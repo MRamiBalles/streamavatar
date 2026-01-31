@@ -5,8 +5,14 @@ import { useAvatarStore, AvatarType } from '@/stores/avatarStore';
 import { PillAvatar } from './PillAvatar';
 import { BoxyAvatar } from './BoxyAvatar';
 import { SphereAvatar } from './SphereAvatar';
+import { CatAvatar } from './CatAvatar';
+import { GhostAvatar } from './GhostAvatar';
+import { EmojiAvatar } from './EmojiAvatar';
+import { CustomModelAvatar } from './CustomModelAvatar';
 
 const AvatarModel = ({ type }: { type: AvatarType }) => {
+  const { customModel } = useAvatarStore();
+  
   switch (type) {
     case 'pill':
       return <PillAvatar />;
@@ -14,6 +20,17 @@ const AvatarModel = ({ type }: { type: AvatarType }) => {
       return <BoxyAvatar />;
     case 'sphere':
       return <SphereAvatar />;
+    case 'cat':
+      return <CatAvatar />;
+    case 'ghost':
+      return <GhostAvatar />;
+    case 'emoji':
+      return <EmojiAvatar />;
+    case 'custom':
+      if (customModel) {
+        return <CustomModelAvatar modelUrl={customModel.url} modelType={customModel.type} />;
+      }
+      return <PillAvatar />;
     default:
       return <PillAvatar />;
   }

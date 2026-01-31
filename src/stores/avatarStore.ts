@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type AvatarType = 'pill' | 'boxy' | 'sphere';
+export type AvatarType = 'pill' | 'boxy' | 'sphere' | 'cat' | 'ghost' | 'emoji' | 'custom';
 export type BackgroundType = 'dark' | 'chroma-green' | 'chroma-blue' | 'transparent';
 
 interface FaceData {
@@ -18,11 +18,18 @@ interface StreamDestination {
   enabled: boolean;
 }
 
+interface CustomModel {
+  url: string;
+  name: string;
+  type: 'glb' | 'vrm';
+}
+
 interface AvatarStore {
   // Avatar settings
   selectedAvatar: AvatarType;
   avatarColor: string;
   avatarScale: number;
+  customModel: CustomModel | null;
   
   // Background
   background: BackgroundType;
@@ -44,6 +51,7 @@ interface AvatarStore {
   setFaceData: (data: FaceData) => void;
   setCameraActive: (active: boolean) => void;
   setTracking: (tracking: boolean) => void;
+  setCustomModel: (model: CustomModel | null) => void;
   addStreamDestination: (dest: Omit<StreamDestination, 'id'>) => void;
   removeStreamDestination: (id: string) => void;
   toggleStreamDestination: (id: string) => void;
@@ -56,6 +64,7 @@ export const useAvatarStore = create<AvatarStore>((set) => ({
   selectedAvatar: 'pill',
   avatarColor: '#c97d3d',
   avatarScale: 1,
+  customModel: null,
   background: 'dark',
   faceData: {
     headRotation: { x: 0, y: 0, z: 0 },
@@ -79,6 +88,7 @@ export const useAvatarStore = create<AvatarStore>((set) => ({
   setFaceData: (data) => set({ faceData: data }),
   setCameraActive: (active) => set({ isCameraActive: active }),
   setTracking: (tracking) => set({ isTracking: tracking }),
+  setCustomModel: (model) => set({ customModel: model, selectedAvatar: model ? 'custom' : 'pill' }),
   addStreamDestination: (dest) => set((state) => ({
     streamDestinations: [...state.streamDestinations, { ...dest, id: crypto.randomUUID() }],
   })),
