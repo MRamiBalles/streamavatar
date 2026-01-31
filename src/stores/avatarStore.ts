@@ -190,7 +190,14 @@ export const useAvatarStore = create<AvatarStore>()(
         background: state.background,
         audioSensitivity: state.audioSensitivity,
         language: state.language,
-        streamDestinations: state.streamDestinations,
+        // Exclude streamKey from persisted data for security - keys must be re-entered each session
+        streamDestinations: state.streamDestinations.map(d => ({
+          id: d.id,
+          name: d.name,
+          rtmpUrl: d.rtmpUrl,
+          enabled: d.enabled,
+          streamKey: '', // Never persist stream keys
+        })),
       }),
     }
   )

@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
-import { useFrame, useLoader } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { Sphere } from '@react-three/drei';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -11,6 +11,89 @@ interface CustomModelAvatarProps {
   modelType: 'glb' | 'vrm';
 }
 
+// Allowed domains for custom 3D models
+const ALLOWED_MODEL_DOMAINS = [
+  'localhost',
+  '127.0.0.1',
+  // Common 3D model hosting services
+  'github.com',
+  'raw.githubusercontent.com',
+  'gist.githubusercontent.com',
+  'cdn.jsdelivr.net',
+  'unpkg.com',
+  // Cloud storage
+  'storage.googleapis.com',
+  's3.amazonaws.com',
+  'blob.core.windows.net',
+  // 3D model platforms
+  'sketchfab.com',
+  'models.readyplayer.me',
+  'hub.vroid.com',
+  // Lovable preview domains
+  'lovable.app',
+];
+
+// Maximum file size for models (50MB)
+const MAX_MODEL_SIZE_BYTES = 50 * 1024 * 1024;
+
+/**
+ * Validates a model URL for security
+ * - Checks for HTTPS (or localhost)
+ * - Validates against allowed domains
+ * - Prevents loading internal network resources
+ */
+function validateModelUrl(url: string): { valid: boolean; error?: string } {
+  try {
+    const parsed = new URL(url);
+    
+    // Only allow https (or http for localhost development)
+    const isLocalhost = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
+    if (parsed.protocol !== 'https:' && !isLocalhost) {
+      return { valid: false, error: 'Only HTTPS URLs are allowed for security' };
+    }
+    
+    // Check for internal/private network URLs (SSRF prevention)
+    const hostname = parsed.hostname.toLowerCase();
+    const privatePatterns = [
+      /^10\./,
+      /^172\.(1[6-9]|2[0-9]|3[0-1])\./,
+      /^192\.168\./,
+      /^169\.254\./,
+      /^0\./,
+      /^fc00:/i,
+      /^fe80:/i,
+    ];
+    
+    for (const pattern of privatePatterns) {
+      if (pattern.test(hostname)) {
+        return { valid: false, error: 'Internal network URLs are not allowed' };
+      }
+    }
+    
+    // Check against allowed domains
+    const isAllowedDomain = ALLOWED_MODEL_DOMAINS.some(domain => 
+      hostname === domain || hostname.endsWith('.' + domain)
+    );
+    
+    if (!isAllowedDomain) {
+      return { 
+        valid: false, 
+        error: `Domain not in allowed list. Allowed: ${ALLOWED_MODEL_DOMAINS.slice(0, 5).join(', ')}...` 
+      };
+    }
+    
+    // Check file extension
+    const path = parsed.pathname.toLowerCase();
+    if (!path.endsWith('.glb') && !path.endsWith('.vrm') && !path.includes('.glb') && !path.includes('.vrm')) {
+      return { valid: false, error: 'URL must point to a .glb or .vrm file' };
+    }
+    
+    return { valid: true };
+  } catch {
+    return { valid: false, error: 'Invalid URL format' };
+  }
+}
+
 export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProps) => {
   const groupRef = useRef<THREE.Group>(null);
   const [vrm, setVrm] = useState<VRM | null>(null);
@@ -20,7 +103,22 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
   const { avatarScale, faceData } = useAvatarStore();
 
   useEffect(() => {
+    // Validate URL before loading
+    const validation = validateModelUrl(modelUrl);
+    if (!validation.valid) {
+      console.warn('Model URL validation failed:', validation.error);
+      setError(validation.error || 'Invalid model URL');
+      return;
+    }
+    
     const loader = new GLTFLoader();
+    const abortController = new AbortController();
+    
+    // Set a timeout for loading (30 seconds)
+    const loadTimeout = setTimeout(() => {
+      abortController.abort();
+      setError('Model loading timed out');
+    }, 30000);
     
     if (modelType === 'vrm') {
       loader.register((parser) => new VRMLoaderPlugin(parser));
@@ -29,6 +127,8 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
     loader.load(
       modelUrl,
       (gltf) => {
+        clearTimeout(loadTimeout);
+        
         if (modelType === 'vrm' && gltf.userData.vrm) {
           const vrmModel = gltf.userData.vrm as VRM;
           VRMUtils.removeUnnecessaryVertices(vrmModel.scene);
@@ -61,12 +161,14 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
       },
       undefined,
       (err) => {
+        clearTimeout(loadTimeout);
         console.error('Error loading model:', err);
-        setError('Error al cargar el modelo');
+        setError('Error loading model');
       }
     );
 
     return () => {
+      clearTimeout(loadTimeout);
       if (vrm) {
         VRMUtils.deepDispose(vrm.scene);
       }
