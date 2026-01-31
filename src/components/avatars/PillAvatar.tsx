@@ -9,8 +9,9 @@ export const PillAvatar = () => {
   const mouthRef = useRef<THREE.Mesh>(null);
   const leftEyeRef = useRef<THREE.Mesh>(null);
   const rightEyeRef = useRef<THREE.Mesh>(null);
+  const bodyRef = useRef<THREE.Mesh>(null);
   
-  const { avatarColor, avatarScale, faceData } = useAvatarStore();
+  const { avatarColor, avatarScale, faceData, audioData, audioReactiveEnabled } = useAvatarStore();
   
   useFrame(() => {
     if (groupRef.current) {
@@ -32,9 +33,18 @@ export const PillAvatar = () => {
       );
     }
     
-    // Animate mouth
+    // Audio reactive scaling
+    if (bodyRef.current && audioReactiveEnabled) {
+      const audioScale = 1 + audioData.bass * 0.15;
+      bodyRef.current.scale.x = THREE.MathUtils.lerp(bodyRef.current.scale.x, audioScale, 0.2);
+      bodyRef.current.scale.z = THREE.MathUtils.lerp(bodyRef.current.scale.z, audioScale, 0.2);
+    }
+    
+    // Animate mouth - combine face tracking and audio
     if (mouthRef.current) {
-      const mouthScale = 0.1 + faceData.mouthOpen * 0.4;
+      const faceOpenness = faceData.mouthOpen;
+      const audioOpenness = audioReactiveEnabled ? audioData.volume * 0.5 : 0;
+      const mouthScale = 0.1 + Math.max(faceOpenness, audioOpenness) * 0.4;
       mouthRef.current.scale.y = THREE.MathUtils.lerp(
         mouthRef.current.scale.y,
         mouthScale,
@@ -62,7 +72,7 @@ export const PillAvatar = () => {
   return (
     <group ref={groupRef} scale={avatarScale}>
       {/* Main pill body */}
-      <Capsule args={[0.6, 1.2, 16, 32]} position={[0, 0, 0]}>
+      <Capsule ref={bodyRef} args={[0.6, 1.2, 16, 32]} position={[0, 0, 0]}>
         <meshStandardMaterial color={avatarColor} roughness={0.4} metalness={0.1} />
       </Capsule>
       

@@ -10,8 +10,9 @@ export const BoxyAvatar = () => {
   const leftEyeRef = useRef<THREE.Mesh>(null);
   const rightEyeRef = useRef<THREE.Mesh>(null);
   const antennaRef = useRef<THREE.Group>(null);
+  const antennaBallRef = useRef<THREE.Mesh>(null);
   
-  const { avatarColor, avatarScale, faceData } = useAvatarStore();
+  const { avatarColor, avatarScale, faceData, audioData, audioReactiveEnabled } = useAvatarStore();
   
   useFrame((state) => {
     if (groupRef.current) {
@@ -32,13 +33,22 @@ export const BoxyAvatar = () => {
       );
     }
     
-    // Antenna wobble
+    // Antenna wobble + audio reactive
     if (antennaRef.current) {
-      antennaRef.current.rotation.z = Math.sin(state.clock.elapsedTime * 2) * 0.1;
+      const audioWobble = audioReactiveEnabled ? audioData.treble * 0.3 : 0;
+      antennaRef.current.rotation.z = Math.sin(state.clock.elapsedTime * 2) * 0.1 + audioWobble;
+    }
+    
+    // Antenna ball glow with audio
+    if (antennaBallRef.current && audioReactiveEnabled) {
+      const material = antennaBallRef.current.material as THREE.MeshStandardMaterial;
+      material.emissiveIntensity = 0.5 + audioData.volume * 1.5;
     }
     
     if (mouthRef.current) {
-      const mouthScale = 0.05 + faceData.mouthOpen * 0.3;
+      const faceOpenness = faceData.mouthOpen;
+      const audioOpenness = audioReactiveEnabled ? audioData.volume * 0.4 : 0;
+      const mouthScale = 0.05 + Math.max(faceOpenness, audioOpenness) * 0.3;
       mouthRef.current.scale.y = THREE.MathUtils.lerp(
         mouthRef.current.scale.y,
         mouthScale,
@@ -94,7 +104,7 @@ export const BoxyAvatar = () => {
         <Box args={[0.08, 0.3, 0.08]}>
           <meshStandardMaterial color="#666" metalness={0.8} roughness={0.2} />
         </Box>
-        <Sphere args={[0.1, 16, 16]} position={[0, 0.2, 0]}>
+        <Sphere ref={antennaBallRef} args={[0.1, 16, 16]} position={[0, 0.2, 0]}>
           <meshStandardMaterial color="#ff0066" emissive="#ff0066" emissiveIntensity={0.8} />
         </Sphere>
       </group>

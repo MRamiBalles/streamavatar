@@ -12,8 +12,9 @@ export const CatAvatar = () => {
   const tailRef = useRef<THREE.Group>(null);
   const leftEarRef = useRef<THREE.Mesh>(null);
   const rightEarRef = useRef<THREE.Mesh>(null);
+  const bodyRef = useRef<THREE.Mesh>(null);
   
-  const { avatarColor, avatarScale, faceData } = useAvatarStore();
+  const { avatarColor, avatarScale, faceData, audioData, audioReactiveEnabled } = useAvatarStore();
   
   useFrame((state) => {
     if (groupRef.current) {
@@ -34,20 +35,30 @@ export const CatAvatar = () => {
       );
     }
     
-    // Tail wag
+    // Tail wag + audio reactive
     if (tailRef.current) {
-      tailRef.current.rotation.z = Math.sin(state.clock.elapsedTime * 3) * 0.3;
+      const audioWag = audioReactiveEnabled ? audioData.volume * 0.5 : 0;
+      tailRef.current.rotation.z = Math.sin(state.clock.elapsedTime * 3) * (0.3 + audioWag);
     }
     
-    // Ear twitch
+    // Ear twitch + audio reactive
     if (leftEarRef.current && rightEarRef.current) {
       const twitch = Math.sin(state.clock.elapsedTime * 5) * 0.05;
-      leftEarRef.current.rotation.z = -0.2 + twitch;
-      rightEarRef.current.rotation.z = 0.2 - twitch;
+      const audioTwitch = audioReactiveEnabled ? audioData.treble * 0.15 : 0;
+      leftEarRef.current.rotation.z = -0.2 + twitch + audioTwitch;
+      rightEarRef.current.rotation.z = 0.2 - twitch - audioTwitch;
+    }
+    
+    // Body scale with audio
+    if (bodyRef.current && audioReactiveEnabled) {
+      const scale = 1 + audioData.bass * 0.08;
+      bodyRef.current.scale.setScalar(THREE.MathUtils.lerp(bodyRef.current.scale.x, scale, 0.15));
     }
     
     if (mouthRef.current) {
-      const mouthScale = 0.05 + faceData.mouthOpen * 0.4;
+      const faceOpenness = faceData.mouthOpen;
+      const audioOpenness = audioReactiveEnabled ? audioData.volume * 0.5 : 0;
+      const mouthScale = 0.05 + Math.max(faceOpenness, audioOpenness) * 0.4;
       mouthRef.current.scale.y = THREE.MathUtils.lerp(
         mouthRef.current.scale.y,
         mouthScale,
@@ -74,7 +85,7 @@ export const CatAvatar = () => {
   return (
     <group ref={groupRef} scale={avatarScale}>
       {/* Head */}
-      <Sphere args={[0.9, 32, 32]} position={[0, 0, 0]}>
+      <Sphere ref={bodyRef} args={[0.9, 32, 32]} position={[0, 0, 0]}>
         <meshStandardMaterial color={avatarColor} roughness={0.6} />
       </Sphere>
       

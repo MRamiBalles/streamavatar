@@ -12,12 +12,13 @@ export const GhostAvatar = () => {
   const bodyRef = useRef<THREE.Mesh>(null);
   const tailRefs = useRef<THREE.Mesh[]>([]);
   
-  const { avatarColor, avatarScale, faceData } = useAvatarStore();
+  const { avatarColor, avatarScale, faceData, audioData, audioReactiveEnabled } = useAvatarStore();
   
   useFrame((state) => {
     if (groupRef.current) {
-      // Floating animation
-      groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 1.5) * 0.1;
+      // Floating animation with audio boost
+      const audioFloat = audioReactiveEnabled ? audioData.bass * 0.15 : 0;
+      groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 1.5) * 0.1 + audioFloat;
       
       groupRef.current.rotation.x = THREE.MathUtils.lerp(
         groupRef.current.rotation.x,
@@ -36,20 +37,24 @@ export const GhostAvatar = () => {
       );
     }
     
-    // Wavy tail pieces
+    // Wavy tail pieces + audio reactive
     tailRefs.current.forEach((tail, i) => {
       if (tail) {
-        tail.position.x = Math.sin(state.clock.elapsedTime * 2 + i * 0.8) * 0.1;
+        const audioWave = audioReactiveEnabled ? audioData.volume * 0.15 : 0;
+        tail.position.x = Math.sin(state.clock.elapsedTime * 2 + i * 0.8) * (0.1 + audioWave);
       }
     });
     
-    // Body wobble
-    if (bodyRef.current) {
-      bodyRef.current.scale.x = 1 + Math.sin(state.clock.elapsedTime * 2) * 0.03;
+    // Body wobble with audio
+    if (bodyRef.current && audioReactiveEnabled) {
+      const scale = 1 + audioData.bass * 0.1;
+      bodyRef.current.scale.x = THREE.MathUtils.lerp(bodyRef.current.scale.x, scale, 0.15);
     }
     
     if (mouthRef.current) {
-      const mouthScale = 0.1 + faceData.mouthOpen * 0.5;
+      const faceOpenness = faceData.mouthOpen;
+      const audioOpenness = audioReactiveEnabled ? audioData.volume * 0.6 : 0;
+      const mouthScale = 0.1 + Math.max(faceOpenness, audioOpenness) * 0.5;
       mouthRef.current.scale.y = THREE.MathUtils.lerp(
         mouthRef.current.scale.y,
         mouthScale,
@@ -57,7 +62,7 @@ export const GhostAvatar = () => {
       );
       mouthRef.current.scale.x = THREE.MathUtils.lerp(
         mouthRef.current.scale.x,
-        0.8 + faceData.mouthOpen * 0.4,
+        0.8 + Math.max(faceOpenness, audioOpenness) * 0.4,
         0.2
       );
     }
