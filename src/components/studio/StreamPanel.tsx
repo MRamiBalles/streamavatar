@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { useAvatarStore } from '@/stores/avatarStore';
+import { useAvatarStore, useTranslation } from '@/stores/avatarStore';
 import { useToast } from '@/hooks/use-toast';
 import {
   Collapsible,
@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 export const StreamPanel = () => {
   const { streamDestinations, updateStreamDestination, toggleStreamDestination, removeStreamDestination, addStreamDestination, isLive, setLive } = useAvatarStore();
   const { toast } = useToast();
+  const t = useTranslation();
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newDestination, setNewDestination] = useState({ name: '', rtmpUrl: '', streamKey: '' });
   const [openDestination, setOpenDestination] = useState<string | null>(null);
@@ -24,8 +25,8 @@ export const StreamPanel = () => {
     const cleanViewUrl = `${window.location.origin}/view`;
     navigator.clipboard.writeText(cleanViewUrl);
     toast({
-      title: "¡Link copiado!",
-      description: "Usa este link como Browser Source en OBS",
+      title: t.linkCopied,
+      description: t.useAsOBS,
     });
   };
 
@@ -44,16 +45,16 @@ export const StreamPanel = () => {
     const enabledDestinations = streamDestinations.filter(d => d.enabled && d.streamKey);
     if (enabledDestinations.length === 0) {
       toast({
-        title: "Sin destinos configurados",
-        description: "Configura al menos un destino con Stream Key",
+        title: t.noDestinations,
+        description: t.configureDestination,
         variant: "destructive",
       });
       return;
     }
     setLive(!isLive);
     toast({
-      title: isLive ? "Stream detenido" : "¡EN VIVO!",
-      description: isLive ? "Tu stream ha terminado" : `Transmitiendo a ${enabledDestinations.length} destino(s)`,
+      title: isLive ? t.streamStopped : t.live,
+      description: isLive ? t.streamEnded : `${t.streamingTo} ${enabledDestinations.length} ${t.destinationsCount}`,
     });
   };
 
@@ -71,15 +72,15 @@ export const StreamPanel = () => {
         )}
       >
         <Radio className={cn("w-5 h-5", isLive && "animate-pulse")} />
-        {isLive ? 'DETENER STREAM' : 'GO LIVE'}
+        {isLive ? t.stopStream : t.goLive}
       </Button>
 
       {/* Clean View Link */}
       <div className="glass-panel p-3">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium">Vista Limpia (OBS)</p>
-            <p className="text-xs text-muted-foreground">Añadir como Browser Source</p>
+            <p className="text-sm font-medium">{t.cleanView}</p>
+            <p className="text-xs text-muted-foreground">{t.addAsBrowserSource}</p>
           </div>
           <Button
             variant="outline"
@@ -88,7 +89,7 @@ export const StreamPanel = () => {
             className="gap-2"
           >
             <Copy className="w-3 h-3" />
-            Copiar Link
+            {t.copyLink}
           </Button>
         </div>
       </div>
@@ -97,7 +98,7 @@ export const StreamPanel = () => {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-            Destinos
+            {t.destinations}
           </h4>
           <Button
             variant="ghost"
@@ -106,7 +107,7 @@ export const StreamPanel = () => {
             className="h-7 px-2 text-xs"
           >
             <Plus className="w-3 h-3 mr-1" />
-            Añadir
+            {t.add}
           </Button>
         </div>
 
@@ -129,7 +130,7 @@ export const StreamPanel = () => {
                       <div>
                         <p className="text-sm font-medium">{dest.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {dest.streamKey ? 'Configurado' : 'Sin Stream Key'}
+                          {dest.streamKey ? t.configured : t.noStreamKey}
                         </p>
                       </div>
                     </div>
@@ -152,12 +153,12 @@ export const StreamPanel = () => {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-xs">Stream Key</Label>
+                      <Label className="text-xs">{t.streamKeyPlaceholder}</Label>
                       <Input
                         type="password"
                         value={dest.streamKey}
                         onChange={(e) => updateStreamDestination(dest.id, { streamKey: e.target.value })}
-                        placeholder="Tu clave secreta"
+                        placeholder={t.yourSecretKey}
                         className="h-8 text-xs"
                       />
                     </div>
@@ -168,7 +169,7 @@ export const StreamPanel = () => {
                       className="h-7 px-2 text-xs text-destructive hover:text-destructive"
                     >
                       <Trash2 className="w-3 h-3 mr-1" />
-                      Eliminar
+                      {t.delete}
                     </Button>
                   </div>
                 </CollapsibleContent>
@@ -181,19 +182,19 @@ export const StreamPanel = () => {
         {isAddingNew && (
           <div className="glass-panel p-3 space-y-3">
             <Input
-              placeholder="Nombre (ej: Kick)"
+              placeholder={t.namePlaceholder}
               value={newDestination.name}
               onChange={(e) => setNewDestination(prev => ({ ...prev, name: e.target.value }))}
               className="h-8 text-sm"
             />
             <Input
-              placeholder="RTMP URL"
+              placeholder={t.rtmpPlaceholder}
               value={newDestination.rtmpUrl}
               onChange={(e) => setNewDestination(prev => ({ ...prev, rtmpUrl: e.target.value }))}
               className="h-8 text-sm"
             />
             <Input
-              placeholder="Stream Key"
+              placeholder={t.streamKeyPlaceholder}
               type="password"
               value={newDestination.streamKey}
               onChange={(e) => setNewDestination(prev => ({ ...prev, streamKey: e.target.value }))}
@@ -202,10 +203,10 @@ export const StreamPanel = () => {
             <div className="flex gap-2">
               <Button size="sm" onClick={handleAddDestination} className="flex-1">
                 <Check className="w-3 h-3 mr-1" />
-                Guardar
+                {t.save}
               </Button>
               <Button size="sm" variant="ghost" onClick={() => setIsAddingNew(false)}>
-                Cancelar
+                {t.cancel}
               </Button>
             </div>
           </div>
@@ -219,7 +220,7 @@ export const StreamPanel = () => {
         disabled
       >
         <ExternalLink className="w-4 h-4" />
-        Importar .VRM / .GLB (Próximamente)
+        {t.importModelComingSoon}
       </Button>
     </div>
   );

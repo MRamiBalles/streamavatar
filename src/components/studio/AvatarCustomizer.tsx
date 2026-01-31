@@ -1,4 +1,4 @@
-import { useAvatarStore, BackgroundType } from '@/stores/avatarStore';
+import { useAvatarStore, useTranslation, BackgroundType } from '@/stores/avatarStore';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -15,22 +15,23 @@ const presetColors = [
   '#ec4899', // Pink
 ];
 
-const backgroundOptions: { type: BackgroundType; label: string; color: string }[] = [
-  { type: 'dark', label: 'Oscuro', color: 'bg-zinc-900' },
-  { type: 'chroma-green', label: 'Verde', color: 'bg-green-500' },
-  { type: 'chroma-blue', label: 'Azul', color: 'bg-blue-600' },
-  { type: 'transparent', label: 'Trans', color: 'bg-gradient-to-br from-gray-300 to-gray-400' },
-];
-
 export const AvatarCustomizer = () => {
   const { avatarColor, setAvatarColor, avatarScale, setAvatarScale, background, setBackground } = useAvatarStore();
+  const t = useTranslation();
+
+  const backgroundOptions: { type: BackgroundType; label: string; color: string }[] = [
+    { type: 'dark', label: t.dark, color: 'bg-zinc-900' },
+    { type: 'chroma-green', label: t.green, color: 'bg-green-500' },
+    { type: 'chroma-blue', label: t.blue, color: 'bg-blue-600' },
+    { type: 'transparent', label: t.transparent, color: 'bg-gradient-to-br from-gray-300 to-gray-400' },
+  ];
 
   return (
     <div className="space-y-6">
       {/* Color Picker */}
       <div className="space-y-3">
         <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-          Color
+          {t.color}
         </Label>
         <div className="flex items-center gap-3">
           <Input
@@ -59,7 +60,7 @@ export const AvatarCustomizer = () => {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-            Escala
+            {t.scale}
           </Label>
           <span className="text-sm text-muted-foreground">{avatarScale.toFixed(1)}x</span>
         </div>
@@ -76,7 +77,7 @@ export const AvatarCustomizer = () => {
       {/* Background Selector */}
       <div className="space-y-3">
         <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-          Fondo
+          {t.background}
         </Label>
         <div className="flex gap-2">
           {backgroundOptions.map((bg) => (
