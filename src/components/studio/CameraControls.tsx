@@ -1,11 +1,12 @@
 import { Camera, CameraOff, Monitor, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFaceTracker } from '@/hooks/useFaceTracker';
-import { useAvatarStore } from '@/stores/avatarStore';
+import { useAvatarStore, useTranslation } from '@/stores/avatarStore';
 
 export const CameraControls = () => {
   const { videoRef, startCamera, stopCamera, isLoading, error, isCameraActive } = useFaceTracker();
   const { isTracking } = useAvatarStore();
+  const t = useTranslation();
 
   return (
     <div className="space-y-4">
@@ -27,7 +28,7 @@ export const CameraControls = () => {
           <div className={`w-2 h-2 rounded-full ${
             isCameraActive ? 'bg-success animate-pulse' : 'bg-muted-foreground'
           }`} />
-          {isCameraActive ? 'Cámara Activa' : 'Cámara Inactiva'}
+          {isCameraActive ? t.cameraActive : t.cameraInactive}
         </div>
         
         {isCameraActive && (
@@ -39,7 +40,7 @@ export const CameraControls = () => {
             <div className={`w-2 h-2 rounded-full ${
               isTracking ? 'bg-primary animate-pulse' : 'bg-destructive'
             }`} />
-            {isTracking ? 'Tracking OK' : 'Sin Rostro'}
+            {isTracking ? t.trackingOk : t.noFace}
           </div>
         )}
       </div>
@@ -63,12 +64,12 @@ export const CameraControls = () => {
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Iniciando...
+                {t.starting}
               </>
             ) : (
               <>
                 <Camera className="w-4 h-4" />
-                Iniciar Cámara
+                {t.startCamera}
               </>
             )}
           </Button>
@@ -79,7 +80,7 @@ export const CameraControls = () => {
             variant="secondary"
           >
             <CameraOff className="w-4 h-4" />
-            Detener Cámara
+            {t.stopCamera}
           </Button>
         )}
       </div>
@@ -91,7 +92,7 @@ export const CameraControls = () => {
         disabled
       >
         <Monitor className="w-4 h-4" />
-        Compartir Pantalla (Próximamente)
+        {t.shareScreen}
       </Button>
     </div>
   );

@@ -215,8 +215,9 @@ La fecha de última actualización se indicará al inicio del documento.
 ## 9. Contacto
 
 Para consultas relacionadas con privacidad o aspectos legales:
-- **Email:** [Insertar email de contacto]
-- **Formulario:** [Insertar URL si aplica]
+- **Email:** legal@streamavatar.app
+- **Soporte:** support@streamavatar.app
+- **Web:** https://streamavatar.app/contact
 
 ---
 
