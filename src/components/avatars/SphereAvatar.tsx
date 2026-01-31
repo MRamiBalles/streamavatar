@@ -11,7 +11,7 @@ export const SphereAvatar = () => {
   const rightEyeRef = useRef<THREE.Mesh>(null);
   const bodyRef = useRef<THREE.Mesh>(null);
   
-  const { avatarColor, avatarScale, faceData } = useAvatarStore();
+  const { avatarColor, avatarScale, faceData, audioData, audioReactiveEnabled } = useAvatarStore();
   
   useFrame((state) => {
     if (groupRef.current) {
@@ -32,14 +32,18 @@ export const SphereAvatar = () => {
       );
     }
     
-    // Subtle bouncing/breathing animation
+    // Audio reactive + breathing animation
     if (bodyRef.current) {
       const breathe = Math.sin(state.clock.elapsedTime * 1.5) * 0.02 + 1;
-      bodyRef.current.scale.set(breathe, breathe * 0.98, breathe);
+      const audioScale = audioReactiveEnabled ? 1 + audioData.bass * 0.2 : 1;
+      const finalScale = breathe * audioScale;
+      bodyRef.current.scale.set(finalScale, finalScale * 0.98, finalScale);
     }
     
     if (mouthRef.current) {
-      const mouthScale = 0.08 + faceData.mouthOpen * 0.5;
+      const faceOpenness = faceData.mouthOpen;
+      const audioOpenness = audioReactiveEnabled ? audioData.volume * 0.6 : 0;
+      const mouthScale = 0.08 + Math.max(faceOpenness, audioOpenness) * 0.5;
       mouthRef.current.scale.y = THREE.MathUtils.lerp(
         mouthRef.current.scale.y,
         mouthScale,

@@ -11,8 +11,9 @@ export const EmojiAvatar = () => {
   const rightEyeRef = useRef<THREE.Mesh>(null);
   const leftBrowRef = useRef<THREE.Mesh>(null);
   const rightBrowRef = useRef<THREE.Mesh>(null);
+  const bodyRef = useRef<THREE.Mesh>(null);
   
-  const { avatarColor, avatarScale, faceData } = useAvatarStore();
+  const { avatarColor, avatarScale, faceData, audioData, audioReactiveEnabled } = useAvatarStore();
   
   useFrame((state) => {
     if (groupRef.current) {
@@ -33,16 +34,25 @@ export const EmojiAvatar = () => {
       );
     }
     
-    // Eyebrow movement based on mouth (expressive)
+    // Audio reactive body bounce
+    if (bodyRef.current && audioReactiveEnabled) {
+      const bounce = 1 + audioData.bass * 0.08;
+      bodyRef.current.scale.y = THREE.MathUtils.lerp(bodyRef.current.scale.y, bounce, 0.2);
+    }
+    
+    // Eyebrow movement based on mouth (expressive) + audio
     if (leftBrowRef.current && rightBrowRef.current) {
       const browRaise = faceData.mouthOpen * 0.15;
-      leftBrowRef.current.position.y = 0.55 + browRaise;
-      rightBrowRef.current.position.y = 0.55 + browRaise;
+      const audioBrow = audioReactiveEnabled ? audioData.volume * 0.1 : 0;
+      leftBrowRef.current.position.y = 0.55 + browRaise + audioBrow;
+      rightBrowRef.current.position.y = 0.55 + browRaise + audioBrow;
     }
     
     if (mouthRef.current) {
-      // Smile to O shape transition
-      const mouthOpenness = faceData.mouthOpen;
+      const faceOpenness = faceData.mouthOpen;
+      const audioOpenness = audioReactiveEnabled ? audioData.volume * 0.5 : 0;
+      const mouthOpenness = Math.max(faceOpenness, audioOpenness);
+      
       mouthRef.current.scale.y = THREE.MathUtils.lerp(
         mouthRef.current.scale.y,
         0.3 + mouthOpenness * 0.7,
@@ -74,7 +84,7 @@ export const EmojiAvatar = () => {
   return (
     <group ref={groupRef} scale={avatarScale}>
       {/* Main face - flat circle */}
-      <Cylinder args={[1, 1, 0.3, 64]} rotation={[Math.PI / 2, 0, 0]}>
+      <Cylinder ref={bodyRef} args={[1, 1, 0.3, 64]} rotation={[Math.PI / 2, 0, 0]}>
         <meshStandardMaterial color={avatarColor} roughness={0.3} />
       </Cylinder>
       

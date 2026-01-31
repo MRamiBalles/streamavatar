@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Home, User, Radio, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAvatarStore } from '@/stores/avatarStore';
+import { useAvatarStore, useTranslation } from '@/stores/avatarStore';
 
 type TabType = 'studio' | 'avatar' | 'stream' | 'settings';
 
@@ -10,16 +10,17 @@ interface StudioSidebarProps {
   onTabChange: (tab: TabType) => void;
 }
 
-const tabs = [
-  { id: 'studio' as const, label: 'Studio', icon: Home },
-  { id: 'avatar' as const, label: 'Avatar', icon: User },
-  { id: 'stream' as const, label: 'Stream', icon: Radio },
-  { id: 'settings' as const, label: 'Ajustes', icon: Settings },
-];
-
 export const StudioSidebar = ({ activeTab, onTabChange }: StudioSidebarProps) => {
   const [collapsed, setCollapsed] = useState(false);
   const { isLive } = useAvatarStore();
+  const t = useTranslation();
+
+  const tabs = [
+    { id: 'studio' as const, label: t.studio, icon: Home },
+    { id: 'avatar' as const, label: t.avatar, icon: User },
+    { id: 'stream' as const, label: t.stream, icon: Radio },
+    { id: 'settings' as const, label: t.settings, icon: Settings },
+  ];
 
   return (
     <div className={cn(
