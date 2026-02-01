@@ -24,6 +24,7 @@ import { useCallback, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useAvatarStore } from '@/stores/avatarStore';
 import { useIdleAnimations, IdleAnimationState } from './useIdleAnimations';
+import { useAudioLipSync } from './useAudioLipSync';
 import { VisemeWeights } from './useVisemeAnalyzer';
 
 // =============================================================================
@@ -62,6 +63,9 @@ export interface AvatarAnimationState {
     /** Mouth openness (0-1) */
     mouthOpen: number;
 
+    /** Phonetic viseme weights (Aa, Ee, Ih, Oh, Ou) */
+    visemes: VisemeWeights;
+
     /** Eye blink values (0 = open, 1 = closed) */
     leftEyeBlink: number;
     rightEyeBlink: number;
@@ -79,7 +83,14 @@ export interface AvatarAnimationState {
 
 export function useAvatarAnimation() {
     // Get store data
-    const { faceData, isTracking, isCameraActive, audioData, audioReactiveEnabled } = useAvatarStore();
+    const {
+        faceData,
+        isTracking,
+        isCameraActive,
+        audioData,
+        audioReactiveEnabled,
+        lipSyncEnabled
+    } = useAvatarStore();
 
     // Initialize idle animations system
     const { getIdleState } = useIdleAnimations({
@@ -98,10 +109,16 @@ export function useAvatarAnimation() {
     const outputRef = useRef<AvatarAnimationState>({
         headRotation: { x: 0, y: 0, z: 0 },
         mouthOpen: 0,
+        visemes: { aa: 0, ee: 0, ih: 0, oh: 0, ou: 0, sil: 1 },
         leftEyeBlink: 0,
         rightEyeBlink: 0,
         breathScale: 1,
         blendState: 'idle',
+    });
+
+    // Initialize phonetical lip-sync
+    const lipSync = useAudioLipSync({
+        autoStart: lipSyncEnabled,
     });
 
     /**
@@ -162,10 +179,36 @@ export function useAvatarAnimation() {
             z: lerp(idleState.headRotation.z, faceData.headRotation.z + idleState.headRotation.z * additiveIdle, blend),
         };
 
-        // Mouth - tracking + audio reactive
-        const audioMouth = audioReactiveEnabled ? audioData.volume * 0.5 : 0;
-        const trackingMouth = Math.max(faceData.mouthOpen, audioMouth);
-        output.mouthOpen = lerp(0, trackingMouth, blend);
+        // Mouth - tracking + audio reactive + phonetic lip-sync
+        const lipSyncState = lipSync.getLipSyncState();
+
+        // Priority logic for mouth: 
+        // 1. Phonetic lip-sync (if enabled)
+        // 2. Simple audio reactive (if enabled)
+        // 3. Face tracking
+        let mouthOpen = faceData.mouthOpen;
+        let visemes = { aa: mouthOpen, ee: 0, ih: 0, oh: 0, ou: 0, sil: 1 - mouthOpen };
+
+        if (lipSyncEnabled && lipSyncState.isActive) {
+            mouthOpen = lipSyncState.mouthOpen;
+            visemes = lipSyncState.visemes;
+        } else if (audioReactiveEnabled) {
+            const audioMouth = audioData.volume * 0.5;
+            mouthOpen = Math.max(mouthOpen, audioMouth);
+            visemes = { aa: mouthOpen, ee: 0, ih: 0, oh: 0, ou: 0, sil: 1 - mouthOpen };
+        }
+
+        output.mouthOpen = lerp(0, mouthOpen, blend);
+
+        // Blend visemes individually
+        output.visemes = {
+            aa: lerp(0, visemes.aa, blend),
+            ee: lerp(0, visemes.ee, blend),
+            ih: lerp(0, visemes.ih, blend),
+            oh: lerp(0, visemes.oh, blend),
+            ou: lerp(0, visemes.ou, blend),
+            sil: lerp(1, visemes.sil, blend),
+        };
 
         // Eyes - blend blinks, idle can blink too
         // Use max of tracking blink and idle blink for natural feel

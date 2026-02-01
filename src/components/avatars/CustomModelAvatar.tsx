@@ -19,8 +19,8 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { VRM, VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
 import { useAvatarStore } from '@/stores/avatarStore';
 import { useAvatarAnimation } from '@/hooks/useAvatarAnimation';
-import { mapSimpleToVRM } from '@/lib/vrmTrackingBridge';
 import { normalizeVRM, normalizeModel, logNormalization } from '@/lib/modelNormalizer';
+import { mapSimpleToVRM, mapARKitToVRM, applyVisemesToVRM } from '@/lib/vrmTrackingBridge';
 
 // =============================================================================
 // Types & Configuration
@@ -282,11 +282,14 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
       }
 
       // Apply expressions via Tracking Bridge
-      mapSimpleToVRM(vrm, {
-        headRotation: anim.headRotation,
-        mouthOpen: anim.mouthOpen,
-        leftEyeBlink: anim.leftEyeBlink,
-        rightEyeBlink: anim.rightEyeBlink,
+      // Priority: Phonetic Visemes > Simple Tracking
+      applyVisemesToVRM(vrm, anim.visemes);
+
+      // Other face tracking (eyes, head)
+      mapARKitToVRM(vrm, {
+        eyeBlinkLeft: anim.leftEyeBlink,
+        eyeBlinkRight: anim.rightEyeBlink,
+        // Head rotation is already handled by groupRef.current above
       });
     }
   });
