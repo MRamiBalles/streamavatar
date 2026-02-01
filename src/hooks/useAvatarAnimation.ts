@@ -1,14 +1,19 @@
 /**
  * StreamAvatar - Unified Avatar Animation Hook
  * 
- * Combines face tracking data with procedural idle animations to create
- * a seamless, natural animation experience. When tracking is active, it takes
- * priority. When tracking is inactive or weak, idle animations fill in.
+ * Combines face tracking data with procedural idle animations and
+ * audio-based lip-sync to create a seamless animation experience.
+ * 
+ * Priority order:
+ * 1. Face tracking (when camera active)
+ * 2. Lip-sync visemes (when microphone active)
+ * 3. Idle animations (when nothing active)
  * 
  * Features:
  * - Automatic blending between tracking and idle
  * - Smooth transitions when tracking starts/stops
  * - Additive idle layer for extra organic feel
+ * - Phonetic lip-sync from audio analysis
  * - Performance optimized with minimal re-renders
  * 
  * @author Manuel Ramírez Ballesteros
@@ -19,6 +24,7 @@ import { useCallback, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useAvatarStore } from '@/stores/avatarStore';
 import { useIdleAnimations, IdleAnimationState } from './useIdleAnimations';
+import { VisemeWeights } from './useVisemeAnalyzer';
 
 // =============================================================================
 // Configuration

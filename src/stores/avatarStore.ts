@@ -58,6 +58,9 @@ interface AvatarStore {
   audioSensitivity: number;
   audioReactiveEnabled: boolean;
 
+  // Lip Sync (phonetic)
+  lipSyncEnabled: boolean;
+
   // Language
   language: Language;
 
@@ -79,6 +82,7 @@ interface AvatarStore {
   setAudioData: (data: AudioData) => void;
   setAudioSensitivity: (sensitivity: number) => void;
   setAudioReactiveEnabled: (enabled: boolean) => void;
+  setLipSyncEnabled: (enabled: boolean) => void;
 
   // Actions - Language
   setLanguage: (lang: Language) => void;
@@ -110,6 +114,7 @@ const defaultState = {
   audioData: { volume: 0, bass: 0, treble: 0 },
   audioSensitivity: 1.5,
   audioReactiveEnabled: false,
+  lipSyncEnabled: false,
   language: 'es' as Language,
 };
 
@@ -143,6 +148,7 @@ export const useAvatarStore = create<AvatarStore>()(
       setAudioData: (data) => set({ audioData: data }),
       setAudioSensitivity: (sensitivity) => set({ audioSensitivity: sensitivity }),
       setAudioReactiveEnabled: (enabled) => set({ audioReactiveEnabled: enabled }),
+      setLipSyncEnabled: (enabled) => set({ lipSyncEnabled: enabled }),
 
       // Language Actions
       setLanguage: (lang) => set({ language: lang }),
