@@ -9,10 +9,11 @@ import { CatAvatar } from './CatAvatar';
 import { GhostAvatar } from './GhostAvatar';
 import { EmojiAvatar } from './EmojiAvatar';
 import { CustomModelAvatar } from './CustomModelAvatar';
+import { CompositeAvatar } from './CompositeAvatar';
 
 const AvatarModel = ({ type }: { type: AvatarType }) => {
   const { customModel } = useAvatarStore();
-  
+
   switch (type) {
     case 'pill':
       return <PillAvatar />;
@@ -26,6 +27,8 @@ const AvatarModel = ({ type }: { type: AvatarType }) => {
       return <GhostAvatar />;
     case 'emoji':
       return <EmojiAvatar />;
+    case 'composite':
+      return <CompositeAvatar />;
     case 'custom':
       if (customModel) {
         return <CustomModelAvatar modelUrl={customModel.url} modelType={customModel.type} />;
@@ -49,7 +52,7 @@ interface AvatarRendererProps {
 
 export const AvatarRenderer = ({ isCleanView = false }: AvatarRendererProps) => {
   const { selectedAvatar, background } = useAvatarStore();
-  
+
   const getBackgroundClass = () => {
     switch (background) {
       case 'chroma-green':
@@ -67,7 +70,7 @@ export const AvatarRenderer = ({ isCleanView = false }: AvatarRendererProps) => 
     <div className={`canvas-container w-full h-full ${getBackgroundClass()}`}>
       <Canvas
         camera={{ position: [0, 0, 4], fov: 50 }}
-        gl={{ 
+        gl={{
           alpha: background === 'transparent',
           antialias: true,
           preserveDrawingBuffer: true,
@@ -79,26 +82,26 @@ export const AvatarRenderer = ({ isCleanView = false }: AvatarRendererProps) => 
           <directionalLight position={[5, 5, 5]} intensity={1} castShadow />
           <directionalLight position={[-5, 3, -5]} intensity={0.3} color="#a855f7" />
           <pointLight position={[0, -2, 2]} intensity={0.5} color="#ec4899" />
-          
+
           {/* Avatar */}
           <AvatarModel type={selectedAvatar} />
-          
+
           {/* Environment & Shadows */}
           {background === 'dark' && (
             <>
               <Environment preset="city" />
-              <ContactShadows 
-                position={[0, -1.5, 0]} 
-                opacity={0.5} 
-                blur={2} 
+              <ContactShadows
+                position={[0, -1.5, 0]}
+                opacity={0.5}
+                blur={2}
                 far={3}
               />
             </>
           )}
-          
+
           {/* Controls - only in non-clean view */}
           {!isCleanView && (
-            <OrbitControls 
+            <OrbitControls
               enablePan={false}
               enableZoom={true}
               minDistance={2}

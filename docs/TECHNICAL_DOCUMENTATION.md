@@ -127,6 +127,7 @@ Canvas 3D con React Three Fiber:
 | Cat | Custom | Orejas y cola animadas |
 | Ghost | Custom | Flotación suave |
 | Emoji | Sphere | Expresiones de cara |
+| Composite | Primitives | Creación modular (Composer) |
 | Custom | GLB/VRM | Modelos importados |
 
 ### 3.4 Gestión de Estado

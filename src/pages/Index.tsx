@@ -12,6 +12,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Button } from '@/components/ui/button';
 import { Menu, Shield } from 'lucide-react';
 import { useAvatarStore } from '@/stores/avatarStore';
+import { ComposerPanel } from '@/components/studio/ComposerPanel';
+import { AvatarGallery } from '@/components/studio/AvatarGallery';
 
 type TabType = 'studio' | 'avatar' | 'stream' | 'settings';
 
@@ -45,7 +47,11 @@ const Index = () => {
       {/* Avatar Tab */}
       {activeTab === 'avatar' && (
         <>
+          <AvatarGallery />
+          <div className="h-px bg-border" />
           <AvatarSelector />
+          <div className="h-px bg-border" />
+          <ComposerPanel />
           <div className="h-px bg-border" />
           <AvatarCustomizer />
         </>

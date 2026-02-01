@@ -15,7 +15,7 @@ import { persist } from 'zustand/middleware';
 // Type Definitions
 // =============================================================================
 
-export type AvatarType = 'pill' | 'boxy' | 'sphere' | 'cat' | 'ghost' | 'emoji' | 'custom';
+export type AvatarType = 'pill' | 'boxy' | 'sphere' | 'cat' | 'ghost' | 'emoji' | 'custom' | 'composite';
 export type BackgroundType = 'dark' | 'chroma-green' | 'chroma-blue' | 'transparent';
 export type Language = 'es' | 'en';
 
@@ -38,12 +38,38 @@ interface CustomModel {
   type: 'glb' | 'vrm';
 }
 
+export interface AvatarPart {
+  id: string;
+  type: 'sphere' | 'box' | 'cylinder' | 'torus' | 'head' | 'body';
+  position: [number, number, number];
+  rotation: [number, number, number];
+  scale: [number, number, number];
+  color: string;
+  visible: boolean;
+}
+
+export interface AvatarPreset {
+  id: string;
+  name: string;
+  avatarType: AvatarType;
+  parts: AvatarPart[];
+  baseColor: string;
+  baseScale: number;
+  customModel?: CustomModel;
+  lastModified: number;
+}
+
 interface AvatarStore {
   // Avatar settings
   selectedAvatar: AvatarType;
   avatarColor: string;
   avatarScale: number;
   customModel: CustomModel | null;
+
+  // Composite Avatar system
+  currentParts: AvatarPart[];
+  presets: AvatarPreset[];
+  activePresetId: string | null;
 
   // Background
   background: BackgroundType;
@@ -73,6 +99,14 @@ interface AvatarStore {
   setAvatarColor: (color: string) => void;
   setAvatarScale: (scale: number) => void;
   setCustomModel: (model: CustomModel | null) => void;
+
+  // Actions - Composite & Presets
+  addPart: (type: AvatarPart['type']) => void;
+  removePart: (id: string) => void;
+  updatePart: (id: string, updates: Partial<AvatarPart>) => void;
+  saveCurrentAsPreset: (name: string) => void;
+  loadPreset: (id: string) => void;
+  deletePreset: (id: string) => void;
 
   // Actions - Background
   setBackground: (bg: BackgroundType) => void;
@@ -110,6 +144,9 @@ const defaultState = {
   avatarColor: '#c97d3d',
   avatarScale: 1,
   customModel: null as CustomModel | null,
+  currentParts: [] as AvatarPart[],
+  presets: [] as AvatarPreset[],
+  activePresetId: null as string | null,
   background: 'dark' as BackgroundType,
   faceData: {
     headRotation: { x: 0, y: 0, z: 0 },
@@ -145,6 +182,65 @@ export const useAvatarStore = create<AvatarStore>()(
         customModel: model,
         selectedAvatar: model ? 'custom' : get().selectedAvatar === 'custom' ? 'pill' : get().selectedAvatar
       }),
+
+      // Composite & Preset Actions
+      addPart: (type) => set((state) => ({
+        currentParts: [
+          ...state.currentParts,
+          {
+            id: Math.random().toString(36).substr(2, 9),
+            type,
+            position: [0, 0, 0],
+            rotation: [0, 0, 0],
+            scale: [1, 1, 1],
+            color: state.avatarColor,
+            visible: true,
+          }
+        ],
+        selectedAvatar: 'composite'
+      })),
+
+      removePart: (id) => set((state) => ({
+        currentParts: state.currentParts.filter(p => p.id !== id)
+      })),
+
+      updatePart: (id, updates) => set((state) => ({
+        currentParts: state.currentParts.map(p => p.id === id ? { ...p, ...updates } : p)
+      })),
+
+      saveCurrentAsPreset: (name) => {
+        const state = get();
+        const newPreset: AvatarPreset = {
+          id: Math.random().toString(36).substr(2, 9),
+          name,
+          avatarType: state.selectedAvatar,
+          parts: [...state.currentParts],
+          baseColor: state.avatarColor,
+          baseScale: state.avatarScale,
+          customModel: state.customModel || undefined,
+          lastModified: Date.now(),
+        };
+        set({ presets: [...state.presets, newPreset], activePresetId: newPreset.id });
+      },
+
+      loadPreset: (id) => {
+        const preset = get().presets.find(p => p.id === id);
+        if (preset) {
+          set({
+            selectedAvatar: preset.avatarType,
+            currentParts: [...preset.parts],
+            avatarColor: preset.baseColor,
+            avatarScale: preset.baseScale,
+            customModel: preset.customModel || null,
+            activePresetId: preset.id
+          });
+        }
+      },
+
+      deletePreset: (id) => set((state) => ({
+        presets: state.presets.filter(p => p.id !== id),
+        activePresetId: state.activePresetId === id ? null : state.activePresetId
+      })),
 
       // Background Actions
       setBackground: (bg) => set({ background: bg }),
@@ -211,8 +307,9 @@ export const useAvatarStore = create<AvatarStore>()(
         background: state.background,
         audioSensitivity: state.audioSensitivity,
         language: state.language,
-        // Note: customModel, faceData, audioData, isCameraActive, isTracking are NOT persisted
-        // They are runtime-only state that should reset on page reload
+        presets: state.presets,
+        currentParts: state.currentParts,
+        activePresetId: state.activePresetId,
       }),
     }
   )
