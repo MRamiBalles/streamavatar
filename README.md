@@ -13,93 +13,29 @@
 
 StreamAvatar te permite crear y animar un avatar 3D directamente en tu navegador, usando solo tu webcam. Ideal para streamers, creadores de contenido, educadores o cualquiera que quiera aparecer online sin mostrar su rostro.
 
-### Características
+### Características Principales
 
-- 🎭 **6 avatares prediseñados** — Pill, Boxy, Sphere, Cat, Ghost, Emoji
-- 📷 **Face tracking en tiempo real** — Via MediaPipe, procesado 100% localmente
-- 🎤 **Audio reactive** — El avatar responde a tu voz
-- 🎨 **Personalización** — Colores, escala, fondos chroma key
-- 🌐 **100% Web** — Funciona en Chrome, Firefox, Safari, Edge
-- 🔒 **Privacidad** — Ningún dato sale de tu navegador
-
----
-
-## Demo Rápida
-
-```
-1. Abre https://streamavatar.app
-2. Permite acceso a cámara
-3. ¡Tu avatar cobra vida!
-```
+- 🎭 **Soporte VRM Profesional** — Compatibilidad total con modelos `.vrm` (v0/v1).
+- 🦴 **Spring Bones & Physics** — Física en tiempo real para pelo, ropa y accesorios.
+- 🎤 **Audio2Face (Visemas Phonetic)** — Sincronización labial avanzada basada en análisis de formantes FFT (A/E/I/O/U).
+- 📷 **Tracking Facial Dual** — MediaPipe ARKit blendshapes con respaldo fonético.
+- 🔒 **Privacy Shield** — Procesamiento 100% local con Modo Ofuscación para descarte inmediato de datos biométricos.
+- 🌐 **Clean View (OBS)** — URL configurable para integración directa en OBS con deep-linking.
 
 ---
 
-## Uso con OBS Studio
+## Roadmap v2.0+
 
-StreamAvatar está diseñado para integrarse con OBS u otro software de streaming:
+### Fase Actual: Innovación & Realismo (Q1 2026)
 
-1. **En StreamAvatar:** Copia el link de "Vista Limpia"
-2. **En OBS:** Añadir fuente → Navegador
-3. **URL:** Pega el link copiado
-4. **Dimensiones:** 1920x1080 (o según tu setup)
-5. **Fondo:** Usa chroma green y aplica filtro Chroma Key en OBS
+- [x] Soporte VRM Avanzado (Spring Bones)
+- [x] Motor Lip-Sync fonético (Audio2Face)
+- [x] Privacy Shield & Obfuscation Mode
+- [x] Normalización automática de modelos
+- [ ] Renderizado experimental via **3D Gaussian Splatting** (ver `3DGS_ANALYSIS.md`)
+- [ ] Generación de avatares desde texto/imagen (Stable Diffusion SDS)
+- [ ] Integración de DreamBooth para personalización zero-shot
 
-Para multi-streaming, usa plugins gratuitos como [obs-multi-rtmp](https://github.com/sorayuki/obs-multi-rtmp) o [Aitum Multistream](https://aitum.tv/).
-
----
-
-## Desarrollo Local
-
-### Requisitos
-
-- Node.js 18+
-- npm o bun
-
-### Instalación
-
-```bash
-git clone https://github.com/MRamiBalles/streamavatar.git
-cd streamavatar
-npm install
-npm run dev
-```
-
-Abre `http://localhost:5173` en tu navegador.
-
-### Build
-
-```bash
-npm run build
-npm run preview
-```
-
----
-
-## Stack Tecnológico
-
-| Tecnología | Uso |
-|------------|-----|
-| **React 18** | UI y gestión de componentes |
-| **Vite** | Build tool y dev server |
-| **Three.js / R3F** | Renderizado 3D |
-| **MediaPipe** | Detección facial AI |
-| **Zustand** | Estado global |
-| **Tailwind CSS** | Estilos |
-| **shadcn/ui** | Componentes UI accesibles |
-
----
-
-## Roadmap
-
-Ver [docs/ROADMAP.md](docs/ROADMAP.md) para el plan de desarrollo completo.
-
-### Próximamente
-
-- [ ] Import de modelos VRM/GLB custom
-- [ ] Animaciones idle con IA
-- [ ] Sistema de expresiones (hotkeys)
-- [ ] Configuración via URL
-- [ ] Escenas colaborativas multi-usuario
 
 ---
 

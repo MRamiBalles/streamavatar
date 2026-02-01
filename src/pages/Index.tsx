@@ -132,44 +132,51 @@ const Index = () => {
               </SheetContent>
             </Sheet>
           </div>
+        </div>
 
-          {/* Center - Avatar Canvas */}
-          <div className="flex-1 flex flex-col p-4">
-            <div className="flex-1 relative">
-              <AvatarRenderer />
+        {/* Center - Avatar Canvas */}
+        <div className="flex-1 flex flex-col p-4">
+          <div className="flex-1 relative">
+            <AvatarRenderer />
 
-              {/* Overlay controls */}
-              <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end pointer-events-none">
-                <div className="glass-panel p-3 pointer-events-auto">
-                  <p className="text-xs text-muted-foreground mb-1">{t.preview}</p>
-                  <p className="text-sm font-medium">{t.dragToRotate}</p>
-                </div>
+            {/* Overlay controls */}
+            <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end pointer-events-none">
+              <div className="glass-panel p-3 pointer-events-auto">
+                <p className="text-xs text-muted-foreground mb-1">{t.preview}</p>
+                <p className="text-sm font-medium">{t.dragToRotate}</p>
+              </div>
 
-                {/* Mobile menu hint */}
-                <div className="md:hidden glass-panel p-3 pointer-events-auto">
-                  <p className="text-xs text-muted-foreground">
-                    {t.tapForOptions} <Menu className="w-3 h-3 inline" />
-                  </p>
-                </div>
+              {/* Mobile menu hint */}
+              <div className="md:hidden glass-panel p-3 pointer-events-auto">
+                <p className="text-xs text-muted-foreground">
+                  {t.tapForOptions} <Menu className="w-3 h-3 inline" />
+                </p>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Right Panel - Hidden on mobile, use Sheet instead */}
-          <div className="hidden md:flex w-80 border-l border-border bg-card/50 flex-col">
-            <div className="p-4 border-b border-border">
-              <h2 className="font-display font-semibold text-lg">
-                {getPanelTitle()}
-              </h2>
-            </div>
-
-            <ScrollArea className="flex-1">
-              <PanelContent />
-            </ScrollArea>
+        {/* Right Panel - Hidden on mobile, use Sheet instead */}
+        <div className="hidden md:flex w-80 border-l border-border bg-card/50 flex-col">
+          <div className="p-4 border-b border-border flex items-center justify-between">
+            <h2 className="font-display font-semibold text-lg">
+              {getPanelTitle()}
+            </h2>
+            {useAvatarStore.getState().privacyShieldActive && (
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-500">
+                <Shield className="w-3 h-3" />
+                <span className="text-[10px] font-bold uppercase tracking-tighter">Safe</span>
+              </div>
+            )}
           </div>
+
+          <ScrollArea className="flex-1">
+            <PanelContent />
+          </ScrollArea>
         </div>
       </div>
-      );
+    </div>
+  );
 };
 
-      export default Index;
+export default Index;
