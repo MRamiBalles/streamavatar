@@ -85,7 +85,7 @@ const Index = () => {
             {useAvatarStore.getState().privacyShieldActive && (
               <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500">
                 <Shield className="w-3 h-3 animate-pulse" />
-                <span className="text-[10px] font-bold tracking-tight uppercase">Privacy Shield</span>
+                <span className="text-[10px] font-bold tracking-tight uppercase">{t.privacyShield}</span>
               </div>
             )}
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -101,7 +101,7 @@ const Index = () => {
                     {useAvatarStore.getState().privacyShieldActive && (
                       <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                         <Shield className="w-3 h-3" />
-                        <span className="text-[9px] font-bold uppercase">Safe</span>
+                        <span className="text-[9px] font-bold uppercase">{t.safe}</span>
                       </div>
                     )}
                   </div>
@@ -165,7 +165,7 @@ const Index = () => {
             {useAvatarStore.getState().privacyShieldActive && (
               <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-500">
                 <Shield className="w-3 h-3" />
-                <span className="text-[10px] font-bold uppercase tracking-tighter">Safe</span>
+                <span className="text-[10px] font-bold uppercase tracking-tighter">{t.safe}</span>
               </div>
             )}
           </div>

@@ -79,8 +79,10 @@ src/
 │   ├── Index.tsx             # Página principal (Studio)
 │   ├── CleanView.tsx         # Vista limpia para OBS
 │   └── NotFound.tsx          # Página 404
-└── lib/
-    └── utils.ts              # Utilidades (cn, etc.)
+├── lib/
+│   ├── vrmTrackingBridge.ts  # Mapeo ARKit -> VRM y Visemas
+│   ├── modelNormalizer.ts    # Normalización pro de modelos 3D
+│   └── utils.ts              # Utilidades base
 ```
 
 ## 3. Componentes Principales
