@@ -139,7 +139,7 @@ Ver [docs/ROADMAP.md](docs/ROADMAP.md) para el plan de desarrollo completo.
 
 ## Licencia
 
-[MIT](LICENSE) © 2026 Manuel Ramírez Ballestas
+[MIT](LICENSE) © 2026 Manuel Ramírez Ballesteros
 
 ---
 

@@ -150,4 +150,4 @@ La decisión de delegar el streaming a OBS es correcta, pragmática y alineada c
 ---
 
 *Documento creado: Febrero 2026*  
-*Autor: Manuel Ramírez Ballestas*
+*Autor: Manuel Ramírez Ballesteros*

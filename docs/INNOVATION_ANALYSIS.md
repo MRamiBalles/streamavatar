@@ -178,4 +178,4 @@ La financiación más accesible a corto plazo es vía GitHub Sponsors y grants d
 ---
 
 *Documento creado: Febrero 2026*  
-*Autor: Manuel Ramírez Ballestas*
+*Autor: Manuel Ramírez Ballesteros*

@@ -251,5 +251,5 @@ Si el proyecto gana tracción, opciones de sostenibilidad:
 ---
 
 *Documento creado: Febrero 2026*  
-*Autor: Manuel Ramírez Ballestas*  
+*Autor: Manuel Ramírez Ballesteros*  
 *Versión: 1.0*
