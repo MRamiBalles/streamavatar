@@ -7,6 +7,8 @@ import { useAvatarStore, useTranslation, Language } from '@/stores/avatarStore';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { AudioReactiveControls } from './AudioReactiveControls';
+import { LipSyncControls } from './LipSyncControls';
+import { PrivacyControls } from './PrivacyControls';
 
 const languages: { code: Language; label: string; flag: string }[] = [
   { code: 'es', label: 'Español', flag: '🇪🇸' },
@@ -14,14 +16,14 @@ const languages: { code: Language; label: string; flag: string }[] = [
 ];
 
 export const SettingsPanel = () => {
-  const { 
-    language, 
-    setLanguage, 
+  const {
+    language,
+    setLanguage,
     audioSensitivity,
     setAudioSensitivity,
-    exportConfig, 
-    importConfig, 
-    resetToDefaults 
+    exportConfig,
+    importConfig,
+    resetToDefaults
   } = useAvatarStore();
   const t = useTranslation();
   const { toast } = useToast();
@@ -36,7 +38,7 @@ export const SettingsPanel = () => {
     a.download = 'streamavatar-config.json';
     a.click();
     URL.revokeObjectURL(url);
-    
+
     toast({
       title: t.exportSuccess,
       description: 'streamavatar-config.json',
@@ -51,7 +53,7 @@ export const SettingsPanel = () => {
     reader.onload = (e) => {
       const content = e.target?.result as string;
       const success = importConfig(content);
-      
+
       if (success) {
         toast({
           title: t.importSuccess,
@@ -64,7 +66,7 @@ export const SettingsPanel = () => {
       }
     };
     reader.readAsText(file);
-    
+
     // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -117,12 +119,22 @@ export const SettingsPanel = () => {
 
       <div className="h-px bg-border" />
 
+      {/* Lip Sync */}
+      <LipSyncControls />
+
+      <div className="h-px bg-border" />
+
+      {/* Privacy & Ethics */}
+      <PrivacyControls />
+
+      <div className="h-px bg-border" />
+
       {/* Export/Import */}
       <div className="space-y-3">
         <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
           {t.exportConfig} / {t.importConfig}
         </Label>
-        
+
         <input
           ref={fileInputRef}
           type="file"
@@ -130,7 +142,7 @@ export const SettingsPanel = () => {
           onChange={handleImport}
           className="hidden"
         />
-        
+
         <div className="grid grid-cols-2 gap-2">
           <Button
             variant="outline"

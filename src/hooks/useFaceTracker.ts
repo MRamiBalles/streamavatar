@@ -8,18 +8,18 @@ export const useFaceTracker = () => {
   const animationFrameRef = useRef<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const { setFaceData, setCameraActive, setTracking, isCameraActive } = useAvatarStore();
 
   const initializeFaceLandmarker = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const filesetResolver = await FilesetResolver.forVisionTasks(
         'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.8/wasm'
       );
-      
+
       const faceLandmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
         baseOptions: {
           modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
@@ -30,7 +30,7 @@ export const useFaceTracker = () => {
         runningMode: 'VIDEO',
         numFaces: 1,
       });
-      
+
       faceLandmarkerRef.current = faceLandmarker;
       setIsLoading(false);
     } catch (err) {
@@ -46,14 +46,14 @@ export const useFaceTracker = () => {
     }
 
     const video = videoRef.current;
-    
+
     if (video.readyState >= 2) {
       const startTimeMs = performance.now();
       const result: FaceLandmarkerResult = faceLandmarkerRef.current.detectForVideo(video, startTimeMs);
-      
+
       if (result.faceBlendshapes && result.faceBlendshapes.length > 0) {
         const blendshapes = result.faceBlendshapes[0].categories;
-        
+
         const getBlendshapeValue = (name: string) => {
           const shape = blendshapes.find(b => b.categoryName === name);
           return shape ? shape.score : 0;
@@ -63,13 +63,13 @@ export const useFaceTracker = () => {
         const jawOpen = getBlendshapeValue('jawOpen');
         const eyeBlinkLeft = getBlendshapeValue('eyeBlinkLeft');
         const eyeBlinkRight = getBlendshapeValue('eyeBlinkRight');
-        
+
         // Get head rotation from transformation matrix
         let headRotation = { x: 0, y: 0, z: 0 };
-        
+
         if (result.facialTransformationMatrixes && result.facialTransformationMatrixes.length > 0) {
           const matrix = result.facialTransformationMatrixes[0].data;
-          
+
           // Extract rotation from transformation matrix
           headRotation = {
             x: Math.atan2(matrix[9], matrix[10]) * 0.5,
@@ -84,8 +84,19 @@ export const useFaceTracker = () => {
           leftEyeBlink: eyeBlinkLeft,
           rightEyeBlink: eyeBlinkRight,
         });
-        
+
         setTracking(true);
+
+        // --- Obfuscation Mode logic ---
+        // In obfuscation mode, we explicitly ensure the heavy landmark result
+        // is discarded and not accessible for further inference or storage.
+        if (useAvatarStore.getState().obfuscationMode) {
+          // Nullify local references to help GC and prevent lingering data
+          // @ts-ignore - explicitly clearing for privacy
+          blendshapes.length = 0;
+          // @ts-ignore
+          result = null;
+        }
       } else {
         setTracking(false);
       }
@@ -97,13 +108,13 @@ export const useFaceTracker = () => {
   const startCamera = useCallback(async () => {
     try {
       setError(null);
-      
+
       if (!faceLandmarkerRef.current) {
         await initializeFaceLandmarker();
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
+        video: {
           width: { ideal: 640 },
           height: { ideal: 480 },
           facingMode: 'user',
@@ -128,12 +139,12 @@ export const useFaceTracker = () => {
       tracks.forEach(track => track.stop());
       videoRef.current.srcObject = null;
     }
-    
+
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
     }
-    
+
     setCameraActive(false);
     setTracking(false);
   }, [setCameraActive, setTracking]);

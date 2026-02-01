@@ -61,6 +61,10 @@ interface AvatarStore {
   // Lip Sync (phonetic)
   lipSyncEnabled: boolean;
 
+  // Privacy & Ethics
+  obfuscationMode: boolean; // Immediate data disposal after render
+  privacyShieldActive: boolean; // Visual indicator and status
+
   // Language
   language: Language;
 
@@ -83,6 +87,10 @@ interface AvatarStore {
   setAudioSensitivity: (sensitivity: number) => void;
   setAudioReactiveEnabled: (enabled: boolean) => void;
   setLipSyncEnabled: (enabled: boolean) => void;
+
+  // Actions - Privacy
+  setObfuscationMode: (enabled: boolean) => void;
+  setPrivacyShieldActive: (active: boolean) => void;
 
   // Actions - Language
   setLanguage: (lang: Language) => void;
@@ -115,6 +123,8 @@ const defaultState = {
   audioSensitivity: 1.5,
   audioReactiveEnabled: false,
   lipSyncEnabled: false,
+  obfuscationMode: false,
+  privacyShieldActive: true,
   language: 'es' as Language,
 };
 
@@ -149,6 +159,10 @@ export const useAvatarStore = create<AvatarStore>()(
       setAudioSensitivity: (sensitivity) => set({ audioSensitivity: sensitivity }),
       setAudioReactiveEnabled: (enabled) => set({ audioReactiveEnabled: enabled }),
       setLipSyncEnabled: (enabled) => set({ lipSyncEnabled: enabled }),
+
+      // Privacy Actions
+      setObfuscationMode: (enabled) => set({ obfuscationMode: enabled }),
+      setPrivacyShieldActive: (active) => set({ privacyShieldActive: active }),
 
       // Language Actions
       setLanguage: (lang) => set({ language: lang }),
@@ -289,6 +303,19 @@ export const translations = {
     dragToRotate: 'Arrastra para rotar',
     preview: 'Vista previa',
     tapForOptions: 'Toca para opciones',
+    experimental: 'Experimental',
+
+    // Lip Sync
+    lipSync: 'Lip-Sync Fonético',
+    enableLipSync: 'Activar sincronización por voz',
+    lipSyncDesc: 'Analiza tu voz para mover la boca con las vocales (A, E, I, O, U).',
+
+    // Privacy
+    privacy: 'Privacidad y Ética',
+    obfuscationMode: 'Modo Ofuscación',
+    obfuscationDesc: 'Descarta datos biométricos inmediatamente después del renderizado.',
+    privacyShield: 'Privacy Shield Activo',
+    localProcessing: 'Procesamiento 100% Local',
 
     // Model Import
     unsupportedFormat: 'Formato no soportado',
@@ -398,6 +425,19 @@ export const translations = {
     dragToRotate: 'Drag to rotate',
     preview: 'Preview',
     tapForOptions: 'Tap for options',
+    experimental: 'Experimental',
+
+    // Lip Sync
+    lipSync: 'Phonetic Lip-Sync',
+    enableLipSync: 'Enable voice synchronization',
+    lipSyncDesc: 'Analyzes your voice to move the mouth with vowels (A, E, I, O, U).',
+
+    // Privacy
+    privacy: 'Privacy & Ethics',
+    obfuscationMode: 'Obfuscation Mode',
+    obfuscationDesc: 'Discards biometric data immediately after rendering.',
+    privacyShield: 'Privacy Shield Active',
+    localProcessing: '100% Local Processing',
 
     // Model Import
     unsupportedFormat: 'Unsupported format',

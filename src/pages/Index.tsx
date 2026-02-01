@@ -10,7 +10,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useTranslation } from '@/stores/avatarStore';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Menu } from 'lucide-react';
+import { Menu, Shield } from 'lucide-react';
+import { useAvatarStore } from '@/stores/avatarStore';
 
 type TabType = 'studio' | 'avatar' | 'stream' | 'settings';
 
@@ -80,80 +81,95 @@ const Index = () => {
             <span className="font-display font-bold text-sm gradient-text">StreamAvatar</span>
           </div>
 
-          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Menu className="w-5 h-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[85vw] sm:w-[400px] p-0">
-              <SheetHeader className="p-4 border-b border-border">
-                <SheetTitle>{getPanelTitle()}</SheetTitle>
-              </SheetHeader>
-
-              {/* Mobile Navigation Tabs */}
-              <div className="flex border-b border-border">
-                {(['studio', 'avatar', 'stream', 'settings'] as const).map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`flex-1 py-3 text-xs font-medium transition-colors ${activeTab === tab
-                      ? 'text-primary border-b-2 border-primary bg-primary/5'
-                      : 'text-muted-foreground hover:text-foreground'
-                      }`}
-                  >
-                    {tab === 'studio' && t.studio}
-                    {tab === 'avatar' && t.avatar}
-                    {tab === 'stream' && t.obsSetup}
-                    {tab === 'settings' && t.settings}
-                  </button>
-                ))}
+          <div className="flex items-center gap-2">
+            {useAvatarStore.getState().privacyShieldActive && (
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500">
+                <Shield className="w-3 h-3 animate-pulse" />
+                <span className="text-[10px] font-bold tracking-tight uppercase">Privacy Shield</span>
               </div>
+            )}
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="w-5 h-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[85vw] sm:w-[400px] p-0">
+                <SheetHeader className="p-4 border-b border-border">
+                  <div className="flex items-center justify-between">
+                    <SheetTitle>{getPanelTitle()}</SheetTitle>
+                    {useAvatarStore.getState().privacyShieldActive && (
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                        <Shield className="w-3 h-3" />
+                        <span className="text-[9px] font-bold uppercase">Safe</span>
+                      </div>
+                    )}
+                  </div>
+                </SheetHeader>
 
-              <ScrollArea className="h-[calc(100vh-120px)]">
-                <PanelContent />
-              </ScrollArea>
-            </SheetContent>
-          </Sheet>
-        </div>
+                {/* Mobile Navigation Tabs */}
+                <div className="flex border-b border-border">
+                  {(['studio', 'avatar', 'stream', 'settings'] as const).map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={`flex-1 py-3 text-xs font-medium transition-colors ${activeTab === tab
+                        ? 'text-primary border-b-2 border-primary bg-primary/5'
+                        : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                    >
+                      {tab === 'studio' && t.studio}
+                      {tab === 'avatar' && t.avatar}
+                      {tab === 'stream' && t.obsSetup}
+                      {tab === 'settings' && t.settings}
+                    </button>
+                  ))}
+                </div>
 
-        {/* Center - Avatar Canvas */}
-        <div className="flex-1 flex flex-col p-4">
-          <div className="flex-1 relative">
-            <AvatarRenderer />
+                <ScrollArea className="h-[calc(100vh-120px)]">
+                  <PanelContent />
+                </ScrollArea>
+              </SheetContent>
+            </Sheet>
+          </div>
 
-            {/* Overlay controls */}
-            <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end pointer-events-none">
-              <div className="glass-panel p-3 pointer-events-auto">
-                <p className="text-xs text-muted-foreground mb-1">{t.preview}</p>
-                <p className="text-sm font-medium">{t.dragToRotate}</p>
-              </div>
+          {/* Center - Avatar Canvas */}
+          <div className="flex-1 flex flex-col p-4">
+            <div className="flex-1 relative">
+              <AvatarRenderer />
 
-              {/* Mobile menu hint */}
-              <div className="md:hidden glass-panel p-3 pointer-events-auto">
-                <p className="text-xs text-muted-foreground">
-                  {t.tapForOptions} <Menu className="w-3 h-3 inline" />
-                </p>
+              {/* Overlay controls */}
+              <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end pointer-events-none">
+                <div className="glass-panel p-3 pointer-events-auto">
+                  <p className="text-xs text-muted-foreground mb-1">{t.preview}</p>
+                  <p className="text-sm font-medium">{t.dragToRotate}</p>
+                </div>
+
+                {/* Mobile menu hint */}
+                <div className="md:hidden glass-panel p-3 pointer-events-auto">
+                  <p className="text-xs text-muted-foreground">
+                    {t.tapForOptions} <Menu className="w-3 h-3 inline" />
+                  </p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Right Panel - Hidden on mobile, use Sheet instead */}
-        <div className="hidden md:flex w-80 border-l border-border bg-card/50 flex-col">
-          <div className="p-4 border-b border-border">
-            <h2 className="font-display font-semibold text-lg">
-              {getPanelTitle()}
-            </h2>
+          {/* Right Panel - Hidden on mobile, use Sheet instead */}
+          <div className="hidden md:flex w-80 border-l border-border bg-card/50 flex-col">
+            <div className="p-4 border-b border-border">
+              <h2 className="font-display font-semibold text-lg">
+                {getPanelTitle()}
+              </h2>
+            </div>
+
+            <ScrollArea className="flex-1">
+              <PanelContent />
+            </ScrollArea>
           </div>
-
-          <ScrollArea className="flex-1">
-            <PanelContent />
-          </ScrollArea>
         </div>
       </div>
-    </div>
-  );
+      );
 };
 
-export default Index;
+      export default Index;
