@@ -38,20 +38,41 @@ const MAX_MODEL_SIZE_BYTES = 50 * 1024 * 1024;
 
 /**
  * Validates a model URL for security
- * - Checks for HTTPS (or localhost)
- * - Validates against allowed domains
- * - Prevents loading internal network resources
+ * 
+ * Supports two types of URLs:
+ * 1. Blob URLs (blob:http://...) - Created by URL.createObjectURL() for local file uploads
+ *    These are inherently safe as the content is already in browser memory
+ * 2. Remote URLs - Must be HTTPS and from allowed domains to prevent SSRF attacks
+ * 
+ * @param url - The model URL to validate
+ * @returns Object with valid boolean and optional error message
  */
 function validateModelUrl(url: string): { valid: boolean; error?: string } {
+  // Blob URLs are safe - they represent local file uploads that are already in browser memory
+  // The browser generates these via URL.createObjectURL(file) and they cannot access external resources
+  if (url.startsWith('blob:')) {
+    return { valid: true };
+  }
+
+  // Data URLs are also safe (base64 embedded content)
+  if (url.startsWith('data:')) {
+    // Validate it's a 3D model MIME type
+    if (url.startsWith('data:model/') || url.startsWith('data:application/octet-stream')) {
+      return { valid: true };
+    }
+    return { valid: false, error: 'Data URL must be a valid 3D model format' };
+  }
+
+  // For remote URLs, apply strict security validation
   try {
     const parsed = new URL(url);
-    
+
     // Only allow https (or http for localhost development)
     const isLocalhost = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
     if (parsed.protocol !== 'https:' && !isLocalhost) {
       return { valid: false, error: 'Only HTTPS URLs are allowed for security' };
     }
-    
+
     // Check for internal/private network URLs (SSRF prevention)
     const hostname = parsed.hostname.toLowerCase();
     const privatePatterns = [
@@ -63,43 +84,44 @@ function validateModelUrl(url: string): { valid: boolean; error?: string } {
       /^fc00:/i,
       /^fe80:/i,
     ];
-    
+
     for (const pattern of privatePatterns) {
       if (pattern.test(hostname)) {
         return { valid: false, error: 'Internal network URLs are not allowed' };
       }
     }
-    
+
     // Check against allowed domains
-    const isAllowedDomain = ALLOWED_MODEL_DOMAINS.some(domain => 
+    const isAllowedDomain = ALLOWED_MODEL_DOMAINS.some(domain =>
       hostname === domain || hostname.endsWith('.' + domain)
     );
-    
+
     if (!isAllowedDomain) {
-      return { 
-        valid: false, 
-        error: `Domain not in allowed list. Allowed: ${ALLOWED_MODEL_DOMAINS.slice(0, 5).join(', ')}...` 
+      return {
+        valid: false,
+        error: `Domain not in allowed list. Allowed: ${ALLOWED_MODEL_DOMAINS.slice(0, 5).join(', ')}...`
       };
     }
-    
-    // Check file extension
+
+    // Check file extension for remote URLs
     const path = parsed.pathname.toLowerCase();
     if (!path.endsWith('.glb') && !path.endsWith('.vrm') && !path.includes('.glb') && !path.includes('.vrm')) {
       return { valid: false, error: 'URL must point to a .glb or .vrm file' };
     }
-    
+
     return { valid: true };
   } catch {
     return { valid: false, error: 'Invalid URL format' };
   }
 }
 
+
 export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProps) => {
   const groupRef = useRef<THREE.Group>(null);
   const [vrm, setVrm] = useState<VRM | null>(null);
   const [gltfScene, setGltfScene] = useState<THREE.Group | null>(null);
   const [error, setError] = useState<string | null>(null);
-  
+
   const { avatarScale, faceData } = useAvatarStore();
 
   useEffect(() => {
@@ -110,16 +132,16 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
       setError(validation.error || 'Invalid model URL');
       return;
     }
-    
+
     const loader = new GLTFLoader();
     const abortController = new AbortController();
-    
+
     // Set a timeout for loading (30 seconds)
     const loadTimeout = setTimeout(() => {
       abortController.abort();
       setError('Model loading timed out');
     }, 30000);
-    
+
     if (modelType === 'vrm') {
       loader.register((parser) => new VRMLoaderPlugin(parser));
     }
@@ -128,7 +150,7 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
       modelUrl,
       (gltf) => {
         clearTimeout(loadTimeout);
-        
+
         if (modelType === 'vrm' && gltf.userData.vrm) {
           const vrmModel = gltf.userData.vrm as VRM;
           VRMUtils.removeUnnecessaryVertices(vrmModel.scene);
@@ -146,7 +168,7 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
               child.receiveShadow = true;
             }
           });
-          
+
           // Center and scale the model
           const box = new THREE.Box3().setFromObject(scene);
           const center = box.getCenter(new THREE.Vector3());
@@ -155,7 +177,7 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
           const scale = 2 / maxDim;
           scene.scale.setScalar(scale);
           scene.position.sub(center.multiplyScalar(scale));
-          
+
           setGltfScene(scene);
         }
       },
@@ -192,7 +214,7 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
     // VRM specific updates
     if (vrm) {
       vrm.update(delta);
-      
+
       // Apply blendshapes if available
       if (vrm.expressionManager) {
         vrm.expressionManager.setValue('aa', faceData.mouthOpen);
