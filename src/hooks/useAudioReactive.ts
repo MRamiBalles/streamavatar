@@ -9,7 +9,7 @@ export const useAudioReactive = () => {
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [volume, setVolume] = useState(0);
-  
+
   const { setAudioData, audioSensitivity } = useAvatarStore();
 
   const processAudio = useCallback(() => {
@@ -21,12 +21,12 @@ export const useAudioReactive = () => {
     // Calculate average volume
     const average = dataArray.reduce((acc, val) => acc + val, 0) / dataArray.length;
     const normalizedVolume = Math.min((average / 128) * audioSensitivity, 1);
-    
+
     // Calculate bass (low frequencies) for more impactful reactions
     const bassRange = dataArray.slice(0, Math.floor(dataArray.length * 0.1));
     const bassAverage = bassRange.reduce((acc, val) => acc + val, 0) / bassRange.length;
     const normalizedBass = Math.min((bassAverage / 128) * audioSensitivity, 1);
-    
+
     // Calculate treble (high frequencies) for subtle details
     const trebleRange = dataArray.slice(Math.floor(dataArray.length * 0.7));
     const trebleAverage = trebleRange.reduce((acc, val) => acc + val, 0) / trebleRange.length;
@@ -45,12 +45,12 @@ export const useAudioReactive = () => {
   const startListening = useCallback(async () => {
     try {
       setError(null);
-      
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: { 
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
           echoCancellation: true,
           noiseSuppression: true,
-        } 
+        }
       });
 
       audioContextRef.current = new AudioContext();
@@ -65,7 +65,7 @@ export const useAudioReactive = () => {
       animationFrameRef.current = requestAnimationFrame(processAudio);
     } catch (err) {
       console.error('Failed to access microphone:', err);
-      setError('No se pudo acceder al micrófono. Verifica los permisos.');
+      setError('Failed to access microphone. Please check permissions.');
     }
   }, [processAudio]);
 

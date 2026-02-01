@@ -1,5 +1,19 @@
+/**
+ * StreamAvatar - Global State Store
+ * 
+ * Centralized state management using Zustand with persistence.
+ * Handles avatar configuration, face tracking data, audio reactivity, and UI preferences.
+ * 
+ * @author Manuel Ramírez Ballesteros
+ * @license MIT
+ */
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+
+// =============================================================================
+// Type Definitions
+// =============================================================================
 
 export type AvatarType = 'pill' | 'boxy' | 'sphere' | 'cat' | 'ghost' | 'emoji' | 'custom';
 export type BackgroundType = 'dark' | 'chroma-green' | 'chroma-blue' | 'transparent';
@@ -18,14 +32,6 @@ interface AudioData {
   treble: number;
 }
 
-interface StreamDestination {
-  id: string;
-  name: string;
-  rtmpUrl: string;
-  streamKey: string;
-  enabled: boolean;
-}
-
 interface CustomModel {
   url: string;
   name: string;
@@ -38,55 +44,60 @@ interface AvatarStore {
   avatarColor: string;
   avatarScale: number;
   customModel: CustomModel | null;
-  
+
   // Background
   background: BackgroundType;
-  
+
   // Face tracking
   faceData: FaceData;
   isCameraActive: boolean;
   isTracking: boolean;
-  
+
   // Audio reactive
   audioData: AudioData;
   audioSensitivity: number;
   audioReactiveEnabled: boolean;
-  
+
   // Language
   language: Language;
-  
-  // Stream destinations
-  streamDestinations: StreamDestination[];
-  isLive: boolean;
-  
-  // Actions
+
+  // Actions - Avatar
   setSelectedAvatar: (avatar: AvatarType) => void;
   setAvatarColor: (color: string) => void;
   setAvatarScale: (scale: number) => void;
+  setCustomModel: (model: CustomModel | null) => void;
+
+  // Actions - Background
   setBackground: (bg: BackgroundType) => void;
+
+  // Actions - Face Tracking
   setFaceData: (data: FaceData) => void;
   setCameraActive: (active: boolean) => void;
   setTracking: (tracking: boolean) => void;
-  setCustomModel: (model: CustomModel | null) => void;
+
+  // Actions - Audio
   setAudioData: (data: AudioData) => void;
   setAudioSensitivity: (sensitivity: number) => void;
   setAudioReactiveEnabled: (enabled: boolean) => void;
+
+  // Actions - Language
   setLanguage: (lang: Language) => void;
-  addStreamDestination: (dest: Omit<StreamDestination, 'id'>) => void;
-  removeStreamDestination: (id: string) => void;
-  toggleStreamDestination: (id: string) => void;
-  updateStreamDestination: (id: string, updates: Partial<StreamDestination>) => void;
-  setLive: (live: boolean) => void;
+
+  // Actions - Config Management
   exportConfig: () => string;
   importConfig: (config: string) => boolean;
   resetToDefaults: () => void;
 }
 
+// =============================================================================
+// Default State
+// =============================================================================
+
 const defaultState = {
   selectedAvatar: 'pill' as AvatarType,
   avatarColor: '#c97d3d',
   avatarScale: 1,
-  customModel: null,
+  customModel: null as CustomModel | null,
   background: 'dark' as BackgroundType,
   faceData: {
     headRotation: { x: 0, y: 0, z: 0 },
@@ -100,68 +111,57 @@ const defaultState = {
   audioSensitivity: 1.5,
   audioReactiveEnabled: false,
   language: 'es' as Language,
-  streamDestinations: [
-    { id: '1', name: 'Twitch', rtmpUrl: 'rtmp://live.twitch.tv/live', streamKey: '', enabled: false },
-    { id: '2', name: 'YouTube', rtmpUrl: 'rtmp://a.rtmp.youtube.com/live2', streamKey: '', enabled: false },
-  ],
-  isLive: false,
 };
+
+// =============================================================================
+// Store Implementation
+// =============================================================================
 
 export const useAvatarStore = create<AvatarStore>()(
   persist(
     (set, get) => ({
       ...defaultState,
 
-      // Actions
+      // Avatar Actions
       setSelectedAvatar: (avatar) => set({ selectedAvatar: avatar }),
       setAvatarColor: (color) => set({ avatarColor: color }),
       setAvatarScale: (scale) => set({ avatarScale: scale }),
+      setCustomModel: (model) => set({
+        customModel: model,
+        selectedAvatar: model ? 'custom' : get().selectedAvatar === 'custom' ? 'pill' : get().selectedAvatar
+      }),
+
+      // Background Actions
       setBackground: (bg) => set({ background: bg }),
+
+      // Face Tracking Actions
       setFaceData: (data) => set({ faceData: data }),
       setCameraActive: (active) => set({ isCameraActive: active }),
       setTracking: (tracking) => set({ isTracking: tracking }),
-      setCustomModel: (model) => set({ customModel: model, selectedAvatar: model ? 'custom' : 'pill' }),
+
+      // Audio Actions
       setAudioData: (data) => set({ audioData: data }),
       setAudioSensitivity: (sensitivity) => set({ audioSensitivity: sensitivity }),
       setAudioReactiveEnabled: (enabled) => set({ audioReactiveEnabled: enabled }),
+
+      // Language Actions
       setLanguage: (lang) => set({ language: lang }),
-      addStreamDestination: (dest) => set((state) => ({
-        streamDestinations: [...state.streamDestinations, { ...dest, id: crypto.randomUUID() }],
-      })),
-      removeStreamDestination: (id) => set((state) => ({
-        streamDestinations: state.streamDestinations.filter((d) => d.id !== id),
-      })),
-      toggleStreamDestination: (id) => set((state) => ({
-        streamDestinations: state.streamDestinations.map((d) =>
-          d.id === id ? { ...d, enabled: !d.enabled } : d
-        ),
-      })),
-      updateStreamDestination: (id, updates) => set((state) => ({
-        streamDestinations: state.streamDestinations.map((d) =>
-          d.id === id ? { ...d, ...updates } : d
-        ),
-      })),
-      setLive: (live) => set({ isLive: live }),
-      
+
+      // Config Management
       exportConfig: () => {
         const state = get();
         const exportData = {
+          version: 1, // For future compatibility
           selectedAvatar: state.selectedAvatar,
           avatarColor: state.avatarColor,
           avatarScale: state.avatarScale,
           background: state.background,
           audioSensitivity: state.audioSensitivity,
           language: state.language,
-          streamDestinations: state.streamDestinations.map(d => ({
-            name: d.name,
-            rtmpUrl: d.rtmpUrl,
-            enabled: d.enabled,
-            // Exclude streamKey for security
-          })),
         };
         return JSON.stringify(exportData, null, 2);
       },
-      
+
       importConfig: (configString) => {
         try {
           const config = JSON.parse(configString);
@@ -178,11 +178,12 @@ export const useAvatarStore = create<AvatarStore>()(
           return false;
         }
       },
-      
+
       resetToDefaults: () => set(defaultState),
     }),
     {
       name: 'streamavatar-config',
+      version: 1, // Increment when state shape changes
       partialize: (state) => ({
         selectedAvatar: state.selectedAvatar,
         avatarColor: state.avatarColor,
@@ -190,29 +191,27 @@ export const useAvatarStore = create<AvatarStore>()(
         background: state.background,
         audioSensitivity: state.audioSensitivity,
         language: state.language,
-        // Exclude streamKey from persisted data for security - keys must be re-entered each session
-        streamDestinations: state.streamDestinations.map(d => ({
-          id: d.id,
-          name: d.name,
-          rtmpUrl: d.rtmpUrl,
-          enabled: d.enabled,
-          streamKey: '', // Never persist stream keys
-        })),
+        // Note: customModel, faceData, audioData, isCameraActive, isTracking are NOT persisted
+        // They are runtime-only state that should reset on page reload
       }),
     }
   )
 );
 
+// =============================================================================
 // Translations
+// =============================================================================
+
 export const translations = {
   es: {
+    // Navigation
     studio: 'Studio',
     avatar: 'Avatar',
-    stream: 'Stream',
     settings: 'Ajustes',
     controlPanel: 'Panel de Control',
     configureAvatar: 'Configurar Avatar',
-    streamDestinations: 'Destinos de Stream',
+
+    // Camera
     startCamera: 'Iniciar Cámara',
     stopCamera: 'Detener Cámara',
     starting: 'Iniciando...',
@@ -221,10 +220,20 @@ export const translations = {
     trackingOk: 'Tracking OK',
     noFace: 'Sin Rostro',
     shareScreen: 'Compartir Pantalla (Próximamente)',
+
+    // Avatar Selection
     selectAvatar: 'Seleccionar Avatar',
     importModel: 'Importar .VRM / .GLB',
     customModel: 'Modelo 3D personalizado',
     removeCustomModel: 'Eliminar modelo personalizado',
+    peanut: 'Cacahuete',
+    robot: 'Robot',
+    slime: 'Slime',
+    cat: 'Gato',
+    ghost: 'Fantasma',
+    emoji: 'Emoji',
+
+    // Avatar Customization
     color: 'Color',
     scale: 'Escala',
     background: 'Fondo',
@@ -232,24 +241,30 @@ export const translations = {
     green: 'Verde',
     blue: 'Azul',
     transparent: 'Trans',
-    goLive: 'GO LIVE',
-    stopStream: 'DETENER STREAM',
+
+    // OBS Setup
+    obsSetup: 'Configurar OBS',
+    obsInstructions: 'Copia este link y añádelo como Browser Source en OBS. Usa fondo chroma para transparencia.',
     cleanView: 'Vista Limpia (OBS)',
     addAsBrowserSource: 'Añadir como Browser Source',
     copyLink: 'Copiar Link',
-    destinations: 'Destinos',
-    add: 'Añadir',
-    configured: 'Configurado',
-    noStreamKey: 'Sin Stream Key',
-    delete: 'Eliminar',
-    save: 'Guardar',
-    cancel: 'Cancelar',
+    openPreview: 'Abrir vista',
+    quickBackground: 'Fondo rápido',
+    chromaGreen: 'Chroma Verde',
+    chromaBlue: 'Chroma Azul',
+    viewFullGuide: 'Ver guía completa',
+    linkCopied: '¡Link copiado!',
+    useAsOBS: 'Usa este link como Browser Source en OBS',
+
+    // Audio
     audioReactive: 'Reacción al Audio',
     enableAudioReactive: 'Activar reacción al audio',
     sensitivity: 'Sensibilidad',
     startListening: 'Activar Micrófono',
     stopListening: 'Desactivar Micrófono',
     listening: 'Escuchando',
+
+    // Settings
     language: 'Idioma',
     exportConfig: 'Exportar Configuración',
     importConfig: 'Importar Configuración',
@@ -258,17 +273,32 @@ export const translations = {
     importSuccess: '¡Configuración importada!',
     importError: 'Error al importar configuración',
     resetSuccess: 'Valores restablecidos',
+
+    // Common
+    save: 'Guardar',
+    cancel: 'Cancelar',
+    delete: 'Eliminar',
+    add: 'Añadir',
     comingSoon: 'Próximamente más opciones',
     dragToRotate: 'Arrastra para rotar',
     preview: 'Vista previa',
-    peanut: 'Cacahuete',
-    robot: 'Robot',
-    slime: 'Slime',
-    cat: 'Gato',
-    ghost: 'Fantasma',
-    emoji: 'Emoji',
-    linkCopied: '¡Link copiado!',
-    useAsOBS: 'Usa este link como Browser Source en OBS',
+    tapForOptions: 'Toca para opciones',
+
+    // Model Import
+    unsupportedFormat: 'Formato no soportado',
+    onlyGLBorVRM: 'Solo se permiten archivos .GLB o .VRM',
+    modelLoaded: '¡Modelo cargado!',
+    modelReadyToUse: 'listo para usar',
+    loadingModel: 'Cargando modelo...',
+
+    // Legacy (kept for backwards compatibility if referenced elsewhere)
+    stream: 'Stream',
+    streamDestinations: 'Destinos de Stream',
+    destinations: 'Destinos',
+    configured: 'Configurado',
+    noStreamKey: 'Sin Stream Key',
+    goLive: 'GO LIVE',
+    stopStream: 'DETENER STREAM',
     noDestinations: 'Sin destinos configurados',
     configureDestination: 'Configura al menos un destino con Stream Key',
     streamStopped: 'Stream detenido',
@@ -281,29 +311,16 @@ export const translations = {
     streamKeyPlaceholder: 'Stream Key',
     yourSecretKey: 'Tu clave secreta',
     importModelComingSoon: 'Importar .VRM / .GLB (Próximamente)',
-    // VRM/GLB Import
-    unsupportedFormat: 'Formato no soportado',
-    onlyGLBorVRM: 'Solo se permiten archivos .GLB o .VRM',
-    modelLoaded: '¡Modelo cargado!',
-    modelReadyToUse: 'listo para usar',
-    loadingModel: 'Cargando modelo...',
-    // OBS Setup Panel
-    obsSetup: 'Configurar OBS',
-    obsInstructions: 'Copia este link y añádelo como Browser Source en OBS. Usa fondo chroma para transparencia.',
-    openPreview: 'Abrir vista',
-    quickBackground: 'Fondo rápido',
-    chromaGreen: 'Chroma Verde',
-    chromaBlue: 'Chroma Azul',
-    viewFullGuide: 'Ver guía completa',
   },
   en: {
+    // Navigation
     studio: 'Studio',
     avatar: 'Avatar',
-    stream: 'Stream',
     settings: 'Settings',
     controlPanel: 'Control Panel',
     configureAvatar: 'Configure Avatar',
-    streamDestinations: 'Stream Destinations',
+
+    // Camera
     startCamera: 'Start Camera',
     stopCamera: 'Stop Camera',
     starting: 'Starting...',
@@ -312,10 +329,20 @@ export const translations = {
     trackingOk: 'Tracking OK',
     noFace: 'No Face',
     shareScreen: 'Share Screen (Coming Soon)',
+
+    // Avatar Selection
     selectAvatar: 'Select Avatar',
     importModel: 'Import .VRM / .GLB',
     customModel: 'Custom 3D model',
     removeCustomModel: 'Remove custom model',
+    peanut: 'Peanut',
+    robot: 'Robot',
+    slime: 'Slime',
+    cat: 'Cat',
+    ghost: 'Ghost',
+    emoji: 'Emoji',
+
+    // Avatar Customization
     color: 'Color',
     scale: 'Scale',
     background: 'Background',
@@ -323,24 +350,30 @@ export const translations = {
     green: 'Green',
     blue: 'Blue',
     transparent: 'Trans',
-    goLive: 'GO LIVE',
-    stopStream: 'STOP STREAM',
+
+    // OBS Setup
+    obsSetup: 'OBS Setup',
+    obsInstructions: 'Copy this link and add it as a Browser Source in OBS. Use chroma background for transparency.',
     cleanView: 'Clean View (OBS)',
     addAsBrowserSource: 'Add as Browser Source',
     copyLink: 'Copy Link',
-    destinations: 'Destinations',
-    add: 'Add',
-    configured: 'Configured',
-    noStreamKey: 'No Stream Key',
-    delete: 'Delete',
-    save: 'Save',
-    cancel: 'Cancel',
+    openPreview: 'Open view',
+    quickBackground: 'Quick Background',
+    chromaGreen: 'Chroma Green',
+    chromaBlue: 'Chroma Blue',
+    viewFullGuide: 'View full guide',
+    linkCopied: 'Link copied!',
+    useAsOBS: 'Use this link as Browser Source in OBS',
+
+    // Audio
     audioReactive: 'Audio Reactive',
     enableAudioReactive: 'Enable audio reactive',
     sensitivity: 'Sensitivity',
     startListening: 'Start Microphone',
     stopListening: 'Stop Microphone',
     listening: 'Listening',
+
+    // Settings
     language: 'Language',
     exportConfig: 'Export Configuration',
     importConfig: 'Import Configuration',
@@ -349,17 +382,32 @@ export const translations = {
     importSuccess: 'Configuration imported!',
     importError: 'Error importing configuration',
     resetSuccess: 'Values reset',
+
+    // Common
+    save: 'Save',
+    cancel: 'Cancel',
+    delete: 'Delete',
+    add: 'Add',
     comingSoon: 'More options coming soon',
     dragToRotate: 'Drag to rotate',
     preview: 'Preview',
-    peanut: 'Peanut',
-    robot: 'Robot',
-    slime: 'Slime',
-    cat: 'Cat',
-    ghost: 'Ghost',
-    emoji: 'Emoji',
-    linkCopied: 'Link copied!',
-    useAsOBS: 'Use this link as Browser Source in OBS',
+    tapForOptions: 'Tap for options',
+
+    // Model Import
+    unsupportedFormat: 'Unsupported format',
+    onlyGLBorVRM: 'Only .GLB or .VRM files are allowed',
+    modelLoaded: 'Model loaded!',
+    modelReadyToUse: 'ready to use',
+    loadingModel: 'Loading model...',
+
+    // Legacy (kept for backwards compatibility if referenced elsewhere)
+    stream: 'Stream',
+    streamDestinations: 'Stream Destinations',
+    destinations: 'Destinations',
+    configured: 'Configured',
+    noStreamKey: 'No Stream Key',
+    goLive: 'GO LIVE',
+    stopStream: 'STOP STREAM',
     noDestinations: 'No destinations configured',
     configureDestination: 'Configure at least one destination with Stream Key',
     streamStopped: 'Stream stopped',
@@ -372,22 +420,12 @@ export const translations = {
     streamKeyPlaceholder: 'Stream Key',
     yourSecretKey: 'Your secret key',
     importModelComingSoon: 'Import .VRM / .GLB (Coming Soon)',
-    // VRM/GLB Import
-    unsupportedFormat: 'Unsupported format',
-    onlyGLBorVRM: 'Only .GLB or .VRM files are allowed',
-    modelLoaded: 'Model loaded!',
-    modelReadyToUse: 'ready to use',
-    loadingModel: 'Loading model...',
-    // OBS Setup Panel
-    obsSetup: 'OBS Setup',
-    obsInstructions: 'Copy this link and add it as a Browser Source in OBS. Use chroma background for transparency.',
-    openPreview: 'Open view',
-    quickBackground: 'Quick Background',
-    chromaGreen: 'Chroma Green',
-    chromaBlue: 'Chroma Blue',
-    viewFullGuide: 'View full guide',
   },
 };
+
+// =============================================================================
+// Translation Hook
+// =============================================================================
 
 export const useTranslation = () => {
   const language = useAvatarStore((state) => state.language);

@@ -98,8 +98,8 @@ const Index = () => {
                     key={tab}
                     onClick={() => setActiveTab(tab)}
                     className={`flex-1 py-3 text-xs font-medium transition-colors ${activeTab === tab
-                        ? 'text-primary border-b-2 border-primary bg-primary/5'
-                        : 'text-muted-foreground hover:text-foreground'
+                      ? 'text-primary border-b-2 border-primary bg-primary/5'
+                      : 'text-muted-foreground hover:text-foreground'
                       }`}
                   >
                     {tab === 'studio' && t.studio}
@@ -132,7 +132,7 @@ const Index = () => {
               {/* Mobile menu hint */}
               <div className="md:hidden glass-panel p-3 pointer-events-auto">
                 <p className="text-xs text-muted-foreground">
-                  Toca <Menu className="w-3 h-3 inline" /> para opciones
+                  {t.tapForOptions} <Menu className="w-3 h-3 inline" />
                 </p>
               </div>
             </div>
