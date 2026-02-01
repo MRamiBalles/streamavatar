@@ -75,14 +75,12 @@ User A (browser) ←→ Signaling Server (WebSocket) ←→ User B (browser)
 
 ---
 
-### Feature 6: Avatar Presets Gallery
+### Feature 6: Avatar Presets Gallery ✅ COMPLETADA
 
-**Descripción:** Usuarios pueden guardar y compartir configuraciones de avatar:
-- Color schemes
-- Expresiones custom
-- Combinaciones de settings
-
-**Implementación:** JSON exportable/importable. Galería pública opcional (requiere backend).
+**Descripción:** Usuarios pueden guardar y gestionar configuraciones de avatar:
+- Compositor de piezas (primitivas)
+- Galería de presets con persistencia local
+- Gestión de identidades Fashion
 
 **Esfuerzo estimado:** 20h (sin backend) / 50h (con galería pública)
 
