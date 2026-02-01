@@ -1,22 +1,23 @@
 import { Pill, Box, Circle, Cat, Ghost, Smile, Upload } from 'lucide-react';
-import { useAvatarStore, AvatarType } from '@/stores/avatarStore';
+import { useAvatarStore, AvatarType, useTranslation } from '@/stores/avatarStore';
 import { cn } from '@/lib/utils';
 import { useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
-const avatarOptions: { type: AvatarType; name: string; icon: React.ElementType; description: string }[] = [
-  { type: 'pill', name: 'Cacahuete', icon: Pill, description: 'Peanut style' },
-  { type: 'boxy', name: 'Robot', icon: Box, description: 'Boxy vibes' },
-  { type: 'sphere', name: 'Slime', icon: Circle, description: 'Cute blob' },
-  { type: 'cat', name: 'Gato', icon: Cat, description: 'Meow!' },
-  { type: 'ghost', name: 'Fantasma', icon: Ghost, description: 'Boo!' },
-  { type: 'emoji', name: 'Emoji', icon: Smile, description: 'Classic face' },
+const avatarOptions: { type: AvatarType; nameKey: 'peanut' | 'robot' | 'slime' | 'cat' | 'ghost' | 'emoji'; icon: React.ElementType }[] = [
+  { type: 'pill', nameKey: 'peanut', icon: Pill },
+  { type: 'boxy', nameKey: 'robot', icon: Box },
+  { type: 'sphere', nameKey: 'slime', icon: Circle },
+  { type: 'cat', nameKey: 'cat', icon: Cat },
+  { type: 'ghost', nameKey: 'ghost', icon: Ghost },
+  { type: 'emoji', nameKey: 'emoji', icon: Smile },
 ];
 
 export const AvatarSelector = () => {
   const { selectedAvatar, setSelectedAvatar, setCustomModel, customModel } = useAvatarStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const t = useTranslation();
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -25,8 +26,8 @@ export const AvatarSelector = () => {
     const extension = file.name.split('.').pop()?.toLowerCase();
     if (extension !== 'glb' && extension !== 'vrm') {
       toast({
-        title: "Formato no soportado",
-        description: "Solo se permiten archivos .GLB o .VRM",
+        title: t.unsupportedFormat,
+        description: t.onlyGLBorVRM,
         variant: "destructive",
       });
       return;
@@ -40,23 +41,23 @@ export const AvatarSelector = () => {
     });
 
     toast({
-      title: "¡Modelo cargado!",
-      description: `${file.name} listo para usar`,
+      title: t.modelLoaded,
+      description: `${file.name} ${t.modelReadyToUse}`,
     });
   };
 
   return (
     <div className="space-y-3">
       <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-        Seleccionar Avatar
+        {t.selectAvatar}
       </h3>
-      
+
       {/* Built-in avatars */}
       <div className="grid grid-cols-3 gap-2">
         {avatarOptions.map((avatar) => {
           const Icon = avatar.icon;
           const isSelected = selectedAvatar === avatar.type;
-          
+
           return (
             <button
               key={avatar.type}
@@ -66,17 +67,17 @@ export const AvatarSelector = () => {
                 isSelected && "selected"
               )}
             >
-              <Icon 
+              <Icon
                 className={cn(
                   "w-6 h-6 transition-colors",
                   isSelected ? "text-primary" : "text-muted-foreground"
-                )} 
+                )}
               />
               <span className={cn(
                 "text-[10px] font-medium",
                 isSelected ? "text-foreground" : "text-muted-foreground"
               )}>
-                {avatar.name}
+                {t[avatar.nameKey]}
               </span>
             </button>
           );
@@ -92,7 +93,7 @@ export const AvatarSelector = () => {
           onChange={handleFileUpload}
           className="hidden"
         />
-        
+
         <button
           onClick={() => fileInputRef.current?.click()}
           className={cn(
@@ -103,10 +104,10 @@ export const AvatarSelector = () => {
           <Upload className="w-5 h-5 text-primary" />
           <div className="text-left">
             <p className="text-xs font-medium">
-              {customModel ? customModel.name : 'Importar .VRM / .GLB'}
+              {customModel ? customModel.name : t.importModel}
             </p>
             <p className="text-[10px] text-muted-foreground">
-              {customModel ? `Tipo: ${customModel.type.toUpperCase()}` : 'Modelo 3D personalizado'}
+              {customModel ? `${customModel.type.toUpperCase()}` : t.customModel}
             </p>
           </div>
         </button>
@@ -120,7 +121,7 @@ export const AvatarSelector = () => {
             }}
             className="w-full mt-2 text-xs text-destructive hover:underline"
           >
-            Eliminar modelo personalizado
+            {t.removeCustomModel}
           </button>
         )}
       </div>
