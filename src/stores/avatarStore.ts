@@ -16,6 +16,7 @@ import { persist } from 'zustand/middleware';
 // =============================================================================
 
 export type AvatarType = 'pill' | 'boxy' | 'sphere' | 'cat' | 'ghost' | 'emoji' | 'custom' | 'composite';
+export type ExpressionType = 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised';
 export type BackgroundType = 'dark' | 'chroma-green' | 'chroma-blue' | 'transparent';
 export type Language = 'es' | 'en';
 
@@ -59,12 +60,22 @@ export interface AvatarPreset {
   lastModified: number;
 }
 
+export interface HotkeyMapping {
+  key: string;
+  expression: ExpressionType;
+  intensity: number;
+}
+
 interface AvatarStore {
   // Avatar settings
   selectedAvatar: AvatarType;
   avatarColor: string;
   avatarScale: number;
   customModel: CustomModel | null;
+
+  // Expressions & Hotkeys
+  activeExpression: ExpressionType;
+  hotkeyMappings: HotkeyMapping[];
 
   // Composite Avatar system
   currentParts: AvatarPart[];
@@ -108,6 +119,11 @@ interface AvatarStore {
   loadPreset: (id: string) => void;
   deletePreset: (id: string) => void;
 
+  // Actions - Expressions & Hotkeys
+  setActiveExpression: (expression: ExpressionType) => void;
+  setHotkeyMapping: (mapping: HotkeyMapping) => void;
+  removeHotkeyMapping: (key: string) => void;
+
   // Actions - Background
   setBackground: (bg: BackgroundType) => void;
 
@@ -144,6 +160,14 @@ const defaultState = {
   avatarColor: '#c97d3d',
   avatarScale: 1,
   customModel: null as CustomModel | null,
+  activeExpression: 'neutral' as ExpressionType,
+  hotkeyMappings: [
+    { key: '1', expression: 'happy', intensity: 1 },
+    { key: '2', expression: 'sad', intensity: 1 },
+    { key: '3', expression: 'angry', intensity: 1 },
+    { key: '4', expression: 'surprised', intensity: 1 },
+    { key: '0', expression: 'neutral', intensity: 1 },
+  ] as HotkeyMapping[],
   currentParts: [] as AvatarPart[],
   presets: [] as AvatarPreset[],
   activePresetId: null as string | null,
@@ -242,6 +266,18 @@ export const useAvatarStore = create<AvatarStore>()(
         activePresetId: state.activePresetId === id ? null : state.activePresetId
       })),
 
+      // Expression & Hotkey Actions
+      setActiveExpression: (expression) => set({ activeExpression: expression }),
+      setHotkeyMapping: (mapping) => set((state) => ({
+        hotkeyMappings: [
+          ...state.hotkeyMappings.filter(m => m.key !== mapping.key),
+          mapping
+        ]
+      })),
+      removeHotkeyMapping: (key) => set((state) => ({
+        hotkeyMappings: state.hotkeyMappings.filter(m => m.key !== key)
+      })),
+
       // Background Actions
       setBackground: (bg) => set({ background: bg }),
 
@@ -310,6 +346,7 @@ export const useAvatarStore = create<AvatarStore>()(
         presets: state.presets,
         currentParts: state.currentParts,
         activePresetId: state.activePresetId,
+        hotkeyMappings: state.hotkeyMappings,
       }),
     }
   )

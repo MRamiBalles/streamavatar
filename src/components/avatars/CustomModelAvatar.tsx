@@ -20,7 +20,7 @@ import { VRM, VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
 import { useAvatarStore } from '@/stores/avatarStore';
 import { useAvatarAnimation } from '@/hooks/useAvatarAnimation';
 import { normalizeVRM, normalizeModel, logNormalization } from '@/lib/modelNormalizer';
-import { mapSimpleToVRM, mapARKitToVRM, applyVisemesToVRM } from '@/lib/vrmTrackingBridge';
+import { mapSimpleToVRM, mapARKitToVRM, applyVisemesToVRM, applyExpressionToVRM } from '@/lib/vrmTrackingBridge';
 
 // =============================================================================
 // Types & Configuration
@@ -128,7 +128,7 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const { avatarScale } = useAvatarStore();
+  const { avatarScale, activeExpression } = useAvatarStore();
   const { getAnimationState } = useAvatarAnimation();
 
   // -------------------------------------------------------------------------
@@ -291,6 +291,9 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
         eyeBlinkRight: anim.rightEyeBlink,
         // Head rotation is already handled by groupRef.current above
       });
+
+      // Apply hotkey expression
+      applyExpressionToVRM(vrm, activeExpression);
     }
   });
 

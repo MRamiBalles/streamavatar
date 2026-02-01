@@ -310,3 +310,35 @@ export function applyVisemesToVRM(vrm: VRM, visemes: VisemeWeights, intensity: n
     exp.setValue(VRMExpressionPresetName.Oh, visemes.oh * intensity);
     exp.setValue(VRMExpressionPresetName.Ou, visemes.ou * intensity);
 }
+
+/**
+ * Applies a global expression (from hotkeys) to the VRM model
+ */
+export function applyExpressionToVRM(vrm: VRM, expression: string, intensity: number = 1): void {
+    const exp = vrm.expressionManager;
+    if (!exp) return;
+
+    // Map string expression to VRM preset
+    const mapping: Record<string, VRMExpressionPresetName> = {
+        happy: VRMExpressionPresetName.Happy,
+        sad: VRMExpressionPresetName.Sad,
+        angry: VRMExpressionPresetName.Angry,
+        surprised: VRMExpressionPresetName.Surprised,
+        neutral: VRMExpressionPresetName.Neutral,
+    };
+
+    const preset = mapping[expression];
+    if (preset) {
+        // Set all other emotional expressions to 0 to avoid mixing weirdly 
+        // unless you want additive, but for hotkeys clean swap is better.
+        [
+            VRMExpressionPresetName.Happy,
+            VRMExpressionPresetName.Sad,
+            VRMExpressionPresetName.Angry,
+            VRMExpressionPresetName.Surprised,
+            VRMExpressionPresetName.Neutral
+        ].forEach(p => exp.setValue(p, 0));
+
+        exp.setValue(preset, intensity);
+    }
+}

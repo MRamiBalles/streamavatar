@@ -14,6 +14,8 @@ import { Menu, Shield } from 'lucide-react';
 import { useAvatarStore } from '@/stores/avatarStore';
 import { ComposerPanel } from '@/components/studio/ComposerPanel';
 import { AvatarGallery } from '@/components/studio/AvatarGallery';
+import { HotkeysPanel } from '@/components/studio/HotkeysPanel';
+import { useHotkeys } from '@/hooks/useHotkeys';
 
 type TabType = 'studio' | 'avatar' | 'stream' | 'settings';
 
@@ -21,6 +23,9 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('studio');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const t = useTranslation();
+
+  // Activate global hotkey listener for expressions
+  useHotkeys();
 
   const getPanelTitle = () => {
     switch (activeTab) {
@@ -64,7 +69,11 @@ const Index = () => {
 
       {/* Settings Tab */}
       {activeTab === 'settings' && (
-        <SettingsPanel />
+        <div className="space-y-6">
+          <HotkeysPanel />
+          <div className="h-px bg-border" />
+          <SettingsPanel />
+        </div>
       )}
     </div>
   );
