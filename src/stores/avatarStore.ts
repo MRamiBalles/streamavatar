@@ -281,6 +281,20 @@ export const translations = {
     streamKeyPlaceholder: 'Stream Key',
     yourSecretKey: 'Tu clave secreta',
     importModelComingSoon: 'Importar .VRM / .GLB (Próximamente)',
+    // VRM/GLB Import
+    unsupportedFormat: 'Formato no soportado',
+    onlyGLBorVRM: 'Solo se permiten archivos .GLB o .VRM',
+    modelLoaded: '¡Modelo cargado!',
+    modelReadyToUse: 'listo para usar',
+    loadingModel: 'Cargando modelo...',
+    // OBS Setup Panel
+    obsSetup: 'Configurar OBS',
+    obsInstructions: 'Copia este link y añádelo como Browser Source en OBS. Usa fondo chroma para transparencia.',
+    openPreview: 'Abrir vista',
+    quickBackground: 'Fondo rápido',
+    chromaGreen: 'Chroma Verde',
+    chromaBlue: 'Chroma Azul',
+    viewFullGuide: 'Ver guía completa',
   },
   en: {
     studio: 'Studio',
@@ -358,6 +372,20 @@ export const translations = {
     streamKeyPlaceholder: 'Stream Key',
     yourSecretKey: 'Your secret key',
     importModelComingSoon: 'Import .VRM / .GLB (Coming Soon)',
+    // VRM/GLB Import
+    unsupportedFormat: 'Unsupported format',
+    onlyGLBorVRM: 'Only .GLB or .VRM files are allowed',
+    modelLoaded: 'Model loaded!',
+    modelReadyToUse: 'ready to use',
+    loadingModel: 'Loading model...',
+    // OBS Setup Panel
+    obsSetup: 'OBS Setup',
+    obsInstructions: 'Copy this link and add it as a Browser Source in OBS. Use chroma background for transparency.',
+    openPreview: 'Open view',
+    quickBackground: 'Quick Background',
+    chromaGreen: 'Chroma Green',
+    chromaBlue: 'Chroma Blue',
+    viewFullGuide: 'View full guide',
   },
 };
 
