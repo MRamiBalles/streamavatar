@@ -27,6 +27,16 @@ const PartRenderer = ({ part, anim }: { part: AvatarPart; anim: any }) => {
         // Breathing effect (global scale additive)
         const breath = part.type === 'body' ? anim.breathScale : 1;
         meshRef.current.scale.multiplyScalar(breath);
+
+        // Lip-sync for mouth parts
+        if (part.id.toLowerCase().includes('mouth')) {
+            meshRef.current.scale.y = THREE.MathUtils.lerp(meshRef.current.scale.y, 0.2 + anim.mouthOpen * 1.5, 0.2);
+        }
+
+        // Expression effects (subtle color/rotation shift)
+        if (anim.activeExpression === 'angry' && (part.type === 'head' || part.id.toLowerCase().includes('head'))) {
+            meshRef.current.rotation.x += Math.sin(Date.now() * 0.05) * 0.02; // Shake head slightly
+        }
     });
 
     const materialProps = {

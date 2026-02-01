@@ -89,6 +89,34 @@ export const EmojiAvatar = () => {
         0.3
       );
     }
+
+    // Emotion Overrides
+    if (leftBrowRef.current && rightBrowRef.current) {
+      if (anim.activeExpression === 'angry') {
+        leftBrowRef.current.rotation.z = 0.5;
+        rightBrowRef.current.rotation.z = -0.5;
+        leftBrowRef.current.position.y -= 0.1;
+        rightBrowRef.current.position.y -= 0.1;
+      } else if (anim.activeExpression === 'sad') {
+        leftBrowRef.current.rotation.z = -0.3;
+        rightBrowRef.current.rotation.z = 0.3;
+        leftBrowRef.current.position.y += 0.05;
+        rightBrowRef.current.position.y += 0.05;
+      } else {
+        leftBrowRef.current.rotation.z = 0.2;
+        rightBrowRef.current.rotation.z = -0.2;
+      }
+    }
+
+    if (mouthRef.current) {
+      if (anim.activeExpression === 'happy') {
+        mouthRef.current.scale.x = 1.4;
+        mouthRef.current.scale.y = 0.4;
+      } else if (anim.activeExpression === 'surprised') {
+        mouthRef.current.scale.x = 0.6;
+        mouthRef.current.scale.y = 0.8;
+      }
+    }
   });
 
   return (

@@ -1,13 +1,12 @@
 import { Keyboard, X, Sparkles, Smile, Frown, Angry, Zap } from 'lucide-react';
-import { useAvatarStore, ExpressionType, HotkeyMapping } from '@/stores/avatarStore';
+import { useAvatarStore, useTranslation, ExpressionType, HotkeyMapping } from '@/stores/avatarStore';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
 export const HotkeysPanel = () => {
     const { hotkeyMappings, setHotkeyMapping, removeHotkeyMapping, activeExpression } = useAvatarStore();
+    const t = useTranslation();
     const [recordingKey, setRecordingKey] = useState<ExpressionType | null>(null);
 
     useEffect(() => {
@@ -28,11 +27,11 @@ export const HotkeysPanel = () => {
     }, [recordingKey, setHotkeyMapping]);
 
     const expressions: { type: ExpressionType; icon: any; label: string }[] = [
-        { type: 'happy', icon: Smile, label: 'Feliz' },
-        { type: 'sad', icon: Frown, label: 'Triste' },
-        { type: 'angry', icon: Angry, label: 'Enfadado' },
-        { type: 'surprised', icon: Zap, label: 'Sorprendido' },
-        { type: 'neutral', icon: Sparkles, label: 'Neutral' },
+        { type: 'happy', icon: Smile, label: t.expressionHappy },
+        { type: 'sad', icon: Frown, label: t.expressionSad },
+        { type: 'angry', icon: Angry, label: t.expressionAngry },
+        { type: 'surprised', icon: Zap, label: t.expressionSurprised },
+        { type: 'neutral', icon: Sparkles, label: t.expressionNeutral },
     ];
 
     return (
@@ -42,8 +41,8 @@ export const HotkeysPanel = () => {
                     <Keyboard className="w-5 h-5" />
                 </div>
                 <div>
-                    <h3 className="text-sm font-bold">Mapeo de Hotkeys</h3>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Control de Expresiones</p>
+                    <h3 className="text-sm font-bold">{t.hotkeys}</h3>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{t.hotkeysDesc}</p>
                 </div>
             </div>
 
@@ -84,7 +83,7 @@ export const HotkeysPanel = () => {
                                     )}
                                     onClick={() => setRecordingKey(type)}
                                 >
-                                    {isRecording ? "Presiona una tecla..." : mapping?.key || "Sin asignar"}
+                                    {isRecording ? t.recordKey : mapping?.key || t.noKey}
                                 </Button>
 
                                 {mapping && (
@@ -105,7 +104,7 @@ export const HotkeysPanel = () => {
 
             <div className="pt-4 border-t border-border">
                 <p className="text-[10px] text-muted-foreground leading-relaxed">
-                    <span className="font-bold text-foreground">Tip:</span> Pulsa la tecla asignada durante tu stream para cambiar la expresión de tu avatar instantáneamente. No funciona mientras escribes en el chat.
+                    <span className="font-bold text-foreground">Tip:</span> Pulsar la tecla asignada durante el stream cambia la expresión inmediatamente.
                 </p>
             </div>
         </div>

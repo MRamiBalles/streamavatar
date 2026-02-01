@@ -31,28 +31,27 @@ Convertir StreamAvatar en la solución de avatares virtuales web de referencia, 
 | Enhanced Lip Sync | [x] | Sistema de visemas fonéticos basado en análisis FFT. |
 | URL-Based Config | [x] | Persistencia y configuración vía query params completa. |
 | Privacy Shield | [x] | Modo ofuscación y procesamiento local implementado. |
-| Hotkeys Expresiones | [/] | Soporte técnico base listo; UI de configuración pendiente. |
+| Hotkeys Expresiones | [x] | Panel de configuración y puente VRM/Emoji completo (v2.3). |
 
 ---
 
-## Fase 2: Innovación & Comunidad 🚀 EN CURSO
+## Fase 2: Innovación & Comunidad ✅ COMPLETADA
 
 ### Objetivo
-Explorar tecnologías de vanguardia y posicionar el proyecto.
+Explorar tecnologías de vanguardia y asentar las bases del sistema.
 
 ### Innovación Técnica
 - [x] **3D Gaussian Splatting:** Análisis de viabilidad y viewer experimental completado (`3DGS_ANALYSIS.md`).
+- [x] **Avatar Identity System:** Compositor, Galería y Presets (v2.2-2.3).
 - [ ] **AI Avatar Generation:** Investigación inicial en DreamBooth y SDS.
-- [ ] **Animaciones Zero-Shot:** Mapeo de movimiento desde video simple.
 
 ### Acciones de Comunidad
-- [/] **Lanzamiento GitHub:** LICENSE y README profesional listos.
-- [ ] **Showcase:** Demostración en r/VirtualYoutubers.
-- [ ] **Documentación Técnica:** Profundizar en la guía de integración para desarrolladores.
+- [x] **Lanzamiento GitHub:** LICENSE y README profesional listos.
+- [x] **Documentación Técnica:** TDRs y Guía Técnica expandidos.
 
 ---
 
-## Fase 3: Innovación Avanzada (Semanas 17-30)
+## Fase 3: Innovación Avanzada 🚀 EN CURSO
 
 ### Feature 5: Collaborative Scenes 🚀 MOONSHOT
 
@@ -72,17 +71,6 @@ User A (browser) ←→ Signaling Server (WebSocket) ←→ User B (browser)
 **Esfuerzo estimado:** 60-80h + servidor WebSocket
 
 **Dependencia:** Requiere hosting mínimo para signaling server (puede ser Cloudflare Workers gratis o Railway).
-
----
-
-### Feature 6: Avatar Presets Gallery ✅ COMPLETADA
-
-**Descripción:** Usuarios pueden guardar y gestionar configuraciones de avatar:
-- Compositor de piezas (primitivas)
-- Galería de presets con persistencia local
-- Gestión de identidades Fashion
-
-**Esfuerzo estimado:** 20h (sin backend) / 50h (con galería pública)
 
 ---
 

@@ -458,6 +458,23 @@ export const translations = {
     modelReadyToUse: 'listo para usar',
     loadingModel: 'Cargando modelo...',
 
+    // Composer & Hotkeys
+    composer: 'Compositor de Avatar',
+    addPart: 'Añadir Pieza',
+    partsList: 'Lista de Piezas',
+    transform: 'Transformar',
+    hotkeys: 'Mapeo de Hotkeys',
+    hotkeysDesc: 'Control de expresiones con teclado',
+    recordKey: 'Presiona una tecla...',
+    noKey: 'Sin asignar',
+    expressionHappy: 'Feliz',
+    expressionSad: 'Triste',
+    expressionAngry: 'Enfadado',
+    expressionSurprised: 'Sorprendido',
+    expressionNeutral: 'Neutral',
+    savePreset: 'Guardar Identidad',
+    presetName: 'Nombre de la identidad...',
+
     // Legacy (kept for backwards compatibility if referenced elsewhere)
     stream: 'Stream',
     streamDestinations: 'Destinos de Stream',
@@ -579,6 +596,23 @@ export const translations = {
     modelLoaded: 'Model loaded!',
     modelReadyToUse: 'ready to use',
     loadingModel: 'Loading model...',
+
+    // Composer & Hotkeys
+    composer: 'Avatar Composer',
+    addPart: 'Add Part',
+    partsList: 'Parts List',
+    transform: 'Transform',
+    hotkeys: 'Hotkey Mapping',
+    hotkeysDesc: 'Keyboard expression control',
+    recordKey: 'Press a key...',
+    noKey: 'Unassigned',
+    expressionHappy: 'Happy',
+    expressionSad: 'Sad',
+    expressionAngry: 'Angry',
+    expressionSurprised: 'Surprised',
+    expressionNeutral: 'Neutral',
+    savePreset: 'Save Identity',
+    presetName: 'Identity name...',
 
     // Legacy (kept for backwards compatibility if referenced elsewhere)
     stream: 'Stream',

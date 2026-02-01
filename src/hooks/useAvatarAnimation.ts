@@ -73,6 +73,9 @@ export interface AvatarAnimationState {
     /** Breathing scale multiplier */
     breathScale: number;
 
+    /** Active expression (from hotkeys) */
+    activeExpression: string;
+
     /** Current blend state for debugging */
     blendState: 'tracking' | 'idle' | 'transitioning';
 }
@@ -89,7 +92,8 @@ export function useAvatarAnimation() {
         isCameraActive,
         audioData,
         audioReactiveEnabled,
-        lipSyncEnabled
+        lipSyncEnabled,
+        activeExpression
     } = useAvatarStore();
 
     // Initialize idle animations system
@@ -113,6 +117,7 @@ export function useAvatarAnimation() {
         leftEyeBlink: 0,
         rightEyeBlink: 0,
         breathScale: 1,
+        activeExpression: 'neutral',
         blendState: 'idle',
     });
 
@@ -227,7 +232,10 @@ export function useAvatarAnimation() {
 
         // Breathing - always from idle, blended by intensity
         output.breathScale = lerp(idleState.breathScale, 1, blend * 0.5);
-    }, [faceData, audioData, audioReactiveEnabled]);
+
+        // Expression - directly from store
+        output.activeExpression = activeExpression;
+    }, [faceData, audioData, audioReactiveEnabled, activeExpression]);
 
     /**
      * Main animation frame - runs every frame via R3F
