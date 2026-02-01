@@ -34,6 +34,12 @@ export const AvatarSelector = () => {
     }
 
     const url = URL.createObjectURL(file);
+
+    // Memory Safety: Revoke the previous object URL if it exists to prevent memory leaks
+    if (customModel?.url) {
+      URL.revokeObjectURL(customModel.url);
+    }
+
     setCustomModel({
       url,
       name: file.name,
