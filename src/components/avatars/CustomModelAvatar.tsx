@@ -1,88 +1,96 @@
-import { useRef, useEffect, useState } from 'react';
+/**
+ * Custom Model Avatar
+ * 
+ * Professional VRM/GLB loader with:
+ * - Spring Bones physics simulation
+ * - Automatic model normalization
+ * - Full expression tracking bridge
+ * - Secure URL validation
+ * 
+ * @author Manuel Ramírez Ballesteros
+ * @license MIT
+ */
+
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Sphere } from '@react-three/drei';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { VRM, VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
 import { useAvatarStore } from '@/stores/avatarStore';
+import { useAvatarAnimation } from '@/hooks/useAvatarAnimation';
+import { mapSimpleToVRM } from '@/lib/vrmTrackingBridge';
+import { normalizeVRM, normalizeModel, logNormalization } from '@/lib/modelNormalizer';
+
+// =============================================================================
+// Types & Configuration
+// =============================================================================
 
 interface CustomModelAvatarProps {
   modelUrl: string;
   modelType: 'glb' | 'vrm';
 }
 
-// Allowed domains for custom 3D models
+/** Trusted domains for remote model loading (SSRF prevention) */
 const ALLOWED_MODEL_DOMAINS = [
   'localhost',
   '127.0.0.1',
-  // Common 3D model hosting services
   'github.com',
   'raw.githubusercontent.com',
   'gist.githubusercontent.com',
   'cdn.jsdelivr.net',
   'unpkg.com',
-  // Cloud storage
   'storage.googleapis.com',
   's3.amazonaws.com',
   'blob.core.windows.net',
-  // 3D model platforms
   'sketchfab.com',
   'models.readyplayer.me',
   'hub.vroid.com',
-  // Lovable preview domains
   'lovable.app',
 ];
 
-// Maximum file size for models (50MB)
-const MAX_MODEL_SIZE_BYTES = 50 * 1024 * 1024;
+/** Spring Bones configuration for different avatar styles */
+const SPRING_BONE_CONFIG = {
+  /** Stiffness multiplier (higher = stiffer hair/clothes) */
+  stiffnessMultiplier: 1.0,
+  /** Gravity power (higher = more droopy) */
+  gravityPower: 1.0,
+  /** Drag force (higher = more dampened movement) */
+  dragForce: 0.4,
+};
 
-/**
- * Validates a model URL for security
- * 
- * Supports two types of URLs:
- * 1. Blob URLs (blob:http://...) - Created by URL.createObjectURL() for local file uploads
- *    These are inherently safe as the content is already in browser memory
- * 2. Remote URLs - Must be HTTPS and from allowed domains to prevent SSRF attacks
- * 
- * @param url - The model URL to validate
- * @returns Object with valid boolean and optional error message
- */
+// =============================================================================
+// URL Validation (Security)
+// =============================================================================
+
 function validateModelUrl(url: string): { valid: boolean; error?: string } {
-  // Blob URLs are safe - they represent local file uploads that are already in browser memory
-  // The browser generates these via URL.createObjectURL(file) and they cannot access external resources
+  // Blob URLs - safe, created by URL.createObjectURL()
   if (url.startsWith('blob:')) {
     return { valid: true };
   }
 
-  // Data URLs are also safe (base64 embedded content)
+  // Data URLs - safe if correct MIME type
   if (url.startsWith('data:')) {
-    // Validate it's a 3D model MIME type
     if (url.startsWith('data:model/') || url.startsWith('data:application/octet-stream')) {
       return { valid: true };
     }
     return { valid: false, error: 'Data URL must be a valid 3D model format' };
   }
 
-  // For remote URLs, apply strict security validation
+  // Remote URLs - strict validation
   try {
     const parsed = new URL(url);
-
-    // Only allow https (or http for localhost development)
     const isLocalhost = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
+
     if (parsed.protocol !== 'https:' && !isLocalhost) {
-      return { valid: false, error: 'Only HTTPS URLs are allowed for security' };
+      return { valid: false, error: 'Only HTTPS URLs are allowed' };
     }
 
-    // Check for internal/private network URLs (SSRF prevention)
+    // SSRF prevention - block private networks
     const hostname = parsed.hostname.toLowerCase();
     const privatePatterns = [
-      /^10\./,
-      /^172\.(1[6-9]|2[0-9]|3[0-1])\./,
-      /^192\.168\./,
-      /^169\.254\./,
-      /^0\./,
-      /^fc00:/i,
-      /^fe80:/i,
+      /^10\./, /^172\.(1[6-9]|2[0-9]|3[0-1])\./, /^192\.168\./,
+      /^169\.254\./, /^0\./, /^fc00:/i, /^fe80:/i,
     ];
 
     for (const pattern of privatePatterns) {
@@ -91,7 +99,7 @@ function validateModelUrl(url: string): { valid: boolean; error?: string } {
       }
     }
 
-    // Check against allowed domains
+    // Domain whitelist
     const isAllowedDomain = ALLOWED_MODEL_DOMAINS.some(domain =>
       hostname === domain || hostname.endsWith('.' + domain)
     );
@@ -99,14 +107,8 @@ function validateModelUrl(url: string): { valid: boolean; error?: string } {
     if (!isAllowedDomain) {
       return {
         valid: false,
-        error: `Domain not in allowed list. Allowed: ${ALLOWED_MODEL_DOMAINS.slice(0, 5).join(', ')}...`
+        error: `Domain not in allowed list. Upload locally or use: ${ALLOWED_MODEL_DOMAINS.slice(0, 3).join(', ')}...`
       };
-    }
-
-    // Check file extension for remote URLs
-    const path = parsed.pathname.toLowerCase();
-    if (!path.endsWith('.glb') && !path.endsWith('.vrm') && !path.includes('.glb') && !path.includes('.vrm')) {
-      return { valid: false, error: 'URL must point to a .glb or .vrm file' };
     }
 
     return { valid: true };
@@ -115,33 +117,49 @@ function validateModelUrl(url: string): { valid: boolean; error?: string } {
   }
 }
 
+// =============================================================================
+// Component
+// =============================================================================
 
 export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProps) => {
   const groupRef = useRef<THREE.Group>(null);
   const [vrm, setVrm] = useState<VRM | null>(null);
   const [gltfScene, setGltfScene] = useState<THREE.Group | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { avatarScale, faceData } = useAvatarStore();
+  const { avatarScale } = useAvatarStore();
+  const { getAnimationState } = useAvatarAnimation();
+
+  // -------------------------------------------------------------------------
+  // Model Loading
+  // -------------------------------------------------------------------------
 
   useEffect(() => {
-    // Validate URL before loading
+    // Validate URL
     const validation = validateModelUrl(modelUrl);
     if (!validation.valid) {
-      console.warn('Model URL validation failed:', validation.error);
+      console.warn('[CustomModelAvatar] URL validation failed:', validation.error);
       setError(validation.error || 'Invalid model URL');
+      setIsLoading(false);
       return;
     }
 
-    const loader = new GLTFLoader();
-    const abortController = new AbortController();
+    setIsLoading(true);
+    setError(null);
 
-    // Set a timeout for loading (30 seconds)
+    const loader = new GLTFLoader();
+    let mounted = true;
+
+    // Timeout for slow connections
     const loadTimeout = setTimeout(() => {
-      abortController.abort();
-      setError('Model loading timed out');
+      if (mounted) {
+        setError('Model loading timed out (30s)');
+        setIsLoading(false);
+      }
     }, 30000);
 
+    // Register VRM plugin if loading VRM
     if (modelType === 'vrm') {
       loader.register((parser) => new VRMLoaderPlugin(parser));
     }
@@ -150,18 +168,33 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
       modelUrl,
       (gltf) => {
         clearTimeout(loadTimeout);
+        if (!mounted) return;
 
         if (modelType === 'vrm' && gltf.userData.vrm) {
           const vrmModel = gltf.userData.vrm as VRM;
+
+          // Optimize the model
           VRMUtils.removeUnnecessaryVertices(vrmModel.scene);
           VRMUtils.removeUnnecessaryJoints(vrmModel.scene);
+
+          // Disable frustum culling for VRM (prevents disappearing)
           vrmModel.scene.traverse((obj) => {
             obj.frustumCulled = false;
           });
+
+          // Normalize model (center, scale, fix rotation)
+          const normResult = normalizeVRM(vrmModel);
+          logNormalization(normResult, 'VRM Model');
+
           setVrm(vrmModel);
+          console.log('[CustomModelAvatar] VRM loaded successfully');
+          console.log('  - Spring Bones:', vrmModel.springBoneManager ? 'Yes' : 'No');
+          console.log('  - Expressions:', vrmModel.expressionManager ? Object.keys(vrmModel.expressionManager.expressionMap || {}).length : 0);
         } else {
           // Regular GLB
           const scene = gltf.scene;
+
+          // Enable shadows
           scene.traverse((child) => {
             if ((child as THREE.Mesh).isMesh) {
               child.castShadow = true;
@@ -169,66 +202,118 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
             }
           });
 
-          // Center and scale the model
-          const box = new THREE.Box3().setFromObject(scene);
-          const center = box.getCenter(new THREE.Vector3());
-          const size = box.getSize(new THREE.Vector3());
-          const maxDim = Math.max(size.x, size.y, size.z);
-          const scale = 2 / maxDim;
-          scene.scale.setScalar(scale);
-          scene.position.sub(center.multiplyScalar(scale));
+          // Normalize model
+          const normResult = normalizeModel(scene);
+          logNormalization(normResult, 'GLB Model');
 
           setGltfScene(scene);
+          console.log('[CustomModelAvatar] GLB loaded successfully');
+        }
+
+        setIsLoading(false);
+      },
+      // Progress callback
+      (progress) => {
+        if (progress.total > 0) {
+          const pct = Math.round((progress.loaded / progress.total) * 100);
+          console.log(`[CustomModelAvatar] Loading: ${pct}%`);
         }
       },
-      undefined,
+      // Error callback
       (err) => {
         clearTimeout(loadTimeout);
-        console.error('Error loading model:', err);
-        setError('Error loading model');
+        if (!mounted) return;
+        console.error('[CustomModelAvatar] Load error:', err);
+        setError('Failed to load model. Check console for details.');
+        setIsLoading(false);
       }
     );
 
+    // Cleanup
     return () => {
+      mounted = false;
       clearTimeout(loadTimeout);
+
+      // Dispose VRM resources
       if (vrm) {
         VRMUtils.deepDispose(vrm.scene);
       }
     };
   }, [modelUrl, modelType]);
 
-  useFrame((state, delta) => {
+  // -------------------------------------------------------------------------
+  // Animation Frame
+  // -------------------------------------------------------------------------
+
+  useFrame((_, delta) => {
+    // Get unified animation state (tracking + idle)
+    const anim = getAnimationState();
+
+    // Head rotation
     if (groupRef.current) {
       groupRef.current.rotation.x = THREE.MathUtils.lerp(
         groupRef.current.rotation.x,
-        faceData.headRotation.x,
+        anim.headRotation.x,
         0.1
       );
       groupRef.current.rotation.y = THREE.MathUtils.lerp(
         groupRef.current.rotation.y,
-        -faceData.headRotation.y,
+        -anim.headRotation.y,
+        0.1
+      );
+      groupRef.current.rotation.z = THREE.MathUtils.lerp(
+        groupRef.current.rotation.z,
+        anim.headRotation.z,
         0.1
       );
     }
 
-    // VRM specific updates
+    // VRM-specific updates
     if (vrm) {
+      // Update VRM (internal animations, lookAt, etc.)
       vrm.update(delta);
 
-      // Apply blendshapes if available
-      if (vrm.expressionManager) {
-        vrm.expressionManager.setValue('aa', faceData.mouthOpen);
-        vrm.expressionManager.setValue('blinkLeft', faceData.leftEyeBlink);
-        vrm.expressionManager.setValue('blinkRight', faceData.rightEyeBlink);
+      // Update Spring Bones (hair, clothes physics)
+      // The update method handles this internally in newer versions of three-vrm
+      // but we can manually call springBoneManager if needed for custom delta
+      if (vrm.springBoneManager) {
+        // Spring bones are updated automatically in vrm.update(delta)
+        // No need for manual call unless you want custom delta
       }
+
+      // Apply expressions via Tracking Bridge
+      mapSimpleToVRM(vrm, {
+        headRotation: anim.headRotation,
+        mouthOpen: anim.mouthOpen,
+        leftEyeBlink: anim.leftEyeBlink,
+        rightEyeBlink: anim.rightEyeBlink,
+      });
     }
   });
 
+  // -------------------------------------------------------------------------
+  // Render
+  // -------------------------------------------------------------------------
+
+  // Error state - show red wireframe sphere
   if (error) {
     return (
-      <Sphere args={[0.5, 16, 16]}>
-        <meshStandardMaterial color="#ff4444" wireframe />
-      </Sphere>
+      <group scale={avatarScale}>
+        <Sphere args={[0.5, 16, 16]}>
+          <meshStandardMaterial color="#ff4444" wireframe />
+        </Sphere>
+      </group>
+    );
+  }
+
+  // Loading state - show gray wireframe sphere
+  if (isLoading) {
+    return (
+      <group scale={avatarScale}>
+        <Sphere args={[0.5, 16, 16]}>
+          <meshStandardMaterial color="#666" wireframe />
+        </Sphere>
+      </group>
     );
   }
 
@@ -236,11 +321,6 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
     <group ref={groupRef} scale={avatarScale}>
       {vrm && <primitive object={vrm.scene} />}
       {gltfScene && <primitive object={gltfScene} />}
-      {!vrm && !gltfScene && (
-        <Sphere args={[0.5, 16, 16]}>
-          <meshStandardMaterial color="#666" wireframe />
-        </Sphere>
-      )}
     </group>
   );
 };
