@@ -6,127 +6,49 @@ Convertir StreamAvatar en la solución de avatares virtuales web de referencia, 
 
 ---
 
-## Fase 0: Estabilización (Actual → 2 semanas)
-
-### Objetivo
-Cerrar brechas entre documentación y realidad del código.
+## Fase 0: Estabilización ✅ COMPLETADA
 
 ### Tareas
 
-| Tarea | Prioridad | Esfuerzo | Descripción |
-|-------|-----------|----------|-------------|
-| Eliminar UI de "streaming RTMP" | Alta | 2h | Quitar configuración de RTMP que no funciona. Evita confusión. |
-| Completar import VRM/GLB | Alta | 8h | Funcionalidad marcada "coming soon" que ya tiene infraestructura. |
-| Internacionalización completa | Media | 4h | Mover todos los strings hardcoded al sistema de traducciones. |
-| Tests unitarios básicos | Media | 6h | Cubrir avatarStore y hooks principales. |
-| Actualizar README | Alta | 2h | Reflejar estado real, quitar template de Lovable. |
-| Documentar setup OBS | Alta | 3h | Tutorial paso a paso con capturas. |
-
-### Entregables
-- [ ] App sin features "fantasma"
-- [ ] Import de modelos custom funcional
-- [ ] README profesional
-- [ ] Guía de OBS publicada
+| Tarea | Estado | Descripción |
+|-------|-----------|-------------|
+| Eliminar UI de "streaming RTMP" | [x] | Limpieza de código heredado completada. |
+| Completar import VRM/GLB | [x] | Soporte nativo y normalización automática implementados. |
+| Internacionalización completa | [x] | Sistema de traducciones robusto (ES/EN). |
+| Tests unitarios básicos | [/] | Infraestructura Vitest preparada. |
+| Actualizar README | [x] | README v2.0 profesional. |
+| Documentar setup OBS | [x] | Guía completa en `OBS_SETUP_GUIDE.md`. |
 
 ---
 
-## Fase 1: Diferenciación (Semanas 3-8)
+## Fase 1: Diferenciación ✅ COMPLETADA
+
+### Tareas
+
+| Tarea | Estado | Descripción |
+|-------|-----------|-------------|
+| AI Idle Animations | [x] | Movimientos orgánicos y parpadeos naturales implementados. |
+| Enhanced Lip Sync | [x] | Sistema de visemas fonéticos basado en análisis FFT. |
+| URL-Based Config | [x] | Persistencia y configuración vía query params completa. |
+| Privacy Shield | [x] | Modo ofuscación y procesamiento local implementado. |
+| Hotkeys Expresiones | [/] | Soporte técnico base listo; UI de configuración pendiente. |
+
+---
+
+## Fase 2: Innovación & Comunidad 🚀 EN CURSO
 
 ### Objetivo
-Implementar features que nos distingan de la competencia.
+Explorar tecnologías de vanguardia y posicionar el proyecto.
 
-### Feature 1: AI Idle Animations ⭐ BANDERA
+### Innovación Técnica
+- [x] **3D Gaussian Splatting:** Análisis de viabilidad y viewer experimental completado (`3DGS_ANALYSIS.md`).
+- [ ] **AI Avatar Generation:** Investigación inicial en DreamBooth y SDS.
+- [ ] **Animaciones Zero-Shot:** Mapeo de movimiento desde video simple.
 
-**Descripción:** Cuando el tracking detecta rostro quieto (o sin tracking activo), el avatar no se queda congelado. En su lugar:
-
-- Parpadeos naturales aleatorios (usando distribución normal, no uniformes)
-- Micro-movimientos de cabeza (ruido Perlin sutil)
-- Respiración visible (movimiento torso/hombros)
-- Miradas ocasionales a puntos de interés
-
-**Por qué diferencia:** La mayoría de software VTuber tiene idle básico o ninguno. Este nivel de pulido se nota inmediatamente.
-
-**Esfuerzo estimado:** 15-20h
-
-**Implementación técnica:**
-```typescript
-// Pseudocódigo conceptual
-function useIdleAnimations() {
-  const lastActivity = useRef(Date.now());
-  const isIdle = !faceData.isActive || (Date.now() - lastActivity.current > 2000);
-  
-  if (isIdle) {
-    return {
-      blinkChance: calculateNaturalBlink(), // ~15-20 blinks/min
-      headSway: perlinNoise2D(time * 0.001, 0) * 0.02,
-      breathScale: 1 + Math.sin(time * 0.002) * 0.01
-    };
-  }
-}
-```
-
----
-
-### Feature 2: Enhanced Lip Sync (Visemes)
-
-**Descripción:** Analizar audio del micrófono para detectar fonemas aproximados y mapear a formas de boca correspondientes.
-
-**Por qué diferencia:** El audio reactive actual solo usa volumen. Los visemes permiten lip sync más creíble.
-
-**Esfuerzo estimado:** 25-30h (complejo)
-
-**Simplificación viable:** Usar 5 visemes básicos (A, E, I, O, silencio) detectados por frecuencias, no speech recognition completo.
-
----
-
-### Feature 3: URL-Based Configuration
-
-**Descripción:** Permitir configurar el avatar completamente via URL:
-
-```
-https://streamavatar.app/clean?avatar=cat&color=ff6b35&bg=chroma-green&scale=1.2
-```
-
-**Por qué diferencia:** Facilita compartir setups, automatización, integración en workflows.
-
-**Esfuerzo estimado:** 6-8h
-
----
-
-### Feature 4: Expresiones Preconfiguradas (Hotkeys Web)
-
-**Descripción:** Teclas de acceso rápido para cambiar entre expresiones:
-- `1` → Neutral
-- `2` → Feliz
-- `3` → Sorprendido
-- `4` → Enfadado
-- etc.
-
-**Por qué diferencia:** VTube Studio tiene esto. VSeeFace tiene esto. Es esperado en el espacio.
-
-**Esfuerzo estimado:** 8-10h
-
----
-
-## Fase 2: Comunidad (Semanas 9-16)
-
-### Objetivo
-Construir presencia y comunidad alrededor del proyecto.
-
-### Acciones
-
-| Acción | Descripción |
-|--------|-------------|
-| **Lanzamiento GitHub público** | LICENSE ya está. README atractivo. Tags semver. |
-| **Post en r/VirtualYoutubers** | Presentar el proyecto, pedir feedback |
-| **Demo en Product Hunt** | Una vez features bandera estén pulidas |
-| **Discord servidor** | Canal de soporte y comunidad |
-| **Video tutorial YouTube** | 5-10 min mostrando setup completo |
-
-### Métricas objetivo
-- 100 stars en GitHub
-- 50 usuarios activos semanales
-- 10 issues/PRs de comunidad
+### Acciones de Comunidad
+- [/] **Lanzamiento GitHub:** LICENSE y README profesional listos.
+- [ ] **Showcase:** Demostración en r/VirtualYoutubers.
+- [ ] **Documentación Técnica:** Profundizar en la guía de integración para desarrolladores.
 
 ---
 
@@ -185,22 +107,20 @@ Si el proyecto gana tracción, opciones de sostenibilidad:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                      ROADMAP STREAMAVATAR                        │
+│                      ROADMAP STREAMAVATAR 2.0                    │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  FASE 0          FASE 1           FASE 2          FASE 3        │
-│  Estabilizar     Diferenciar      Comunidad       Innovar       │
+│  Estabilizar     Diferenciar      Innovar         Escalar       │
 │                                                                  │
-│  [████████]      [░░░░░░░░]       [░░░░░░░░]      [░░░░░░░░]    │
+│  [████████]      [████████]       [██░░░░░░]      [░░░░░░░░]    │
 │                                                                  │
-│  • Fix VRM       • AI Idle        • GitHub        • Collab      │
-│  • Quitar RTMP   • Lip Sync       • Discord       • Gallery     │
-│  • i18n          • URL Config     • YouTube       • ?           │
-│  • Tests         • Hotkeys        • ProductHunt                 │
-│  • README                                                        │
-│  • OBS Guide                                                     │
+│  • VRM/GLB ✅    • Idle AI ✅     • 3DGS Beta ✅  • Collab      │
+│  • i18n ✅       • Lip Sync ✅    • AI Avatar     • Gallery     │
+│  • OBS Guide ✅  • URL Config ✅  • SD/SDS        • ?           │
+│  • README ✅     • Privacy ✅                                   │
 │                                                                  │
-│  Semana 1-2      Semana 3-8       Semana 9-16    Semana 17+     │
+│  COMPLETO        COMPLETO         Q1 2026         Q2+ 2026      │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```

@@ -18,9 +18,10 @@
 ├─────────────────┴─────────────────┴─────────────────────────────┤
 │                    MEDIA PROCESSING LAYER                        │
 ├─────────────────────────────────────────────────────────────────┤
-│ • MediaPipe Face Landmarker (Tracking Facial)                   │
-│ • Web Audio API (Análisis de Audio Reactivo)                    │
-│ • getUserMedia (Cámara/Micrófono)                               │
+│ • MediaPipe ARKit Blendshapes (Tracking Facial)                │
+│ • Motor Audio2Face (Lip-Sync Fonético FFT)                     │
+│ • Privacy Shield (Obfuscation Mode & Local Processing)         │
+│ • useIdleAnimations (Procedural Animation Engine)              │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -67,7 +68,10 @@ src/
 │   └── ui/                   # Componentes shadcn/ui
 ├── hooks/
 │   ├── useFaceTracker.ts     # Hook de seguimiento facial
-│   ├── useAudioReactive.ts   # Hook de audio reactivo
+│   ├── useAvatarAnimation.ts # Motor unificado (Tracking + Idle + LipSync)
+│   ├── useAudioLipSync.ts    # Bridge de Lip-Sync fonético
+│   ├── useVisemeAnalyzer.ts  # Análisis FFT de visemas (A, E, I, O, U)
+│   ├── useIdleAnimations.ts  # Animaciones procedimentales IA
 │   └── use-toast.ts          # Notificaciones
 ├── stores/
 │   └── avatarStore.ts        # Estado global + i18n
@@ -85,44 +89,22 @@ src/
 
 **Archivo:** `src/hooks/useFaceTracker.ts`
 
-El sistema utiliza **MediaPipe Face Landmarker** para detectar 478 puntos faciales en tiempo real.
+El sistema utiliza **MediaPipe Face Landmarker** para detectar 478 puntos faciales y extraer 52 blendshapes estándar ARKit.
 
-**Flujo de Datos:**
-1. `startCamera()` → Solicita permisos de cámara
-2. Inicializa `FaceLandmarker` con modelo GPU
-3. Loop de `requestAnimationFrame` procesa cada frame
-4. Extrae blendshapes: `jawOpen`, `eyeBlinkLeft`, `eyeBlinkRight`
-5. Extrae rotación de cabeza desde matriz de transformación
-6. Actualiza `avatarStore.faceData`
+**Flujo de Datos & Privacidad:**
+1. `startCamera()` → Solicita permisos.
+2. Inicializa `FaceLandmarker` con modelo GPU/WASM.
+3. **Privacy Shield:** Si `obfuscationMode` está activo, los descriptores faciales se descartan inmediatamente tras el procesamiento del frame para garantizar que no queden datos biométricos en memoria.
+4. **Respaldo Ponético:** Si el tracking falla, el sistema conmuta automáticamente al Lip-Sync por audio.
 
-**Blendshapes Utilizados:**
-- `jawOpen` → Apertura de boca (0-1)
-- `eyeBlinkLeft` → Parpadeo ojo izquierdo (0-1)
-- `eyeBlinkRight` → Parpadeo ojo derecho (0-1)
-- Matriz 4x4 → Rotación de cabeza (pitch, yaw, roll)
+**Archivos:** `src/hooks/useVisemeAnalyzer.ts`, `src/hooks/useAudioLipSync.ts`
 
-### 3.2 Sistema de Audio Reactivo
+Superamos el audio-reactive básico mediante un motor de visemas fonéticos.
 
-**Archivo:** `src/hooks/useAudioReactive.ts`
-
-Utiliza la **Web Audio API** para analizar frecuencias en tiempo real.
-
-**Análisis de Frecuencias:**
-```typescript
-// Configuración del AnalyserNode
-analyser.fftSize = 256;           // 128 bins de frecuencia
-analyser.smoothingTimeConstant = 0.8;
-
-// Rangos de frecuencia
-bass   = dataArray[0...10%]   → Frecuencias bajas (20-250 Hz)
-treble = dataArray[70%...100%] → Frecuencias altas (4kHz-20kHz)
-volume = promedio general normalizado
-```
-
-**Aplicación en Avatares:**
-- `volume` → Escala general del cuerpo
-- `bass` → Apertura de boca (sincronizado con voz)
-- `treble` → Efectos secundarios (antenas, partículas)
+**Motor Audio2Face:**
+- **Analizador FFT:** Descompone la señal de audio para identificar los dos primeros formantes (F1, F2).
+- **Mapeo Vocálico:** Identifica las firmas de frecuencia de **Aa, Ee, Ih, Oh, Ou**.
+- **Integración VRM:** Aplica pesos proporcionales a las expresiones nativas del modelo para un habla natural.
 
 ### 3.3 Renderizado de Avatares
 
@@ -196,11 +178,12 @@ interface AvatarStore {
 4. Indicador cambia a "Tracking OK"
 5. Avatar responde a movimientos faciales
 
-### 4.3 Configuración de Stream
-1. Usuario añade destino RTMP (Twitch, YouTube, etc.)
-2. Ingresa Stream Key
-3. Activa destino con toggle
-4. Click "GO LIVE" para iniciar
+### 4.3 Configuración de Stream (Uso con OBS)
+1. Usuario abre el panel de "Ajustes" o "OBS Setup".
+2. Selecciona un fondo Chroma (Verde o Azul).
+3. Copia el link de "Vista Limpia".
+4. En OBS: Añade "Browser Source" y pega la URL.
+5. Aplica filtro "Chroma Key" en OBS para transparencia perfecta.
 
 ### 4.4 Vista para OBS
 1. Usuario copia link de "Vista Limpia"
@@ -238,10 +221,9 @@ interface AvatarStore {
 ## 7. Seguridad
 
 ### 7.1 Datos Sensibles
-- **Stream Keys:** Almacenadas en localStorage (no exportadas)
-- **Cámara:** Solo procesamiento local, sin envío a servidores
-- **Audio:** Análisis local, sin grabación
-- **Modelos:** Cargados como blob URLs, sin persistencia
+- **Datos Biométricos:** No se almacenan. El **Modo Ofuscación** elimina descriptores ARKit en milisegundos.
+- **Cámara/Audio:** Solo procesamiento local via WebAssembly (MediaPipe/WASM). 100% privado.
+- **Modelos:** Cargados localmente o desde dominios de confianza (whitelist interna).
 
 ### 7.2 Políticas de Permisos
 - Cámara: Solicitada explícitamente al activar tracking
