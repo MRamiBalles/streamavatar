@@ -1,8 +1,16 @@
+/**
+ * StreamAvatar - Sphere (Slime) Avatar Component
+ * 
+ * A bouncy, slime-like spherical avatar with expressive features.
+ * Now powered by the unified animation system for natural idle behavior.
+ */
+
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Sphere } from '@react-three/drei';
 import * as THREE from 'three';
 import { useAvatarStore } from '@/stores/avatarStore';
+import { useAvatarAnimation } from '@/hooks/useAvatarAnimation';
 
 export const SphereAvatar = () => {
   const groupRef = useRef<THREE.Group>(null);
@@ -10,58 +18,64 @@ export const SphereAvatar = () => {
   const leftEyeRef = useRef<THREE.Mesh>(null);
   const rightEyeRef = useRef<THREE.Mesh>(null);
   const bodyRef = useRef<THREE.Mesh>(null);
-  
-  const { avatarColor, avatarScale, faceData, audioData, audioReactiveEnabled } = useAvatarStore();
-  
-  useFrame((state) => {
+
+  const { avatarColor, avatarScale, audioData, audioReactiveEnabled } = useAvatarStore();
+  const { getAnimationState } = useAvatarAnimation();
+
+  useFrame(() => {
+    const anim = getAnimationState();
+
     if (groupRef.current) {
       groupRef.current.rotation.x = THREE.MathUtils.lerp(
         groupRef.current.rotation.x,
-        faceData.headRotation.x,
+        anim.headRotation.x,
         0.1
       );
       groupRef.current.rotation.y = THREE.MathUtils.lerp(
         groupRef.current.rotation.y,
-        -faceData.headRotation.y,
+        -anim.headRotation.y,
         0.1
       );
       groupRef.current.rotation.z = THREE.MathUtils.lerp(
         groupRef.current.rotation.z,
-        faceData.headRotation.z,
+        anim.headRotation.z,
         0.1
       );
     }
-    
-    // Audio reactive + breathing animation
+
+    // Body breathing + audio reactive
     if (bodyRef.current) {
-      const breathe = Math.sin(state.clock.elapsedTime * 1.5) * 0.02 + 1;
-      const audioScale = audioReactiveEnabled ? 1 + audioData.bass * 0.2 : 1;
-      const finalScale = breathe * audioScale;
-      bodyRef.current.scale.set(finalScale, finalScale * 0.98, finalScale);
+      let targetScale = anim.breathScale;
+      if (audioReactiveEnabled) {
+        targetScale = Math.max(targetScale, 1 + audioData.bass * 0.2);
+      }
+      bodyRef.current.scale.set(
+        THREE.MathUtils.lerp(bodyRef.current.scale.x, targetScale, 0.15),
+        THREE.MathUtils.lerp(bodyRef.current.scale.y, targetScale * 0.98, 0.15),
+        THREE.MathUtils.lerp(bodyRef.current.scale.z, targetScale, 0.15)
+      );
     }
-    
+
     if (mouthRef.current) {
-      const faceOpenness = faceData.mouthOpen;
-      const audioOpenness = audioReactiveEnabled ? audioData.volume * 0.6 : 0;
-      const mouthScale = 0.08 + Math.max(faceOpenness, audioOpenness) * 0.5;
+      const mouthScale = 0.08 + anim.mouthOpen * 0.5;
       mouthRef.current.scale.y = THREE.MathUtils.lerp(
         mouthRef.current.scale.y,
         mouthScale,
         0.2
       );
     }
-    
+
     if (leftEyeRef.current) {
       leftEyeRef.current.scale.y = THREE.MathUtils.lerp(
         leftEyeRef.current.scale.y,
-        1 - faceData.leftEyeBlink * 0.9,
+        1 - anim.leftEyeBlink * 0.9,
         0.3
       );
     }
     if (rightEyeRef.current) {
       rightEyeRef.current.scale.y = THREE.MathUtils.lerp(
         rightEyeRef.current.scale.y,
-        1 - faceData.rightEyeBlink * 0.9,
+        1 - anim.rightEyeBlink * 0.9,
         0.3
       );
     }
@@ -71,18 +85,18 @@ export const SphereAvatar = () => {
     <group ref={groupRef} scale={avatarScale}>
       {/* Main slime body */}
       <Sphere ref={bodyRef} args={[1, 32, 32]}>
-        <meshStandardMaterial 
-          color={avatarColor} 
-          roughness={0.2} 
+        <meshStandardMaterial
+          color={avatarColor}
+          roughness={0.2}
           metalness={0.1}
           transparent
           opacity={0.9}
         />
       </Sphere>
-      
+
       {/* Inner glow sphere */}
       <Sphere args={[0.85, 32, 32]}>
-        <meshStandardMaterial 
+        <meshStandardMaterial
           color={avatarColor}
           emissive={avatarColor}
           emissiveIntensity={0.2}
@@ -91,7 +105,7 @@ export const SphereAvatar = () => {
           opacity={0.5}
         />
       </Sphere>
-      
+
       {/* Left eye white */}
       <Sphere ref={leftEyeRef} args={[0.22, 16, 16]} position={[-0.35, 0.25, 0.8]}>
         <meshStandardMaterial color="#ffffff" />
@@ -104,7 +118,7 @@ export const SphereAvatar = () => {
       <Sphere args={[0.04, 8, 8]} position={[-0.4, 0.32, 1.0]}>
         <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.5} />
       </Sphere>
-      
+
       {/* Right eye white */}
       <Sphere ref={rightEyeRef} args={[0.22, 16, 16]} position={[0.35, 0.25, 0.8]}>
         <meshStandardMaterial color="#ffffff" />
@@ -117,12 +131,12 @@ export const SphereAvatar = () => {
       <Sphere args={[0.04, 8, 8]} position={[0.3, 0.32, 1.0]}>
         <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={0.5} />
       </Sphere>
-      
+
       {/* Mouth */}
       <Sphere ref={mouthRef} args={[0.18, 16, 16]} position={[0, -0.2, 0.85]} scale={[1.3, 0.2, 1]}>
         <meshStandardMaterial color="#2a1a3a" />
       </Sphere>
-      
+
       {/* Cheek blush left */}
       <Sphere args={[0.15, 16, 16]} position={[-0.6, 0, 0.65]}>
         <meshStandardMaterial color="#ff9999" transparent opacity={0.4} />
@@ -131,7 +145,7 @@ export const SphereAvatar = () => {
       <Sphere args={[0.15, 16, 16]} position={[0.6, 0, 0.65]}>
         <meshStandardMaterial color="#ff9999" transparent opacity={0.4} />
       </Sphere>
-      
+
       {/* Top highlight */}
       <Sphere args={[0.2, 16, 16]} position={[-0.3, 0.7, 0.5]}>
         <meshStandardMaterial color="#ffffff" transparent opacity={0.3} />
