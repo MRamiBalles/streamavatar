@@ -23,7 +23,7 @@ const Index = () => {
     switch (activeTab) {
       case 'studio': return t.controlPanel;
       case 'avatar': return t.configureAvatar;
-      case 'stream': return t.streamDestinations;
+      case 'stream': return t.obsSetup;
       case 'settings': return t.settings;
     }
   };
@@ -79,7 +79,7 @@ const Index = () => {
             </div>
             <span className="font-display font-bold text-sm gradient-text">StreamAvatar</span>
           </div>
-          
+
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -90,27 +90,26 @@ const Index = () => {
               <SheetHeader className="p-4 border-b border-border">
                 <SheetTitle>{getPanelTitle()}</SheetTitle>
               </SheetHeader>
-              
+
               {/* Mobile Navigation Tabs */}
               <div className="flex border-b border-border">
                 {(['studio', 'avatar', 'stream', 'settings'] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`flex-1 py-3 text-xs font-medium transition-colors ${
-                      activeTab === tab 
-                        ? 'text-primary border-b-2 border-primary bg-primary/5' 
+                    className={`flex-1 py-3 text-xs font-medium transition-colors ${activeTab === tab
+                        ? 'text-primary border-b-2 border-primary bg-primary/5'
                         : 'text-muted-foreground hover:text-foreground'
-                    }`}
+                      }`}
                   >
                     {tab === 'studio' && t.studio}
                     {tab === 'avatar' && t.avatar}
-                    {tab === 'stream' && t.stream}
+                    {tab === 'stream' && t.obsSetup}
                     {tab === 'settings' && t.settings}
                   </button>
                 ))}
               </div>
-              
+
               <ScrollArea className="h-[calc(100vh-120px)]">
                 <PanelContent />
               </ScrollArea>
@@ -122,14 +121,14 @@ const Index = () => {
         <div className="flex-1 flex flex-col p-4">
           <div className="flex-1 relative">
             <AvatarRenderer />
-            
+
             {/* Overlay controls */}
             <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end pointer-events-none">
               <div className="glass-panel p-3 pointer-events-auto">
                 <p className="text-xs text-muted-foreground mb-1">{t.preview}</p>
                 <p className="text-sm font-medium">{t.dragToRotate}</p>
               </div>
-              
+
               {/* Mobile menu hint */}
               <div className="md:hidden glass-panel p-3 pointer-events-auto">
                 <p className="text-xs text-muted-foreground">
@@ -147,7 +146,7 @@ const Index = () => {
               {getPanelTitle()}
             </h2>
           </div>
-          
+
           <ScrollArea className="flex-1">
             <PanelContent />
           </ScrollArea>

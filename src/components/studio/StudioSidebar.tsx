@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Home, User, Radio, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Home, User, Monitor, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAvatarStore, useTranslation } from '@/stores/avatarStore';
+import { useTranslation } from '@/stores/avatarStore';
 
 type TabType = 'studio' | 'avatar' | 'stream' | 'settings';
 
@@ -12,13 +12,12 @@ interface StudioSidebarProps {
 
 export const StudioSidebar = ({ activeTab, onTabChange }: StudioSidebarProps) => {
   const [collapsed, setCollapsed] = useState(false);
-  const { isLive } = useAvatarStore();
   const t = useTranslation();
 
   const tabs = [
     { id: 'studio' as const, label: t.studio, icon: Home },
     { id: 'avatar' as const, label: t.avatar, icon: User },
-    { id: 'stream' as const, label: t.stream, icon: Radio },
+    { id: 'stream' as const, label: t.obsSetup, icon: Monitor },
     { id: 'settings' as const, label: t.settings, icon: Settings },
   ];
 
@@ -42,38 +41,20 @@ export const StudioSidebar = ({ activeTab, onTabChange }: StudioSidebarProps) =>
         </div>
       </div>
 
-      {/* Live indicator */}
-      {isLive && (
-        <div className={cn(
-          "mx-3 mt-3 py-2 px-3 rounded-lg bg-destructive/20 border border-destructive/50",
-          collapsed ? "flex justify-center" : ""
-        )}>
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <div className="w-2.5 h-2.5 rounded-full bg-destructive" />
-              <div className="absolute inset-0 w-2.5 h-2.5 rounded-full bg-destructive animate-ping" />
-            </div>
-            {!collapsed && (
-              <span className="text-xs font-semibold text-destructive uppercase tracking-wider">EN VIVO</span>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Navigation */}
       <nav className="flex-1 p-3 space-y-1">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
-          
+
           return (
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all",
-                isActive 
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground neon-border" 
+                isActive
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground neon-border"
                   : "text-sidebar-foreground hover:bg-sidebar-accent/50",
                 collapsed && "justify-center px-2"
               )}
