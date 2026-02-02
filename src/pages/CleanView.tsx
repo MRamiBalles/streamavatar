@@ -26,18 +26,18 @@ import { useAvatarStore } from '@/stores/avatarStore';
 // Types & Constants
 // =============================================================================
 
+import { BackgroundType } from '@/stores/avatarStore';
+
 type AvatarType = 'pill' | 'sphere' | 'boxy' | 'cat' | 'ghost' | 'emoji' | 'custom';
-type BackgroundType = 'transparent' | 'chroma-green' | 'chroma-blue' | 'dark' | 'light';
 
 const VALID_AVATARS: AvatarType[] = ['pill', 'sphere', 'boxy', 'cat', 'ghost', 'emoji', 'custom'];
-const VALID_BACKGROUNDS: BackgroundType[] = ['transparent', 'chroma-green', 'chroma-blue', 'dark', 'light'];
+const VALID_BACKGROUNDS: BackgroundType[] = ['transparent', 'chroma-green', 'chroma-blue', 'dark'];
 
 const BACKGROUND_COLORS: Record<BackgroundType, string> = {
   'transparent': 'transparent',
   'chroma-green': '#00ff00',
   'chroma-blue': '#0000ff',
   'dark': '#0a0a0a',
-  'light': '#f0f0f0',
 };
 
 // =============================================================================
@@ -105,8 +105,8 @@ const CleanView = () => {
     // Apply scale
     setAvatarScale(config.scale);
 
-    // Apply background
-    setBackground(BACKGROUND_COLORS[config.background]);
+    // Apply background - pass the BackgroundType directly
+    setBackground(config.background);
 
   }, [config, setSelectedAvatar, setAvatarColor, setAvatarScale, setBackground]);
 

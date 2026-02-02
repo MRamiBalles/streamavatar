@@ -51,15 +51,12 @@ interface LoadingState {
  * Dynamically imports GaussianSplats3D to avoid bundling issues
  * and allow for graceful degradation if not installed
  */
-async function loadGaussianSplats() {
-    try {
-        // Dynamic import - won't crash if package missing
-        const GS3D = await import('@mkkellogg/gaussian-splats-3d');
-        return GS3D;
-    } catch (err) {
-        console.warn('[SplatViewer] GaussianSplats3D not installed. Run: npm install @mkkellogg/gaussian-splats-3d');
-        throw new Error('GaussianSplats3D library not installed');
-    }
+async function loadGaussianSplats(): Promise<any> {
+    // This is an experimental feature that requires manual installation
+    // To use: npm install @mkkellogg/gaussian-splats-3d
+    console.warn('[SplatViewer] GaussianSplats3D is experimental and requires manual installation.');
+    console.warn('[SplatViewer] Run: npm install @mkkellogg/gaussian-splats-3d');
+    throw new Error('GaussianSplats3D library not installed. This is an experimental feature.');
 }
 
 // =============================================================================

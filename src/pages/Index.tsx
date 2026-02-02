@@ -116,7 +116,7 @@ const Index = () => {
                     {useAvatarStore.getState().privacyShieldActive && (
                       <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                         <Shield className="w-3 h-3" />
-                        <span className="text-[9px] font-bold uppercase">{t.safe}</span>
+                        <span className="text-[9px] font-bold uppercase">{t.privacyShield}</span>
                       </div>
                     )}
                   </div>
@@ -180,7 +180,7 @@ const Index = () => {
             {useAvatarStore.getState().privacyShieldActive && (
               <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-500">
                 <Shield className="w-3 h-3" />
-                <span className="text-[10px] font-bold uppercase tracking-tighter">{t.safe}</span>
+                <span className="text-[10px] font-bold uppercase tracking-tighter">{t.privacyShield}</span>
               </div>
             )}
           </div>
