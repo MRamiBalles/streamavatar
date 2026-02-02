@@ -56,30 +56,50 @@ export const HotkeysPanel = () => {
                         <div
                             key={type}
                             className={cn(
-                                "group flex items-center justify-between p-3 rounded-xl border transition-all",
-                                isActive ? "bg-primary/5 border-primary/30 ring-1 ring-primary/20" : "bg-muted/30 border-transparent hover:border-border"
+                                "group flex items-center justify-between p-3 rounded-xl border transition-all duration-300",
+                                isActive 
+                                    ? "bg-primary/10 border-primary/50 ring-2 ring-primary/30 shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)]" 
+                                    : "bg-muted/30 border-transparent hover:border-border"
                             )}
                         >
                             <div className="flex items-center gap-3">
                                 <div className={cn(
-                                    "p-2 rounded-lg transition-colors",
-                                    isActive ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground group-hover:text-foreground"
+                                    "p-2 rounded-lg transition-all duration-300",
+                                    isActive 
+                                        ? "bg-primary text-primary-foreground shadow-lg scale-110 animate-pulse" 
+                                        : "bg-background text-muted-foreground group-hover:text-foreground"
                                 )}>
-                                    <Icon className="w-4 h-4" />
+                                    <Icon className={cn(
+                                        "w-4 h-4 transition-transform duration-300",
+                                        isActive && "animate-bounce"
+                                    )} />
                                 </div>
                                 <div>
-                                    <div className="text-sm font-medium">{label}</div>
-                                    <div className="text-[10px] text-muted-foreground capitalize">{type}</div>
+                                    <div className={cn(
+                                        "text-sm font-medium transition-colors",
+                                        isActive && "text-primary"
+                                    )}>
+                                        {label}
+                                    </div>
+                                    <div className="text-[10px] text-muted-foreground capitalize flex items-center gap-1">
+                                        {type}
+                                        {isActive && (
+                                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-primary/20 text-primary animate-pulse">
+                                                ACTIVO
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
                             <div className="flex items-center gap-2">
                                 <Button
-                                    variant={isRecording ? "default" : "outline"}
+                                    variant={isRecording ? "default" : isActive ? "secondary" : "outline"}
                                     size="sm"
                                     className={cn(
-                                        "h-8 px-4 font-mono text-xs min-w-[60px]",
-                                        isRecording && "animate-pulse"
+                                        "h-8 px-4 font-mono text-xs min-w-[60px] transition-all duration-200",
+                                        isRecording && "animate-pulse",
+                                        isActive && !isRecording && "ring-2 ring-primary/50 bg-primary/10 text-primary font-bold"
                                     )}
                                     onClick={() => setRecordingKey(type)}
                                 >
