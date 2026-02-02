@@ -127,7 +127,7 @@ export function useVisemeAnalyzer(options: UseVisemeAnalyzerOptions = {}) {
     const animationFrameRef = useRef<number | null>(null);
 
     // Analysis data refs (avoid re-allocation)
-    const frequencyDataRef = useRef<Uint8Array | null>(null);
+    const frequencyDataRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
     const previousVisemesRef = useRef<VisemeWeights>({ aa: 0, ee: 0, ih: 0, oh: 0, ou: 0, sil: 1 });
     const silenceCountRef = useRef(0);
 
@@ -223,11 +223,12 @@ export function useVisemeAnalyzer(options: UseVisemeAnalyzerOptions = {}) {
         }
 
         // Get current frequency data
-        analyserRef.current.getByteFrequencyData(frequencyDataRef.current);
+        const frequencyData = frequencyDataRef.current;
+        analyserRef.current.getByteFrequencyData(frequencyData);
 
         // Analyze for visemes
         const visemes = analyzeVisemes(
-            frequencyDataRef.current,
+            frequencyData,
             audioContextRef.current.sampleRate
         );
 
