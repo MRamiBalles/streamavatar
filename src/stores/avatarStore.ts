@@ -102,6 +102,9 @@ interface AvatarStore {
   obfuscationMode: boolean; // Immediate data disposal after render
   privacyShieldActive: boolean; // Visual indicator and status
 
+  // Graphics Quality
+  graphicsQuality: 'low' | 'high';
+
   // Language
   language: Language;
 
@@ -141,6 +144,9 @@ interface AvatarStore {
   // Actions - Privacy
   setObfuscationMode: (enabled: boolean) => void;
   setPrivacyShieldActive: (active: boolean) => void;
+
+  // Actions - Graphics
+  setGraphicsQuality: (quality: 'low' | 'high') => void;
 
   // Actions - Language
   setLanguage: (lang: Language) => void;
@@ -187,6 +193,7 @@ const defaultState = {
   obfuscationMode: false,
   privacyShieldActive: true,
   language: 'es' as Language,
+  graphicsQuality: 'high' as 'low' | 'high',
 };
 
 // =============================================================================
@@ -299,6 +306,9 @@ export const useAvatarStore = create<AvatarStore>()(
       // Language Actions
       setLanguage: (lang) => set({ language: lang }),
 
+      // Actions - Graphics
+      setGraphicsQuality: (quality) => set({ graphicsQuality: quality }),
+
       // Config Management
       exportConfig: () => {
         const state = get();
@@ -347,6 +357,7 @@ export const useAvatarStore = create<AvatarStore>()(
         currentParts: state.currentParts,
         activePresetId: state.activePresetId,
         hotkeyMappings: state.hotkeyMappings,
+        graphicsQuality: state.graphicsQuality,
       }),
     }
   )

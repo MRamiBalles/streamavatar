@@ -114,6 +114,26 @@ export const SettingsPanel = () => {
 
       <div className="h-px bg-border" />
 
+      {/* Graphics Quality */}
+      <div className="flex items-center justify-between space-x-4">
+        <div className="flex flex-col">
+          <Label htmlFor="hq-mode" className="font-medium text-white">{t.settings === 'Ajustes' ? 'Modo Alta Calidad' : 'High Quality Mode'}</Label>
+          <span className="text-xs text-muted-foreground">
+            {t.settings === 'Ajustes' ? 'Habilita Bloom, Sombras y Tone Mapping.' : 'Enables Bloom, Shadows, and Tone Mapping.'}
+          </span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <button
+            className={`w-12 h-6 rounded-full transition-colors ${useAvatarStore.getState().graphicsQuality === 'high' ? 'bg-primary' : 'bg-gray-600'}`}
+            onClick={() => useAvatarStore.getState().setGraphicsQuality(useAvatarStore.getState().graphicsQuality === 'high' ? 'low' : 'high')}
+          >
+            <div className={`w-4 h-4 rounded-full bg-white transform transition-transform ${useAvatarStore.getState().graphicsQuality === 'high' ? 'translate-x-7' : 'translate-x-1'}`} />
+          </button>
+        </div>
+      </div>
+
+      <div className="h-px bg-border" />
+
       {/* Audio Reactive */}
       <AudioReactiveControls />
 

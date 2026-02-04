@@ -1,6 +1,8 @@
 import { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Environment, ContactShadows } from '@react-three/drei';
+import { OrbitControls, Environment, ContactShadows, Html, useProgress } from '@react-three/drei';
+import { EffectComposer, Bloom, Vignette, ToneMapping } from '@react-three/postprocessing';
+import { BlendFunction } from 'postprocessing';
 import { useAvatarStore, AvatarType } from '@/stores/avatarStore';
 import { PillAvatar } from './PillAvatar';
 import { BoxyAvatar } from './BoxyAvatar';
@@ -39,19 +41,22 @@ const AvatarModel = ({ type }: { type: AvatarType }) => {
   }
 };
 
-const LoadingFallback = () => (
-  <mesh>
-    <sphereGeometry args={[0.5, 16, 16]} />
-    <meshStandardMaterial color="#666" wireframe />
-  </mesh>
-);
+const LoadingFallback = () => {
+  const { progress } = useProgress();
+  return (
+    <Html center>
+      <div className="text-white font-bold text-xl">{progress.toFixed(0)}%</div>
+    </Html>
+  );
+};
 
 interface AvatarRendererProps {
   isCleanView?: boolean;
 }
 
 export const AvatarRenderer = ({ isCleanView = false }: AvatarRendererProps) => {
-  const { selectedAvatar, background } = useAvatarStore();
+  const { selectedAvatar, background, graphicsQuality } = useAvatarStore();
+  const isHighQuality = graphicsQuality === 'high';
 
   const getBackgroundClass = () => {
     switch (background) {
@@ -62,41 +67,82 @@ export const AvatarRenderer = ({ isCleanView = false }: AvatarRendererProps) => 
       case 'transparent':
         return 'bg-transparent';
       default:
-        return '';
+        // Improved gradient background
+        return 'bg-gradient-to-b from-gray-900 to-gray-800';
     }
   };
 
   return (
     <div className={`canvas-container w-full h-full ${getBackgroundClass()}`}>
       <Canvas
+        shadows
         camera={{ position: [0, 0, 4], fov: 50 }}
         gl={{
           alpha: background === 'transparent',
-          antialias: true,
+          antialias: !isHighQuality, // Let EffectComposer handle AA in HQ mode
           preserveDrawingBuffer: true,
+          toneMappingExposure: 1.2,
         }}
+        dpr={window.devicePixelRatio}
       >
         <Suspense fallback={<LoadingFallback />}>
-          {/* Lighting */}
+          {/* BASE LIGHTING: Studio setup */}
           <ambientLight intensity={0.5} />
-          <directionalLight position={[5, 5, 5]} intensity={1} castShadow />
-          <directionalLight position={[-5, 3, -5]} intensity={0.3} color="#a855f7" />
-          <pointLight position={[0, -2, 2]} intensity={0.5} color="#ec4899" />
+          <spotLight
+            position={[5, 10, 5]}
+            angle={0.15}
+            penumbra={1}
+            intensity={1}
+            castShadow
+            shadow-mapSize={[1024, 1024]}
+          />
+          <pointLight position={[-5, 5, -5]} intensity={0.5} color="#a855f7" />
 
-          {/* Avatar */}
-          <AvatarModel type={selectedAvatar} />
+          {/* IBL: Realistic reflections */}
+          <Environment preset="city" />
 
-          {/* Environment & Shadows */}
-          {background === 'dark' && (
-            <>
-              <Environment preset="city" />
-              <ContactShadows
-                position={[0, -1.5, 0]}
-                opacity={0.5}
-                blur={2}
-                far={3}
+          {/* AVATAR */}
+          <group position={[0, -1, 0]}>
+            <AvatarModel type={selectedAvatar} />
+          </group>
+
+          {/* CONTACT SHADOWS: Grounding the avatar */}
+          <ContactShadows
+            resolution={1024}
+            scale={10}
+            blur={2}
+            opacity={0.5}
+            far={10}
+            color="#000000"
+          />
+
+          {/* POST-PROCESSING PIPELINE (High Quality Only) */}
+          {isHighQuality && background !== 'transparent' && background !== 'chroma-green' && background !== 'chroma-blue' && (
+            <EffectComposer disableNormalPass>
+              {/* Bloom: only very bright things glow */}
+              <Bloom
+                luminanceThreshold={1.1}
+                mipmapBlur
+                intensity={0.5}
+                radius={0.4}
               />
-            </>
+              {/* Vignette: Cinematic focus */}
+              <Vignette
+                eskil={false}
+                offset={0.1}
+                darkness={0.5}
+              />
+              {/* ToneMapping: Cinematic colors */}
+              <ToneMapping
+                blendFunction={BlendFunction.NORMAL}
+                adaptive={true}
+                resolution={256}
+                middleGrey={0.6}
+                maxLuminance={16.0}
+                averageLuminance={1.0}
+                adaptationRate={1.0}
+              />
+            </EffectComposer>
           )}
 
           {/* Controls - only in non-clean view */}
