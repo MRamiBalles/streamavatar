@@ -13,6 +13,7 @@ import { EmojiAvatar } from './EmojiAvatar';
 import { CustomModelAvatar } from './CustomModelAvatar';
 import { CompositeAvatar } from './CompositeAvatar';
 import { VRMAvatar } from './VRMAvatar';
+import { SplatScene } from '../scene/SplatScene';
 
 const AvatarModel = ({ type }: { type: AvatarType }) => {
   const { customModel } = useAvatarStore();
@@ -64,6 +65,9 @@ export const AvatarRenderer = ({ isCleanView = false }: AvatarRendererProps) => 
   const { selectedAvatar, background, graphicsQuality } = useAvatarStore();
   const isHighQuality = graphicsQuality === 'high';
 
+  // Experimental: Hardcoded Splat URL for demo (replace with store value later)
+  const splatUrl = "https://antimatter15.com/splat/nike.splat"; // Public demo splat
+
   const getBackgroundClass = () => {
     switch (background) {
       case 'chroma-green':
@@ -72,6 +76,8 @@ export const AvatarRenderer = ({ isCleanView = false }: AvatarRendererProps) => 
         return 'chroma-blue';
       case 'transparent':
         return 'bg-transparent';
+      case 'splat': // New experimental mode
+        return 'bg-black';
       default:
         // Improved gradient background
         return 'bg-gradient-to-b from-gray-900 to-gray-800';
@@ -113,14 +119,21 @@ export const AvatarRenderer = ({ isCleanView = false }: AvatarRendererProps) => 
           </group>
 
           {/* CONTACT SHADOWS: Grounding the avatar */}
-          <ContactShadows
-            resolution={1024}
-            scale={10}
-            blur={2}
-            opacity={0.5}
-            far={10}
-            color="#000000"
-          />
+          {background !== 'splat' && (
+            <ContactShadows
+              resolution={1024}
+              scale={10}
+              blur={2}
+              opacity={0.5}
+              far={10}
+              color="#000000"
+            />
+          )}
+
+          {/* EXPERIMENTAL: 3D Gaussian Splatting Background */}
+          {background === 'splat' && (
+            <SplatScene url={splatUrl} />
+          )}
 
           {/* POST-PROCESSING PIPELINE (High Quality Only) */}
           {isHighQuality && background !== 'transparent' && background !== 'chroma-green' && background !== 'chroma-blue' && (

@@ -17,7 +17,9 @@ import { persist } from 'zustand/middleware';
 
 export type AvatarType = 'pill' | 'boxy' | 'sphere' | 'cat' | 'ghost' | 'emoji' | 'custom' | 'composite';
 export type ExpressionType = 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised';
-export type BackgroundType = 'dark' | 'chroma-green' | 'chroma-blue' | 'transparent';
+export type BackgroundType = 'dark' | 'chroma-green' | 'chroma-blue'
+  | 'transparent'
+  | 'splat'; // Experimental 3DGS
 export type Language = 'es' | 'en';
 
 interface FaceData {
