@@ -92,6 +92,16 @@ export const StreamPanel = () => {
             {t.transparent}
           </Button>
         </div>
+        <div className="grid grid-cols-1 gap-2 pt-2">
+          <Button
+            variant={background === 'splat' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setBackground('splat')}
+            className="w-full border-primary/50 text-primary hover:bg-primary/10"
+          >
+            {t.splat}
+          </Button>
+        </div>
       </div>
 
       {/* Documentation Link */}

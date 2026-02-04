@@ -419,7 +419,8 @@ export const translations = {
     quickBackground: 'Fondo rápido',
     chromaGreen: 'Chroma Verde',
     chromaBlue: 'Chroma Azul',
-    viewFullGuide: 'Ver guía completa',
+    viewFullGuide: 'Ver guía completa →',
+    splat: 'Fondos 3DGS (Beta)',
     linkCopied: '¡Link copiado!',
     useAsOBS: 'Usa este link como Browser Source en OBS',
 
@@ -558,7 +559,8 @@ export const translations = {
     quickBackground: 'Quick Background',
     chromaGreen: 'Chroma Green',
     chromaBlue: 'Chroma Blue',
-    viewFullGuide: 'View full guide',
+    viewFullGuide: 'View Full Setup Guide →',
+    splat: '3DGS Background (Beta)',
     linkCopied: 'Link copied!',
     useAsOBS: 'Use this link as Browser Source in OBS',
 
