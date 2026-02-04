@@ -4,8 +4,9 @@ import { useGLTF } from '@react-three/drei';
 import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
 import { useFrame, useLoader } from '@react-three/fiber';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import * as THREE from 'three';
+import * as THREE from 'three'; // keep three import
 import { useAvatarStore } from '@/stores/avatarStore';
+import { useFaceRetargeting } from '@/hooks/useFaceRetargeting';
 
 interface VRMAvatarProps {
     url: string;
@@ -36,44 +37,16 @@ export const VRMAvatar = ({ url }: VRMAvatarProps) => {
         console.log("VRM Model Loaded:", vrmData);
     }, [gltf]);
 
-    // Animation Loop (Spring Bones & Face Tracking)
+    // Animation Loop (Spring Bones)
     useFrame((state, delta) => {
         if (!vrm) return;
 
-        // 1. Update Physics (Spring Bones)
-        // This adds the "secondary motion" to hair and clothes
+        // Update Physics (Spring Bones)
         vrm.update(delta);
-
-        // 2. Face Retargeting (MediaPipe -> VRM Blendshapes)
-        if (vrm.expressionManager) {
-            // Blink
-            // Map average blink to VRM Blink
-            const blinkValue = (faceData.leftEyeBlink + faceData.rightEyeBlink) / 2;
-            vrm.expressionManager.setValue('blink', blinkValue);
-
-            // Mouth (Simple mapping for now - will be replaced by Audio2Face later)
-            // MediaPipe mouthOpen is roughly 0-1
-            vrm.expressionManager.setValue('aa', faceData.mouthOpen);
-
-            // Update expressions
-            vrm.expressionManager.update();
-        }
-
-        // 3. Head Rotation
-        if (vrm.humanoid) {
-            const headNode = vrm.humanoid.getNormalizedBoneNode('head');
-            if (headNode) {
-                // Apply rotation from faceData (which comes from MediaPipe)
-                // Note: MediaPipe data needs coordinate system conversion typically
-                // e.g., MediaPipe Y is inverted relative to Three.js
-                headNode.rotation.set(
-                    faceData.headRotation.x,
-                    faceData.headRotation.y,
-                    faceData.headRotation.z
-                );
-            }
-        }
     });
+
+    // Use the Retargeting Bridge for expressions and rotation
+    useFaceRetargeting(vrm);
 
     return <primitive object={gltf.scene} />;
 };
