@@ -12,6 +12,7 @@ import { GhostAvatar } from './GhostAvatar';
 import { EmojiAvatar } from './EmojiAvatar';
 import { CustomModelAvatar } from './CustomModelAvatar';
 import { CompositeAvatar } from './CompositeAvatar';
+import { VRMAvatar } from './VRMAvatar';
 
 const AvatarModel = ({ type }: { type: AvatarType }) => {
   const { customModel } = useAvatarStore();
@@ -33,6 +34,11 @@ const AvatarModel = ({ type }: { type: AvatarType }) => {
       return <CompositeAvatar />;
     case 'custom':
       if (customModel) {
+        // Determine if it is a VRM or standard GLB
+        // For now, we assume user marked it or we detect extension
+        if (customModel.type === 'vrm' || customModel.url.endsWith('.vrm')) {
+          return <VRMAvatar url={customModel.url} />;
+        }
         return <CustomModelAvatar modelUrl={customModel.url} modelType={customModel.type} />;
       }
       return <PillAvatar />;
