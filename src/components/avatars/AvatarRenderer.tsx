@@ -65,8 +65,9 @@ export const AvatarRenderer = ({ isCleanView = false }: AvatarRendererProps) => 
   const { selectedAvatar, background, graphicsQuality } = useAvatarStore();
   const isHighQuality = graphicsQuality === 'high';
 
-  // Experimental: Hardcoded Splat URL for demo (replace with store value later)
-  const splatUrl = "https://antimatter15.com/splat/nike.splat"; // Public demo splat
+  // Experimental: Hardcoded Splat URL for demo
+  // Memory optimization: Only defined when active to avoid pre-fetching in some loaders
+  const splatUrl = background === 'splat' ? "https://antimatter15.com/splat/nike.splat" : null;
 
   const getBackgroundClass = () => {
     switch (background) {
@@ -131,7 +132,7 @@ export const AvatarRenderer = ({ isCleanView = false }: AvatarRendererProps) => 
           )}
 
           {/* EXPERIMENTAL: 3D Gaussian Splatting Background */}
-          {background === 'splat' && (
+          {background === 'splat' && splatUrl && (
             <SplatScene url={splatUrl} />
           )}
 
