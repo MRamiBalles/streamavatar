@@ -8,7 +8,7 @@ import { useAvatarStore } from '@/stores/avatarStore';
  * Maps MediaPipe ARKit blendshapes (52 shapes) to standard VRM expressions.
  * This acts as the "Standardization Bridge" between the webcam tracking and the Avatar.
  */
-export const useFaceRetargeting = (vrm: VRM | null) => {
+export const useFaceRetargeting = (vrm: VRM | null, options?: { ignoreMouth?: boolean }) => {
     const { faceData } = useAvatarStore();
 
     useEffect(() => {
@@ -30,13 +30,16 @@ export const useFaceRetargeting = (vrm: VRM | null) => {
         }
 
         // 2. MOUTH MAPPING (Basic Vowel Approximation)
-        // Real Audio2Face will replace this, but for now we map openness to "Aa"
-        // In a full implementation, we would map jawOpen, mouthFunnel, etc.
-        const mouthOpen = faceData.mouthOpen || 0;
+        // Only apply if not ignored (e.g., when Audio Lip Sync is active)
+        if (!options?.ignoreMouth) {
+            // Real Audio2Face will replace this, but for now we map openness to "Aa"
+            // In a full implementation, we would map jawOpen, mouthFunnel, etc.
+            const mouthOpen = faceData.mouthOpen || 0;
 
-        // Thresholds for simple vowel approximation based on mouth shape
-        // This is a heuristic until we have the Phonetic analyzer
-        vrm.expressionManager.setValue('aa', mouthOpen);
+            // Thresholds for simple vowel approximation based on mouth shape
+            // This is a heuristic until we have the Phonetic analyzer
+            vrm.expressionManager.setValue('aa', mouthOpen);
+        }
 
         // If we had more detailed ARKit data in faceData (requires updating face tracker to expose all 52 shapes)
         // we would map:
@@ -60,5 +63,5 @@ export const useFaceRetargeting = (vrm: VRM | null) => {
 
         vrm.expressionManager.update();
 
-    }, [vrm, faceData]);
+    }, [vrm, faceData, options?.ignoreMouth]);
 };

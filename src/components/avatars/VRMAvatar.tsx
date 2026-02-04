@@ -7,6 +7,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import * as THREE from 'three'; // keep three import
 import { useAvatarStore } from '@/stores/avatarStore';
 import { useFaceRetargeting } from '@/hooks/useFaceRetargeting';
+import { useAudioLipSync } from '@/hooks/useAudioLipSync';
 
 interface VRMAvatarProps {
     url: string;
@@ -14,7 +15,13 @@ interface VRMAvatarProps {
 
 export const VRMAvatar = ({ url }: VRMAvatarProps) => {
     const [vrm, setVrm] = useState<any>(null);
-    const { faceData } = useAvatarStore();
+    const { faceData, lipSyncEnabled, audioSensitivity } = useAvatarStore();
+
+    // Initialize Lip Sync
+    const lipSync = useAudioLipSync({
+        autoStart: lipSyncEnabled,
+        intensity: audioSensitivity
+    });
 
     // Custom loader to register the VRM plugin
     const gltf = useLoader(GLTFLoader, url, (loader) => {
@@ -43,10 +50,16 @@ export const VRMAvatar = ({ url }: VRMAvatarProps) => {
 
         // Update Physics (Spring Bones)
         vrm.update(delta);
+
+        // Apply Lip Sync if enabled (overrides face tracking for mouth)
+        if (lipSync.isActive) {
+            lipSync.applyToVRM(vrm);
+        }
     });
 
-    // Use the Retargeting Bridge for expressions and rotation
-    useFaceRetargeting(vrm);
+    // Use the Retargeting Bridge for expressions (eyes/brows) and rotation
+    // Pass 'ignoreMouth: lipSync.isActive' to prevent conflict
+    useFaceRetargeting(vrm, { ignoreMouth: lipSync.isActive });
 
     return <primitive object={gltf.scene} />;
 };
