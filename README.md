@@ -9,20 +9,46 @@
 
 ---
 
-## ¿Qué es StreamAvatar?
+# StreamAvatar: Real-Time Hybrid Neural Avatar System for Web-Native Virtual Production
 
-StreamAvatar te permite crear y animar un avatar 3D directamente en tu navegador, usando solo tu webcam. Ideal para streamers, creadores de contenido, educadores o cualquiera que quiera aparecer online sin mostrar su rostro.
-
-### Características Principales
-
-- 🎭 **Soporte VRM Profesional** — Compatibilidad total con modelos `.vrm` (v0/v1).
-- 🦴 **Spring Bones & Physics** — Física en tiempo real para pelo, ropa y accesorios.
-- 🎤 **Audio2Face (Visemas Phonetic)** — Sincronización labial avanzada basada en análisis de formantes FFT (A/E/I/O/U).
-- 📷 **Tracking Facial Dual** — MediaPipe ARKit blendshapes con respaldo fonético.
-- 🔒 **Privacy Shield** — Procesamiento 100% local con Modo Ofuscación para descarte inmediato de datos biométricos.
-- 🌐 **Clean View (OBS)** — URL configurable para integración directa en OBS con deep-linking.
+**StreamAvatar** es un motor de avatares de alto rendimiento diseñado para la nueva era de la producción virtual. Implementa una arquitectura bimodal (Audio + Visual) que permite animar personajes 3D de grado profesional directamente en el navegador, con latencia mínima y procesamiento 100% local (*Privacy-First*).
 
 ---
+
+## 🚀 Key Technical Features
+
+### 1. Hybrid Neural Rendering (3DGS)
+Basado en los últimos avances en **Gaussian Splatting (3DGS)**, StreamAvatar permite insertar avatares tradicionales en entornos fotorrealistas capturados del mundo real.
+- *Referencia:* Arquitectura inspirada en **TaoAvatar (2025)** y **UniMGS**.
+
+### 2. Standardized VRM Character Pipeline
+Soporte completo para el estándar **VRM** (0.0/1.0).
+- **SpringBone Physics**: Movimiento natural de pelo y ropa.
+- **Humanoid Retargeting**: Mapeo instantáneo desde MediaPipe ARKit a visemas VRM.
+
+### 3. Audio2Face: Phonetic Lip-Sync
+A diferencia de los sistemas basados en volumen, StreamAvatar utiliza un **Analizador de Formantes** para descomponer la voz en visemas fonéticos (A, I, U, E, O).
+- *Referencia:* Técnica alineada con **Audio2Face-3D** para máxima expresividad.
+
+### 4. Enterprise-Grade Performance & Privacy
+- **SharedArrayBuffer Support**: Inferencia multihilo para un rastreo fluido a >60 FPS.
+- **IndexedDB Persistent Storage**: Gestión de activos de gran tamaño con política LRU.
+- **Zero-Cloud Architecture**: Ningún dato de imagen o audio sale del navegador del usuario.
+
+## 🛠️ Tech Stack & Scientific Core
+- **Engine:** Three.js / React Three Fiber.
+- **Tracking:** MediaPipe Face Landmarker.
+- **Physics:** @pixiv/three-vrm (MKK Physics).
+- **Research Foundations:** SMPL-X Topology, SDS (Score Distillation Sampling), Hybrid Mesh-Neural Rasterization.
+
+## 📈 Deployment
+```bash
+npm install
+npm run dev
+```
+
+---
+*Proyecto desarrollado bajo los estándares de soberanía digital y excelencia técnica para entornos audiovisuales.*
 
 ## Roadmap v2.0+
 

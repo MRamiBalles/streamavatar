@@ -1,13 +1,9 @@
-import { Pill, Box, Circle, Cat, Ghost, Smimport { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useEffect } from 'react';
-import { useAvatarStore } from '@/stores/avatarStore';
-import Index from "./pages/Index";
-import CleanView from "./pages/CleanView";
-import NotFound from "./pages/NotFound"; el } from '@/lib/db';
+import { Pill, Box, Circle, Cat, Ghost, Smile, Upload } from 'lucide-react';
+import { useAvatarStore, AvatarType, useTranslation } from '@/stores/avatarStore';
+import { cn } from '@/lib/utils';
+import { useRef, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { saveModel } from '@/lib/db';
 
 const avatarOptions: { type: AvatarType; nameKey: 'peanut' | 'robot' | 'slime' | 'cat' | 'ghost' | 'emoji'; icon: React.ElementType }[] = [
   { type: 'pill', nameKey: 'peanut', icon: Pill },

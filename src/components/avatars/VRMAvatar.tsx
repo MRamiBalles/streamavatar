@@ -1,13 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
-import { useGraph } from '@react-three/fiber'; // Correct import for useGraph
 import { useGLTF } from '@react-three/drei';
 import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
-import { useFrame, useLoader } from '@react-three/fiber';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import * as THREE from 'three'; // keep three import
-import { useAvatarStore } from '@/stores/avatarStore';
-import { useFaceRetargeting } from '@/hooks/useFaceRetargeting';
-import { useAudioLipSync } from '@/hooks/useAudioLipSync';
+import { AnimationController } from './AnimationController';
 
 interface VRMAvatarProps {
     url: string;
@@ -15,51 +9,49 @@ interface VRMAvatarProps {
 
 export const VRMAvatar = ({ url }: VRMAvatarProps) => {
     const [vrm, setVrm] = useState<any>(null);
-    const { faceData, lipSyncEnabled, audioSensitivity } = useAvatarStore();
 
-    // Initialize Lip Sync
-    const lipSync = useAudioLipSync({
-        autoStart: lipSyncEnabled,
-        intensity: audioSensitivity
+    // 1. ASSET LOADING (Visual Layer)
+    const { scene } = useGLTF(url, true, (loader) => {
+        loader.register((parser) => new VRMLoaderPlugin(parser));
     });
 
-    // Custom loader to register the VRM plugin
-    const gltf = useLoader(GLTFLoader, url, (loader) => {
-        loader.register((parser) => {
-            return new VRMLoaderPlugin(parser);
-        });
-    });
-
-    // Initialize VRM
-    useEffect(() => {
-        if (!gltf) return;
-
-        const vrmData = (gltf as any).userData.vrm;
-
-        // VRMUtils helps to rotate the model to face forward (VRM standard is +Z, Three.js is +Z but imported models often vary)
-        VRMUtils.rotateVRM0(vrmData);
-
-        setVrm(vrmData);
-
-        console.log("VRM Model Loaded:", vrmData);
-    }, [gltf]);
-
-    // Animation Loop (Spring Bones)
-    useFrame((state, delta) => {
-        if (!vrm) return;
-
-        // Update Physics (Spring Bones)
-        vrm.update(delta);
-
-        // Apply Lip Sync if enabled (overrides face tracking for mouth)
-        if (lipSync.isActive) {
-            lipSync.applyToVRM(vrm);
+    // 2. NORMALIZATION (TaoAvatar style)
+    const clone = useMemo(() => {
+        const v = scene.userData.vrm;
+        if (v) {
+            // VRM 1.0 logic (assuming we use v2+ of three-vrm)
+            VRMUtils.removeUnusedVertices(v.scene);
+            VRMUtils.combinePrefixedMeshes(v.scene);
+            v.scene.traverse((obj: any) => {
+                obj.frustumCulled = false;
+            });
+            setVrm(v); // Set the VRM object to state after normalization
         }
-    });
+    }, [scene]); // Re-run when the scene changes
 
-    // Use the Retargeting Bridge for expressions (eyes/brows) and rotation
-    // Pass 'ignoreMouth: lipSync.isActive' to prevent conflict
-    useFaceRetargeting(vrm, { ignoreMouth: lipSync.isActive });
+    // Placeholder for other hooks/logic that might use vrm
+    // For example, if you had a useFrame hook for physics updates:
+    // useFrame((_, delta) => {
+    //     if (vrm) {
+    //         vrm.update(delta);
+    //     }
+    // });
 
-    return <primitive object={gltf.scene} />;
+    // Placeholder for lip sync or face retargeting if they were defined
+    // if (lipSync.isActive) {
+    //     lipSync.applyToVRM(vrm);
+    // }
+    // useFaceRetargeting(vrm, { ignoreMouth: lipSync.isActive });
+
+    if (!vrm) return null;
+
+    return (
+        <group>
+            {/* RENDER LAYER */}
+            <primitive object={vrm.scene} />
+
+            {/* MOTION LAYER (AHA! Decoupled Architecture) */}
+            <AnimationController vrm={vrm} />
+        </group>
+    );
 };
