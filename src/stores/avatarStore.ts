@@ -9,7 +9,8 @@
  */
 
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { getModel, saveModel, deleteModel } from '@/lib/db';
 
 // =============================================================================
 // Type Definitions
@@ -114,7 +115,8 @@ interface AvatarStore {
   setSelectedAvatar: (avatar: AvatarType) => void;
   setAvatarColor: (color: string) => void;
   setAvatarScale: (scale: number) => void;
-  setCustomModel: (model: CustomModel | null) => void;
+  setCustomModel: (model: CustomModel | null) => Promise<void>;
+  initPersistentModels: () => Promise<void>;
 
   // Actions - Composite & Presets
   addPart: (type: AvatarPart['type']) => void;
@@ -211,10 +213,44 @@ export const useAvatarStore = create<AvatarStore>()(
       setSelectedAvatar: (avatar) => set({ selectedAvatar: avatar }),
       setAvatarColor: (color) => set({ avatarColor: color }),
       setAvatarScale: (scale) => set({ avatarScale: scale }),
-      setCustomModel: (model) => set({
-        customModel: model,
-        selectedAvatar: model ? 'custom' : get().selectedAvatar === 'custom' ? 'pill' : get().selectedAvatar
-      }),
+      setCustomModel: async (model) => {
+        // If removing
+        if (!model) {
+          const current = get().customModel;
+          if (current?.url) URL.revokeObjectURL(current.url);
+          await deleteModel('custom-avatar');
+          set({ customModel: null, selectedAvatar: 'pill' });
+          return;
+        }
+
+        // If it's a new upload (has data or is just metadata)
+        // We assume the caller provides the File/Blob for storage if it's a new upload
+        set({
+          customModel: model,
+          selectedAvatar: 'custom'
+        });
+      },
+
+      // Initialize persistent models on app start
+      initPersistentModels: async () => {
+        try {
+          const saved = await getModel('custom-avatar');
+          if (saved && saved.data) {
+            const url = URL.createObjectURL(saved.data);
+            set({
+              customModel: {
+                url,
+                name: saved.name,
+                type: saved.type
+              },
+              selectedAvatar: 'custom' // Ensure avatar type is 'custom' if a model is loaded
+            });
+            console.log('[Store] Restored persistent model:', saved.name);
+          }
+        } catch (e) {
+          console.error('[Store] Failed to restore model:', e);
+        }
+      },
 
       // Composite & Preset Actions
       addPart: (type) => set((state) => ({

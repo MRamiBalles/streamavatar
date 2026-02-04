@@ -18,34 +18,35 @@ import { SplatScene } from '../scene/SplatScene';
 const AvatarModel = ({ type }: { type: AvatarType }) => {
   const { customModel } = useAvatarStore();
 
-  switch (type) {
-    case 'pill':
-      return <PillAvatar />;
-    case 'boxy':
-      return <BoxyAvatar />;
-    case 'sphere':
-      return <SphereAvatar />;
-    case 'cat':
-      return <CatAvatar />;
-    case 'ghost':
-      return <GhostAvatar />;
-    case 'emoji':
-      return <EmojiAvatar />;
-    case 'composite':
-      return <CompositeAvatar />;
-    case 'custom':
-      if (customModel) {
-        // Determine if it is a VRM or standard GLB
-        // For now, we assume user marked it or we detect extension
-        if (customModel.type === 'vrm' || customModel.url.endsWith('.vrm')) {
-          return <VRMAvatar url={customModel.url} />;
+  // Unified rendering logic: 
+  // Primitives are treated as separate components for now, 
+  // but they all live within the same global transformation group.
+  const renderModel = () => {
+    switch (type) {
+      case 'pill': return <PillAvatar />;
+      case 'boxy': return <BoxyAvatar />;
+      case 'sphere': return <SphereAvatar />;
+      case 'cat': return <CatAvatar />;
+      case 'ghost': return <GhostAvatar />;
+      case 'emoji': return <EmojiAvatar />;
+      case 'composite': return <CompositeAvatar />;
+      case 'custom':
+        if (customModel) {
+          if (customModel.type === 'vrm' || customModel.url.endsWith('.vrm')) {
+            return <VRMAvatar url={customModel.url} />;
+          }
+          return <CustomModelAvatar modelUrl={customModel.url} modelType={customModel.type} />;
         }
-        return <CustomModelAvatar modelUrl={customModel.url} modelType={customModel.type} />;
-      }
-      return <PillAvatar />;
-    default:
-      return <PillAvatar />;
-  }
+        return <PillAvatar />;
+      default: return <PillAvatar />;
+    }
+  };
+
+  return (
+    <Suspense fallback={null}>
+      {renderModel()}
+    </Suspense>
+  );
 };
 
 const LoadingFallback = () => {
