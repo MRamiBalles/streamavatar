@@ -13,24 +13,26 @@
  * 
  * Example: /view?avatar=cat&color=ff6b35&bg=chroma-green&scale=1.2
  * 
+ * Security: All URL parameters are validated with length limits and 
+ * whitelist validation to prevent malformed configurations.
+ * 
  * @author Manuel Ramírez Ballesteros
  * @license MIT
  */
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { AvatarRenderer } from '@/components/avatars/AvatarRenderer';
-import { useAvatarStore } from '@/stores/avatarStore';
+import { useAvatarStore, BackgroundType } from '@/stores/avatarStore';
 
 // =============================================================================
 // Types & Constants
 // =============================================================================
 
-import { BackgroundType } from '@/stores/avatarStore';
-
 type AvatarType = 'pill' | 'sphere' | 'boxy' | 'cat' | 'ghost' | 'emoji' | 'custom';
 
 const VALID_AVATARS: AvatarType[] = ['pill', 'sphere', 'boxy', 'cat', 'ghost', 'emoji', 'custom'];
+// Note: 'splat' is excluded from CleanView as it's experimental
 const VALID_BACKGROUNDS: BackgroundType[] = ['transparent', 'chroma-green', 'chroma-blue', 'dark'];
 
 const BACKGROUND_COLORS: Record<BackgroundType, string> = {
@@ -38,10 +40,34 @@ const BACKGROUND_COLORS: Record<BackgroundType, string> = {
   'chroma-green': '#00ff00',
   'chroma-blue': '#0000ff',
   'dark': '#0a0a0a',
+  'splat': '#0a0a0a', // Fallback for splat (not used in CleanView)
 };
 
 // =============================================================================
-// URL Parameter Parser
+// Security: Parameter Length Limits
+// =============================================================================
+
+const MAX_PARAM_LENGTH = 20; // Maximum characters for any URL parameter
+
+/**
+ * Safely get a URL parameter with length validation
+ * Returns null if parameter exceeds maximum length
+ */
+function safeGetParam(searchParams: URLSearchParams, key: string): string | null {
+  const value = searchParams.get(key);
+  if (value === null) return null;
+  
+  // Reject overly long parameters
+  if (value.length > MAX_PARAM_LENGTH) {
+    console.warn(`[CleanView] Parameter "${key}" exceeded max length (${MAX_PARAM_LENGTH}), ignoring`);
+    return null;
+  }
+  
+  return value;
+}
+
+// =============================================================================
+// URL Parameter Parser with Enhanced Validation
 // =============================================================================
 
 interface URLConfig {
@@ -50,34 +76,93 @@ interface URLConfig {
   background: BackgroundType;
   scale: number;
   idleEnabled: boolean;
+  validationErrors: string[];
 }
 
 function parseURLConfig(searchParams: URLSearchParams): URLConfig {
-  // Avatar type
-  const avatarParam = searchParams.get('avatar')?.toLowerCase() as AvatarType | undefined;
-  const avatar = avatarParam && VALID_AVATARS.includes(avatarParam) ? avatarParam : 'pill';
+  const validationErrors: string[] = [];
 
-  // Color (hex without #)
-  const colorParam = searchParams.get('color');
-  let color: string | null = null;
-  if (colorParam && /^[0-9a-fA-F]{6}$/.test(colorParam)) {
-    color = `#${colorParam}`;
+  // Avatar type - whitelist validation
+  const avatarParam = safeGetParam(searchParams, 'avatar')?.toLowerCase();
+  let avatar: AvatarType = 'pill';
+  if (avatarParam) {
+    if (VALID_AVATARS.includes(avatarParam as AvatarType)) {
+      avatar = avatarParam as AvatarType;
+    } else {
+      validationErrors.push(`Invalid avatar type: "${avatarParam}"`);
+    }
   }
 
-  // Background
-  const bgParam = searchParams.get('bg')?.toLowerCase() as BackgroundType | undefined;
-  const background = bgParam && VALID_BACKGROUNDS.includes(bgParam) ? bgParam : 'transparent';
+  // Color - strict hex validation (6 characters, alphanumeric only)
+  const colorParam = safeGetParam(searchParams, 'color');
+  let color: string | null = null;
+  if (colorParam) {
+    // Only allow exactly 6 hex characters
+    if (/^[0-9a-fA-F]{6}$/.test(colorParam)) {
+      color = `#${colorParam}`;
+    } else {
+      validationErrors.push(`Invalid color format: "${colorParam}"`);
+    }
+  }
 
-  // Scale (0.5 - 3.0)
-  const scaleParam = parseFloat(searchParams.get('scale') || '1');
-  const scale = isNaN(scaleParam) ? 1 : Math.max(0.5, Math.min(3.0, scaleParam));
+  // Background - whitelist validation
+  const bgParam = safeGetParam(searchParams, 'bg')?.toLowerCase();
+  let background: BackgroundType = 'transparent';
+  if (bgParam) {
+    if (VALID_BACKGROUNDS.includes(bgParam as BackgroundType)) {
+      background = bgParam as BackgroundType;
+    } else {
+      validationErrors.push(`Invalid background type: "${bgParam}"`);
+    }
+  }
 
-  // Idle animations
-  const idleParam = searchParams.get('idle')?.toLowerCase();
+  // Scale - numeric validation with strict range (0.5 - 3.0)
+  const scaleParam = safeGetParam(searchParams, 'scale');
+  let scale = 1;
+  if (scaleParam) {
+    const parsed = parseFloat(scaleParam);
+    if (!isNaN(parsed) && isFinite(parsed)) {
+      scale = Math.max(0.5, Math.min(3.0, parsed));
+    } else {
+      validationErrors.push(`Invalid scale value: "${scaleParam}"`);
+    }
+  }
+
+  // Idle animations - boolean validation
+  const idleParam = safeGetParam(searchParams, 'idle')?.toLowerCase();
   const idleEnabled = idleParam !== 'false';
 
-  return { avatar, color, background, scale, idleEnabled };
+  // Log validation errors for monitoring
+  if (validationErrors.length > 0) {
+    console.warn('[CleanView] URL parameter validation errors:', validationErrors);
+  }
+
+  return { avatar, color, background, scale, idleEnabled, validationErrors };
 }
+
+// =============================================================================
+// Error Boundary Fallback UI
+// =============================================================================
+
+interface ConfigErrorProps {
+  errors: string[];
+}
+
+const ConfigErrorNotice = ({ errors }: ConfigErrorProps) => {
+  if (errors.length === 0) return null;
+  
+  return (
+    <div className="fixed top-2 left-2 bg-yellow-500/20 border border-yellow-500/40 rounded px-2 py-1 text-xs text-yellow-200 max-w-xs">
+      <span className="font-medium">Config warnings:</span>
+      <ul className="mt-1">
+        {errors.slice(0, 3).map((err, i) => (
+          <li key={i} className="truncate">{err}</li>
+        ))}
+        {errors.length > 3 && <li>...and {errors.length - 3} more</li>}
+      </ul>
+    </div>
+  );
+};
 
 // =============================================================================
 // Component
@@ -86,13 +171,19 @@ function parseURLConfig(searchParams: URLSearchParams): URLConfig {
 const CleanView = () => {
   const [searchParams] = useSearchParams();
   const { setSelectedAvatar, setAvatarColor, setAvatarScale, setBackground } = useAvatarStore();
+  const [showErrors, setShowErrors] = useState(true);
 
   // Parse URL config (memoized to avoid recalculation)
   const config = useMemo(() => parseURLConfig(searchParams), [searchParams]);
 
   // Apply URL config to store on mount
   useEffect(() => {
-    console.log('[CleanView] Applying URL configuration:', config);
+    console.log('[CleanView] Applying URL configuration:', {
+      avatar: config.avatar,
+      color: config.color,
+      background: config.background,
+      scale: config.scale,
+    });
 
     // Apply avatar type
     setSelectedAvatar(config.avatar);
@@ -108,6 +199,9 @@ const CleanView = () => {
     // Apply background - pass the BackgroundType directly
     setBackground(config.background);
 
+    // Hide errors after 5 seconds in production use
+    const timer = setTimeout(() => setShowErrors(false), 5000);
+    return () => clearTimeout(timer);
   }, [config, setSelectedAvatar, setAvatarColor, setAvatarScale, setBackground]);
 
   // Determine container styles
@@ -120,6 +214,9 @@ const CleanView = () => {
 
   return (
     <div style={containerStyle}>
+      {/* Show validation errors briefly for debugging */}
+      {showErrors && <ConfigErrorNotice errors={config.validationErrors} />}
+      
       <AvatarRenderer isCleanView />
     </div>
   );

@@ -23,11 +23,16 @@ export const AnimationController = ({ vrm }: AnimationControllerProps) => {
     useFaceRetargeting(vrm, { ignoreMouth: lipSyncEnabled });
 
     // 2. MOTION SIGNAL: Audio Analysis (Phonetic Visemes)
-    useAudioLipSync(vrm);
+    const lipSync = useAudioLipSync({ autoStart: lipSyncEnabled });
 
     // 3. INTERNAL ANIMATION: Physics (SpringBones) & Auto-blink
     useFrame((state, delta) => {
         if (vrm) {
+            // Apply lip sync to VRM if active
+            if (lipSyncEnabled) {
+                lipSync.applyToVRM(vrm);
+            }
+            
             // Update physical components independently of external signals
             vrm.update(delta);
         }
