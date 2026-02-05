@@ -139,7 +139,7 @@ export const AvatarRenderer = ({ isCleanView = false }: AvatarRendererProps) => 
 
           {/* POST-PROCESSING PIPELINE (High Quality Only) */}
           {isHighQuality && background !== 'transparent' && background !== 'chroma-green' && background !== 'chroma-blue' && (
-            <EffectComposer disableNormalPass>
+            <EffectComposer enableNormalPass={false}>
               {/* Bloom: only very bright things glow */}
               <Bloom
                 luminanceThreshold={1.1}

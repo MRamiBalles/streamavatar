@@ -11,17 +11,14 @@ export const VRMAvatar = ({ url }: VRMAvatarProps) => {
     const [vrm, setVrm] = useState<any>(null);
 
     // 1. ASSET LOADING (Visual Layer)
-    const { scene } = useGLTF(url, true, (loader) => {
-        loader.register((parser) => new VRMLoaderPlugin(parser));
-    });
+    const { scene } = useGLTF(url, true);
 
     // 2. NORMALIZATION (TaoAvatar style)
-    const clone = useMemo(() => {
+    useMemo(() => {
         const v = scene.userData.vrm;
         if (v) {
-            // VRM 1.0 logic (assuming we use v2+ of three-vrm)
-            VRMUtils.removeUnusedVertices(v.scene);
-            VRMUtils.combinePrefixedMeshes(v.scene);
+            // VRM 1.0 logic - use available VRMUtils methods
+            VRMUtils.rotateVRM0(v); // Rotate VRM0 models to face forward
             v.scene.traverse((obj: any) => {
                 obj.frustumCulled = false;
             });
