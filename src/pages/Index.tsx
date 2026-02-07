@@ -16,12 +16,15 @@ import { ComposerPanel } from '@/components/studio/ComposerPanel';
 import { AvatarGallery } from '@/components/studio/AvatarGallery';
 import { HotkeysPanel } from '@/components/studio/HotkeysPanel';
 import { useHotkeys } from '@/hooks/useHotkeys';
+import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 
 type TabType = 'studio' | 'avatar' | 'stream' | 'settings';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('studio');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const onboardingCompleted = useAvatarStore((s) => s.onboardingCompleted);
+  const [showOnboarding, setShowOnboarding] = useState(!onboardingCompleted);
   const t = useTranslation();
 
   // Activate global hotkey listener for expressions
@@ -80,6 +83,10 @@ const Index = () => {
 
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden">
+      {/* Onboarding overlay */}
+      {showOnboarding && (
+        <OnboardingFlow onComplete={() => setShowOnboarding(false)} />
+      )}
       {/* Sidebar - Hidden on mobile */}
       <div className="hidden md:block">
         <StudioSidebar activeTab={activeTab} onTabChange={setActiveTab} />
