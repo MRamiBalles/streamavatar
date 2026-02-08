@@ -1,9 +1,9 @@
 import { Pill, Box, Circle, Cat, Ghost, Smile, Upload } from 'lucide-react';
 import { useAvatarStore, AvatarType, useTranslation } from '@/stores/avatarStore';
 import { cn } from '@/lib/utils';
-import { useRef, useEffect } from 'react';
+import { useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { saveModel } from '@/lib/db';
+import { saveModel, validateModelFile, MAX_MODEL_SIZE } from '@/lib/db';
 
 const avatarOptions: { type: AvatarType; nameKey: 'peanut' | 'robot' | 'slime' | 'cat' | 'ghost' | 'emoji'; icon: React.ElementType }[] = [
   { type: 'pill', nameKey: 'peanut', icon: Pill },
@@ -20,10 +20,11 @@ export const AvatarSelector = () => {
   const { toast } = useToast();
   const t = useTranslation();
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // 1. Extension check
     const extension = file.name.split('.').pop()?.toLowerCase();
     if (extension !== 'glb' && extension !== 'vrm') {
       toast({
@@ -34,6 +35,19 @@ export const AvatarSelector = () => {
       return;
     }
 
+    // 2. Size + magic byte + glTF version validation
+    const validation = await validateModelFile(file);
+    if (!validation.valid) {
+      toast({
+        title: t.unsupportedFormat,
+        description: validation.error || 'Invalid model file',
+        variant: "destructive",
+      });
+      // Reset the file input so the same file can be retried
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
     const url = URL.createObjectURL(file);
 
     // Memory Safety: Revoke the previous object URL if it exists to prevent memory leaks
@@ -41,9 +55,16 @@ export const AvatarSelector = () => {
       URL.revokeObjectURL(customModel.url);
     }
 
-    // Save to IndexedDB for persistence
+    // Save to IndexedDB for persistence (with enforced storage limits)
     saveModel('custom-avatar', file, { name: file.name, type: extension })
-      .catch(err => console.error('Failed to save model to IDB:', err));
+      .catch(err => {
+        console.error('Failed to save model to IDB:', err);
+        toast({
+          title: 'Storage error',
+          description: err instanceof Error ? err.message : 'Failed to save model',
+          variant: "destructive",
+        });
+      });
 
     setCustomModel({
       url,
