@@ -23,6 +23,9 @@ export class GaussianEntity implements AvatarEntity {
     private sortWorker: Worker | null = null;
     private isSorting = false;
 
+    // Skinning Buffers
+    private transformedPositions: Float32Array | null = null;
+
     // Debug visualization
     private debugPoints: THREE.Points | null = null;
 
@@ -44,6 +47,9 @@ export class GaussianEntity implements AvatarEntity {
         const loader = new HybridLoader();
         loader.load(url, (data) => {
             this.splatData = data;
+            // Initialize transformed positions buffer
+            this.transformedPositions = new Float32Array(data.vertexCount * 3);
+
             // this.createDebugVisualization(data); // Disabled for Splat rendering
             this.createSplatMesh(data);
         });
@@ -57,7 +63,8 @@ export class GaussianEntity implements AvatarEntity {
             transparent: true,
             depthWrite: false, // Essential for transparency
             uniforms: {
-                // Add uniforms if needed
+                resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+                focal: { value: new THREE.Vector2(1000, 1000) } // Initial placeholder
             }
         });
 
@@ -121,33 +128,82 @@ export class GaussianEntity implements AvatarEntity {
         // Update VRM physics/animation
         this.vrm.update(deltaTime);
 
-        // Sorting Trigger
+        // 1. Perform LBS CPU Skinning (Prototype SqueezeMe)
+        if (this.splatData && this.transformedPositions) {
+            this.updateSkinning();
+        }
+
+        // 2. Sorting Trigger
         if (this.splatMesh && this.splatData && !this.isSorting && camera) {
             this.triggerSort(camera);
         }
     }
 
-    private triggerSort(camera: THREE.Camera) {
-        if (!this.sortWorker || !this.splatData) return;
+    private updateSkinning() {
+        if (!this.splatData || !this.transformedPositions) return;
 
-        // For Phase 1, we send raw positions. 
-        // In Phase 2 (Skinning), we must send transformed positions.
-        // Getting View Matrix from camera is tricky inside Entity unless we pass Camera or rely on global state.
-        // For now, let's assume IDENTITY view or approximate (sorting by Z local).
-        // WARNING: Sorting requires view-dependent depth. 
-        // We really need the camera here. 
-        // TODO: Pass camera in update() or retrieve from R3F context via some hook pattern if possible.
+        const { positions, boneIndices, boneWeights, vertexCount } = this.splatData;
+        const bones = this.vrm.humanoid?.getBoneTransforms(); // Needs specific access to bone matrices
+
+        // Fallback if no easy bone access (VRM1.0 vs 0.0)
+        // Ideally we iterate bones and get world matrices.
+        // For prototype, let's assume root bone or just identity + local transform if static.
+        // Real LBS requires accessing the bone matrices from the Skeleton.
+        // We can access via this.vrm.scene.traverse or similar if cached.
+
+        // Assuming we have a way to get matrices. 
+        // For the "Neural Shell" prototype, let's keep it static relative to root for now
+        // to verify pipeline, OR implement full LBS loop if we can get the Bone Objects.
+
+        // Simulated LBS pass (Copy for now until bone mapping is robust)
+        this.transformedPositions.set(positions);
+
+        // TODO: Real implementation:
+        // for (let i = 0; i < vertexCount; i++) {
+        //    const bi = [boneIndices[i*4], ...];
+        //    const bw = [boneWeights[i*4], ...];
+        //    const mat = ... sum(BoneMat[bi] * bw)
+        //    transformedPos[i] = mat * originalPos[i]
+        // }
+    }
+
+    private triggerSort(camera: THREE.Camera) {
+        if (!this.sortWorker || !this.splatData || !this.transformedPositions) return;
 
         // Real View Matrix from Camera
         const viewMatrix = camera.matrixWorldInverse.elements;
 
+        // Update Shader Uniforms
+        if (this.splatMesh) {
+            const material = this.splatMesh.material as THREE.ShaderMaterial;
+
+            // Resolution
+            // TODO: Ideally pass renderer size. Using window as approx for full screen app.
+            material.uniforms.resolution.value.set(window.innerWidth, window.innerHeight);
+
+            // Focal Length Estimation from Projection Matrix
+            // P00 = 2*n / (r-l) = 1 / (tan(fov/2) * aspect)
+            // P11 = 2*n / (t-b) = 1 / tan(fov/2)
+            // FocalX = P00 * width / 2
+            // FocalY = P11 * height / 2
+
+            const projection = camera.projectionMatrix.elements;
+            const fovY = projection[5]; // 1/tan(fov/2) roughly if symmetric
+            const fovX = projection[0];
+
+            material.uniforms.focal.value.set(
+                fovX * window.innerWidth * 0.5,
+                fovY * window.innerHeight * 0.5
+            );
+        }
+
         this.isSorting = true;
         this.sortWorker.postMessage({
             type: 'sort',
-            positions: this.splatData.positions,
-            viewProj: viewMatrix, // We pass View Matrix primarily for Z-sorting
+            positions: this.transformedPositions, // Send TRANSFORMED positions
+            viewProj: viewMatrix,
             vertexCount: this.splatData.vertexCount
-        });
+        }, [/* Transferable? No, likely copy needed if using TypedArray view */]);
     }
 
     private handleWorkerMessage(e: MessageEvent) {
