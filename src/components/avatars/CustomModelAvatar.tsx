@@ -270,7 +270,7 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
   // Animation Frame
   // -------------------------------------------------------------------------
 
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     // Get unified animation state (tracking + idle)
     const anim = getAnimationState();
 
@@ -296,7 +296,7 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
     // VRM-specific updates
     if (entity) {
       // Update entity (physics, internal vrm update)
-      entity.update(delta);
+      entity.update(delta, state.camera);
 
       // Priority: Phonetic Visemes > Simple Tracking
       applyVisemesToVRM(entity.vrm, anim.visemes);

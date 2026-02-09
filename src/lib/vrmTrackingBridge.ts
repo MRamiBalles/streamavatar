@@ -47,8 +47,8 @@ export interface AvatarEntity {
     /** Apply blendshape data to avatar expressions */
     applyBlendShapes(data: BlendShapeData): void;
 
-    /** Update physics simulation */
-    update(deltaTime: number): void;
+    /** Update physics simulation and internal state */
+    update(deltaTime: number, camera?: THREE.Camera): void;
 
     /** Cleanup all GPU resources */
     dispose(): void;
@@ -430,7 +430,7 @@ export class VRMAvatarEntity implements AvatarEntity {
         this.model.quaternion.set(x, y, z, w);
     }
 
-    public update(deltaTime: number): void {
+    public update(deltaTime: number, camera?: THREE.Camera): void {
         this.vrm.update(deltaTime);
     }
 
