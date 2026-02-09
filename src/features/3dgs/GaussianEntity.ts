@@ -238,4 +238,8 @@ export class GaussianEntity implements AvatarEntity {
         }
         // Dispose VRM is handled by owner or we do it here if we own it
     }
+
+    public get vertexCount(): number {
+        return this.splatData?.vertexCount || 0;
+    }
 }

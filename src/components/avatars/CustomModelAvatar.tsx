@@ -13,7 +13,7 @@
 
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Sphere } from '@react-three/drei';
+import { Sphere, Stats, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { GaussianEntity } from '@/features/3dgs/GaussianEntity';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -354,10 +354,26 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
       {gltfScene && <primitive object={gltfScene} />}
 
       {enableDebugHud && (
-        <mesh position={[0, 2.2, 0]}>
-          <textGeometry args={['DEBUG MODE', { size: 0.1, height: 0.02 }]} />
-          <meshStandardMaterial color="yellow" />
-        </mesh>
+        <>
+          <Stats />
+          <Html position={[0, 2.2, 0]} center style={{ pointerEvents: 'none' }}>
+            <div style={{
+              background: 'rgba(0,0,0,0.7)',
+              color: '#0f0',
+              padding: '8px',
+              borderRadius: '4px',
+              fontFamily: 'monospace',
+              fontSize: '12px',
+              textAlign: 'center',
+              whiteSpace: 'nowrap'
+            }}>
+              <div>DEBUG MODE</div>
+              {enable3DGS && entity instanceof GaussianEntity && (
+                <div>Splats: {entity.vertexCount.toLocaleString()}</div>
+              )}
+            </div>
+          </Html>
+        </>
       )}
     </group>
   );
