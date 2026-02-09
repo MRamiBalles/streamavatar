@@ -1,6 +1,8 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { FaceLandmarker, FilesetResolver, FaceLandmarkerResult } from '@mediapipe/tasks-vision';
 import { useAvatarStore } from '@/stores/avatarStore';
+import { ARKitIndex } from '@/lib/vrmTrackingBridge';
+import * as THREE from 'three';
 
 export const useFaceTracker = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -59,6 +61,15 @@ export const useFaceTracker = () => {
           return shape ? shape.score : 0;
         };
 
+        // SDD: Populate all 52 coefficients
+        const rawCoefficients = new Float32Array(52);
+        blendshapes.forEach(category => {
+          const index = (ARKitIndex as any)[category.categoryName];
+          if (index !== undefined) {
+            rawCoefficients[index] = category.score;
+          }
+        });
+
         // Extract relevant blendshapes
         const jawOpen = getBlendshapeValue('jawOpen');
         const eyeBlinkLeft = getBlendshapeValue('eyeBlinkLeft');
@@ -66,16 +77,22 @@ export const useFaceTracker = () => {
 
         // Get head rotation from transformation matrix
         let headRotation = { x: 0, y: 0, z: 0 };
+        let rawRotation: [number, number, number, number] = [0, 0, 0, 1];
 
         if (result.facialTransformationMatrixes && result.facialTransformationMatrixes.length > 0) {
           const matrix = result.facialTransformationMatrixes[0].data;
 
-          // Extract rotation from transformation matrix
+          // Extract rotation from transformation matrix (Legacy Euler)
           headRotation = {
             x: Math.atan2(matrix[9], matrix[10]) * 0.5,
             y: Math.atan2(-matrix[8], Math.sqrt(matrix[9] * matrix[9] + matrix[10] * matrix[10])) * 0.5,
             z: Math.atan2(matrix[4], matrix[0]) * 0.3,
           };
+
+          // SDD: Extract Quaternion from matrix
+          const threeMatrix = new THREE.Matrix4().fromArray(matrix);
+          const quat = new THREE.Quaternion().setFromRotationMatrix(threeMatrix);
+          rawRotation = [quat.x, quat.y, quat.z, quat.w];
         }
 
         setFaceData({
@@ -83,6 +100,8 @@ export const useFaceTracker = () => {
           mouthOpen: jawOpen,
           leftEyeBlink: eyeBlinkLeft,
           rightEyeBlink: eyeBlinkRight,
+          rawCoefficients,
+          rawRotation,
         });
 
         setTracking(true);

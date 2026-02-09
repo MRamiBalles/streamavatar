@@ -78,6 +78,11 @@ export interface AvatarAnimationState {
 
     /** Current blend state for debugging */
     blendState: 'tracking' | 'idle' | 'transitioning';
+
+    /** SDD: Full tracking coefficients */
+    rawCoefficients?: Float32Array;
+    /** SDD: Full tracking rotation */
+    rawRotation?: [number, number, number, number];
 }
 
 // =============================================================================
@@ -119,6 +124,8 @@ export function useAvatarAnimation() {
         breathScale: 1,
         activeExpression: 'neutral',
         blendState: 'idle',
+        rawCoefficients: new Float32Array(52),
+        rawRotation: [0, 0, 0, 1],
     });
 
     // Initialize phonetical lip-sync
@@ -235,6 +242,10 @@ export function useAvatarAnimation() {
 
         // Expression - directly from store
         output.activeExpression = activeExpression;
+
+        // SDD: Data propagation
+        output.rawCoefficients = faceData.rawCoefficients;
+        output.rawRotation = faceData.rawRotation;
     }, [faceData, audioData, audioReactiveEnabled, activeExpression]);
 
     /**

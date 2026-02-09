@@ -12,6 +12,10 @@ export interface FaceData {
   mouthOpen: number;
   leftEyeBlink: number;
   rightEyeBlink: number;
+  /** SDD: Full ARKit blendshape coefficients (52 indices) */
+  rawCoefficients?: Float32Array;
+  /** SDD: Raw head rotation as quaternion [x, y, z, w] */
+  rawRotation?: [number, number, number, number];
 }
 
 // =============================================================================
@@ -38,6 +42,8 @@ export const trackingDefaults = {
     mouthOpen: 0,
     leftEyeBlink: 0,
     rightEyeBlink: 0,
+    rawCoefficients: new Float32Array(52),
+    rawRotation: [0, 0, 0, 1],
   } as FaceData,
   isCameraActive: false,
   isTracking: false,

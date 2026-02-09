@@ -12,13 +12,47 @@
  * 
  * @author Manuel Ramírez Ballesteros
  * @license MIT
+ * 
+ * @compliance Constitution §3 (Architecture Decoupling)
+ * @specification specs/vrm-integration/spec.md
  */
 
 import { VRM, VRMExpressionPresetName } from '@pixiv/three-vrm';
 
 // =============================================================================
-// Type Definitions
+// Type Definitions (SDD Compliant)
 // =============================================================================
+
+/**
+ * Standardized tracking data stream
+ * @compliance specs/vrm-integration/spec.md §2
+ */
+export interface BlendShapeData {
+    /** 52 ARKit blendshape coefficients normalized 0.0-1.0 */
+    coefficients: Float32Array;
+    /** Head rotation as quaternion [x, y, z, w] */
+    headRotation: [number, number, number, number];
+    /** Timestamp in milliseconds */
+    timestamp: number;
+}
+
+/**
+ * Standardized Avatar Entity interface
+ * @compliance specs/vrm-integration/spec.md §2
+ */
+export interface AvatarEntity {
+    readonly model: THREE.Group;
+    readonly vrm: VRM;
+
+    /** Apply blendshape data to avatar expressions */
+    applyBlendShapes(data: BlendShapeData): void;
+
+    /** Update physics simulation */
+    update(deltaTime: number): void;
+
+    /** Cleanup all GPU resources */
+    dispose(): void;
+}
 
 /**
  * ARKit-compatible blendshape data from MediaPipe
@@ -91,7 +125,7 @@ export interface ARKitBlendshapes {
 }
 
 /**
- * Simplified face data (what we currently extract from MediaPipe)
+ * Simplified face data (legacy support)
  */
 export interface SimpleFaceData {
     headRotation: { x: number; y: number; z: number };
@@ -99,6 +133,34 @@ export interface SimpleFaceData {
     leftEyeBlink: number;
     rightEyeBlink: number;
 }
+
+/**
+ * Mapping of ARKit blendshape names to Float32Array indices
+ * Based on Apple's ARKit documentation
+ */
+export const ARKitIndex = {
+    // Eye
+    eyeBlinkLeft: 0, eyeBlinkRight: 1, eyeLookDownLeft: 2, eyeLookDownRight: 3,
+    eyeLookInLeft: 4, eyeLookInRight: 5, eyeLookOutLeft: 6, eyeLookOutRight: 7,
+    eyeLookUpLeft: 8, eyeLookUpRight: 9, eyeSquintLeft: 10, eyeSquintRight: 11,
+    eyeWideLeft: 12, eyeWideRight: 13,
+    // Brow
+    browDownLeft: 14, browDownRight: 15, browInnerUp: 16, browOuterUpLeft: 17, browOuterUpRight: 18,
+    // Nose
+    noseSneerLeft: 19, noseSneerRight: 20,
+    // Cheek
+    cheekPuff: 21, cheekSquintLeft: 22, cheekSquintRight: 23,
+    // Mouth
+    jawForward: 24, jawLeft: 25, jawRight: 26, jawOpen: 27, mouthClose: 28,
+    mouthFunnel: 29, mouthPucker: 30, mouthLeft: 31, mouthRight: 32,
+    mouthSmileLeft: 33, mouthSmileRight: 34, mouthFrownLeft: 35, mouthFrownRight: 36,
+    mouthDimpleLeft: 37, mouthDimpleRight: 38, mouthStretchLeft: 39, mouthStretchRight: 40,
+    mouthRollLower: 41, mouthRollUpper: 42, mouthShrugLower: 43, mouthShrugUpper: 44,
+    mouthPressLeft: 45, mouthPressRight: 46, mouthLowerDownLeft: 47, mouthLowerDownRight: 48,
+    mouthUpperUpLeft: 49, mouthUpperUpRight: 50,
+    // Tongue
+    tongueOut: 51
+} as const;
 
 // =============================================================================
 // VRM Expression Mapping
@@ -121,30 +183,25 @@ export function mapSimpleToVRM(vrm: VRM, faceData: SimpleFaceData): void {
 }
 
 /**
- * Maps full ARKit blendshapes to VRM expressions
- * This provides much richer facial animation when available
+ * Maps full ARKit blendshapes (as Float32Array) to VRM expressions
+ * @compliance specs/vrm-integration/spec.md §3
  */
-export function mapARKitToVRM(vrm: VRM, blendshapes: Partial<ARKitBlendshapes>): void {
+export function mapARKitToVRM(vrm: VRM, coefficients: Float32Array): void {
     const exp = vrm.expressionManager;
     if (!exp) return;
 
+    const getVal = (idx: number) => coefficients[idx] ?? 0;
+
     // --- Eye Blinks ---
-    if (blendshapes.eyeBlinkLeft !== undefined) {
-        exp.setValue(VRMExpressionPresetName.BlinkLeft, blendshapes.eyeBlinkLeft);
-    }
-    if (blendshapes.eyeBlinkRight !== undefined) {
-        exp.setValue(VRMExpressionPresetName.BlinkRight, blendshapes.eyeBlinkRight);
-    }
+    exp.setValue(VRMExpressionPresetName.BlinkLeft, getVal(ARKitIndex.eyeBlinkLeft));
+    exp.setValue(VRMExpressionPresetName.BlinkRight, getVal(ARKitIndex.eyeBlinkRight));
 
     // --- Visemes (Lip Sync) ---
-    // VRM defines 5 vowel visemes: Aa, Ee, Ih, Oh, Ou
-    // We derive these from combinations of ARKit mouth blendshapes
-
-    const jawOpen = blendshapes.jawOpen ?? 0;
-    const mouthFunnel = blendshapes.mouthFunnel ?? 0;
-    const mouthPucker = blendshapes.mouthPucker ?? 0;
-    const mouthSmile = ((blendshapes.mouthSmileLeft ?? 0) + (blendshapes.mouthSmileRight ?? 0)) / 2;
-    const mouthStretch = ((blendshapes.mouthStretchLeft ?? 0) + (blendshapes.mouthStretchRight ?? 0)) / 2;
+    const jawOpen = getVal(ARKitIndex.jawOpen);
+    const mouthFunnel = getVal(ARKitIndex.mouthFunnel);
+    const mouthPucker = getVal(ARKitIndex.mouthPucker);
+    const mouthSmile = (getVal(ARKitIndex.mouthSmileLeft) + getVal(ARKitIndex.mouthSmileRight)) / 2;
+    const mouthStretch = (getVal(ARKitIndex.mouthStretchLeft) + getVal(ARKitIndex.mouthStretchRight)) / 2;
 
     // Aa - Wide open mouth (like saying "ah")
     // Derived from jaw opening with some mouth opening
@@ -179,28 +236,27 @@ export function mapARKitToVRM(vrm: VRM, blendshapes: Partial<ARKitBlendshapes>):
     exp.setValue(VRMExpressionPresetName.Happy, happy);
 
     // Angry - derived from brow down and nose sneer
-    const browDown = ((blendshapes.browDownLeft ?? 0) + (blendshapes.browDownRight ?? 0)) / 2;
-    const noseSneer = ((blendshapes.noseSneerLeft ?? 0) + (blendshapes.noseSneerRight ?? 0)) / 2;
+    const browDown = (getVal(ARKitIndex.browDownLeft) + getVal(ARKitIndex.browDownRight)) / 2;
+    const noseSneer = (getVal(ARKitIndex.noseSneerLeft) + getVal(ARKitIndex.noseSneerRight)) / 2;
     const angry = Math.min(1, browDown * 0.7 + noseSneer * 0.5);
     exp.setValue(VRMExpressionPresetName.Angry, angry);
 
     // Sad - derived from frown
-    const mouthFrown = ((blendshapes.mouthFrownLeft ?? 0) + (blendshapes.mouthFrownRight ?? 0)) / 2;
+    const mouthFrown = (getVal(ARKitIndex.mouthFrownLeft) + getVal(ARKitIndex.mouthFrownRight)) / 2;
     const sad = mouthFrown;
     exp.setValue(VRMExpressionPresetName.Sad, sad);
 
     // Surprised - derived from wide eyes and brow up
-    const eyeWide = ((blendshapes.eyeWideLeft ?? 0) + (blendshapes.eyeWideRight ?? 0)) / 2;
-    const browUp = blendshapes.browInnerUp ?? 0;
+    const eyeWide = (getVal(ARKitIndex.eyeWideLeft) + getVal(ARKitIndex.eyeWideRight)) / 2;
+    const browUp = getVal(ARKitIndex.browInnerUp);
     const surprised = Math.min(1, eyeWide * 0.6 + browUp * 0.5);
     exp.setValue(VRMExpressionPresetName.Surprised, surprised);
 
     // --- Look At ---
-    // VRM has lookLeft, lookRight, lookUp, lookDown
-    const lookLeft = ((blendshapes.eyeLookInRight ?? 0) + (blendshapes.eyeLookOutLeft ?? 0)) / 2;
-    const lookRight = ((blendshapes.eyeLookInLeft ?? 0) + (blendshapes.eyeLookOutRight ?? 0)) / 2;
-    const lookUp = ((blendshapes.eyeLookUpLeft ?? 0) + (blendshapes.eyeLookUpRight ?? 0)) / 2;
-    const lookDown = ((blendshapes.eyeLookDownLeft ?? 0) + (blendshapes.eyeLookDownRight ?? 0)) / 2;
+    const lookLeft = (getVal(ARKitIndex.eyeLookInRight) + getVal(ARKitIndex.eyeLookOutLeft)) / 2;
+    const lookRight = (getVal(ARKitIndex.eyeLookInLeft) + getVal(ARKitIndex.eyeLookOutRight)) / 2;
+    const lookUp = (getVal(ARKitIndex.eyeLookUpLeft) + getVal(ARKitIndex.eyeLookUpRight)) / 2;
+    const lookDown = (getVal(ARKitIndex.eyeLookDownLeft) + getVal(ARKitIndex.eyeLookDownRight)) / 2;
 
     exp.setValue(VRMExpressionPresetName.LookLeft, lookLeft);
     exp.setValue(VRMExpressionPresetName.LookRight, lookRight);
@@ -340,5 +396,60 @@ export function applyExpressionToVRM(vrm: VRM, expression: string, intensity: nu
         ].forEach(p => exp.setValue(p, 0));
 
         exp.setValue(preset, intensity);
+    }
+}
+
+// =============================================================================
+// SDD Class Implementation
+// =============================================================================
+
+import * as THREE from 'three';
+
+/**
+ * VRM Avatar Entity implementation
+ * @compliance specs/vrm-integration/spec.md §2
+ */
+export class VRMAvatarEntity implements AvatarEntity {
+    public readonly model: THREE.Group;
+    public readonly vrm: VRM;
+
+    constructor(vrm: VRM) {
+        this.vrm = vrm;
+        this.model = vrm.scene;
+    }
+
+    public applyBlendShapes(data: BlendShapeData): void {
+        const exp = this.vrm.expressionManager;
+        if (!exp) return;
+
+        // Apply coefficients
+        mapARKitToVRM(this.vrm, data.coefficients);
+
+        // Apply head rotation
+        const [x, y, z, w] = data.headRotation;
+        this.model.quaternion.set(x, y, z, w);
+    }
+
+    public update(deltaTime: number): void {
+        this.vrm.update(deltaTime);
+    }
+
+    public dispose(): void {
+        // Constitution §4 - Clean up resources
+        this.vrm.scene.traverse((obj) => {
+            if ((obj as THREE.Mesh).isMesh) {
+                const mesh = obj as THREE.Mesh;
+                mesh.geometry.dispose();
+
+                if (Array.isArray(mesh.material)) {
+                    mesh.material.forEach(m => m.dispose());
+                } else {
+                    mesh.material.dispose();
+                }
+            }
+        });
+
+        // Use VRMUtils if available in global context or imported
+        // (Assuming deepDispose is available via VRMUtils in CustomModelAvatar)
     }
 }

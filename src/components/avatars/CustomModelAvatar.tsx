@@ -20,7 +20,15 @@ import { VRM, VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
 import { useAvatarStore } from '@/stores/avatarStore';
 import { useAvatarAnimation } from '@/hooks/useAvatarAnimation';
 import { normalizeVRM, normalizeModel, logNormalization } from '@/lib/modelNormalizer';
-import { mapSimpleToVRM, mapARKitToVRM, applyVisemesToVRM, applyExpressionToVRM } from '@/lib/vrmTrackingBridge';
+import {
+  VRMAvatarEntity,
+  AvatarEntity,
+  BlendShapeData,
+  mapSimpleToVRM,
+  applyVisemesToVRM,
+  applyExpressionToVRM
+} from '@/lib/vrmTrackingBridge';
+import { useFeatureFlag } from '@/lib/featureFlags';
 
 // =============================================================================
 // Types & Configuration
@@ -123,10 +131,12 @@ function validateModelUrl(url: string): { valid: boolean; error?: string } {
 
 export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProps) => {
   const groupRef = useRef<THREE.Group>(null);
-  const [vrm, setVrm] = useState<VRM | null>(null);
+  const [entity, setEntity] = useState<AvatarEntity | null>(null);
   const [gltfScene, setGltfScene] = useState<THREE.Group | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const enableDebugHud = useFeatureFlag('ENABLE_DEBUG_HUD');
 
   const { avatarScale, activeExpression } = useAvatarStore();
   const { getAnimationState } = useAvatarAnimation();
@@ -186,7 +196,9 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
           const normResult = normalizeVRM(vrmModel);
           logNormalization(normResult, 'VRM Model');
 
-          setVrm(vrmModel);
+          const newEntity = new VRMAvatarEntity(vrmModel);
+          setEntity(newEntity);
+
           console.log('[CustomModelAvatar] VRM loaded successfully');
           console.log('  - Spring Bones:', vrmModel.springBoneManager ? 'Yes' : 'No');
           console.log('  - Expressions:', vrmModel.expressionManager ? Object.keys(vrmModel.expressionManager.expressionMap || {}).length : 0);
@@ -234,12 +246,12 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
       mounted = false;
       clearTimeout(loadTimeout);
 
-      // Dispose VRM resources
-      if (vrm) {
-        VRMUtils.deepDispose(vrm.scene);
+      // Dispose entity resources (Constitution §4)
+      if (entity) {
+        entity.dispose();
       }
     };
-  }, [modelUrl, modelType]);
+  }, [modelUrl, modelType, entity]); // Added entity to deps to ensure cleanup of previous
 
   // -------------------------------------------------------------------------
   // Animation Frame
@@ -269,31 +281,31 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
     }
 
     // VRM-specific updates
-    if (vrm) {
-      // Update VRM (internal animations, lookAt, etc.)
-      vrm.update(delta);
+    if (entity) {
+      // Update entity (physics, internal vrm update)
+      entity.update(delta);
 
-      // Update Spring Bones (hair, clothes physics)
-      // The update method handles this internally in newer versions of three-vrm
-      // but we can manually call springBoneManager if needed for custom delta
-      if (vrm.springBoneManager) {
-        // Spring bones are updated automatically in vrm.update(delta)
-        // No need for manual call unless you want custom delta
+      // Priority: Phonetic Visemes > Simple Tracking
+      applyVisemesToVRM(entity.vrm, anim.visemes);
+
+      // Apply SDD-compliant BlendShapeData
+      const blendData: BlendShapeData = {
+        coefficients: anim.rawCoefficients || new Float32Array(52), // Use raw coefficients if available
+        headRotation: [0, 0, 0, 1], // Placeholder for quaternion
+        timestamp: Date.now()
+      };
+
+      // If we don't have rawCoefficients yet, we fallback to legacy logic
+      if (!anim.rawCoefficients) {
+        // Legacy fallback mapping
+        entity.vrm.expressionManager?.setValue('blinkLeft', anim.leftEyeBlink);
+        entity.vrm.expressionManager?.setValue('blinkRight', anim.rightEyeBlink);
+      } else {
+        entity.applyBlendShapes(blendData);
       }
 
-      // Apply expressions via Tracking Bridge
-      // Priority: Phonetic Visemes > Simple Tracking
-      applyVisemesToVRM(vrm, anim.visemes);
-
-      // Other face tracking (eyes, head)
-      mapARKitToVRM(vrm, {
-        eyeBlinkLeft: anim.leftEyeBlink,
-        eyeBlinkRight: anim.rightEyeBlink,
-        // Head rotation is already handled by groupRef.current above
-      });
-
       // Apply hotkey expression
-      applyExpressionToVRM(vrm, activeExpression);
+      applyExpressionToVRM(entity.vrm, activeExpression);
     }
   });
 
@@ -325,8 +337,15 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
 
   return (
     <group ref={groupRef} scale={avatarScale}>
-      {vrm && <primitive object={vrm.scene} />}
+      {entity && <primitive object={entity.model} />}
       {gltfScene && <primitive object={gltfScene} />}
+
+      {enableDebugHud && (
+        <mesh position={[0, 2.2, 0]}>
+          <textGeometry args={['DEBUG MODE', { size: 0.1, height: 0.02 }]} />
+          <meshStandardMaterial color="yellow" />
+        </mesh>
+      )}
     </group>
   );
 };
