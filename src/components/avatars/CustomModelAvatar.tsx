@@ -15,6 +15,7 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Sphere } from '@react-three/drei';
 import * as THREE from 'three';
+import { GaussianEntity } from '@/features/3dgs/GaussianEntity';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { VRM, VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
 import { useAvatarStore } from '@/stores/avatarStore';
@@ -137,6 +138,7 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
   const [isLoading, setIsLoading] = useState(true);
 
   const enableDebugHud = useFeatureFlag('ENABLE_DEBUG_HUD');
+  const enable3DGS = useFeatureFlag('ENABLE_3DGS');
 
   const { avatarScale, activeExpression } = useAvatarStore();
   const { getAnimationState } = useAvatarAnimation();
@@ -196,7 +198,18 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
           const normResult = normalizeVRM(vrmModel);
           logNormalization(normResult, 'VRM Model');
 
-          const newEntity = new VRMAvatarEntity(vrmModel);
+          let newEntity: AvatarEntity;
+
+          if (enable3DGS) {
+            console.log('[CustomModelAvatar] initializing Neural Shell (GaussianEntity)');
+            // For prototype: assume a .splat file exists with same name or use a placeholder
+            // Real impl: User would upload .hgs file or we derive path
+            const splatUrl = modelUrl.replace('.vrm', '.splat').replace('.glb', '.splat');
+            newEntity = new GaussianEntity(vrmModel, splatUrl);
+          } else {
+            newEntity = new VRMAvatarEntity(vrmModel);
+          }
+
           setEntity(newEntity);
 
           console.log('[CustomModelAvatar] VRM loaded successfully');
