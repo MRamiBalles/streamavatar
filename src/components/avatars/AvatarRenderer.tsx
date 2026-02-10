@@ -140,28 +140,16 @@ export const AvatarRenderer = ({ isCleanView = false }: AvatarRendererProps) => 
           {/* POST-PROCESSING PIPELINE (High Quality Only) */}
           {isHighQuality && background !== 'transparent' && background !== 'chroma-green' && background !== 'chroma-blue' && (
             <EffectComposer enableNormalPass={false}>
-              {/* Bloom: only very bright things glow */}
               <Bloom
                 luminanceThreshold={1.1}
                 mipmapBlur
                 intensity={0.5}
                 radius={0.4}
               />
-              {/* Vignette: Cinematic focus */}
               <Vignette
                 eskil={false}
                 offset={0.1}
                 darkness={0.5}
-              />
-              {/* ToneMapping: Cinematic colors */}
-              <ToneMapping
-                blendFunction={BlendFunction.NORMAL}
-                adaptive={true}
-                resolution={256}
-                middleGrey={0.6}
-                maxLuminance={16.0}
-                averageLuminance={1.0}
-                adaptationRate={1.0}
               />
             </EffectComposer>
           )}
