@@ -143,7 +143,9 @@ export class GaussianEntity implements AvatarEntity {
         if (!this.splatData || !this.transformedPositions) return;
 
         const { positions, boneIndices, boneWeights, vertexCount } = this.splatData;
-        const bones = this.vrm.humanoid?.getBoneTransforms(); // Needs specific access to bone matrices
+        // Access bone matrices via the VRM scene's skeleton
+        const skeleton = this.vrm.scene.getObjectByProperty('type', 'SkinnedMesh') as THREE.SkinnedMesh | undefined;
+        const bones = skeleton?.skeleton?.bones;
 
         // Fallback if no easy bone access (VRM1.0 vs 0.0)
         // Ideally we iterate bones and get world matrices.
