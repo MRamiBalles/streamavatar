@@ -1,8 +1,6 @@
 import { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Environment, ContactShadows, Html, useProgress } from '@react-three/drei';
-import { EffectComposer, Bloom, Vignette, ToneMapping } from '@react-three/postprocessing';
-import { BlendFunction } from 'postprocessing';
 import { useAvatarStore, AvatarType } from '@/stores/avatarStore';
 import { PillAvatar } from './PillAvatar';
 import { BoxyAvatar } from './BoxyAvatar';
@@ -137,22 +135,6 @@ export const AvatarRenderer = ({ isCleanView = false }: AvatarRendererProps) => 
             <SplatScene url={splatUrl} />
           )}
 
-          {/* POST-PROCESSING PIPELINE (High Quality Only) */}
-          {isHighQuality && background !== 'transparent' && background !== 'chroma-green' && background !== 'chroma-blue' && (
-            <EffectComposer enableNormalPass={false}>
-              <Bloom
-                luminanceThreshold={1.1}
-                mipmapBlur
-                intensity={0.5}
-                radius={0.4}
-              />
-              <Vignette
-                eskil={false}
-                offset={0.1}
-                darkness={0.5}
-              />
-            </EffectComposer>
-          )}
 
           {/* Controls - only in non-clean view */}
           {!isCleanView && (
