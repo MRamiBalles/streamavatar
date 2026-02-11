@@ -21,7 +21,10 @@ export const EmojiAvatar = () => {
   const rightBrowRef = useRef<THREE.Mesh>(null);
   const bodyRef = useRef<THREE.Mesh>(null);
 
-  const { avatarColor, avatarScale, audioData, audioReactiveEnabled } = useAvatarStore();
+  const avatarColor = useAvatarStore((s) => s.avatarColor);
+  const avatarScale = useAvatarStore((s) => s.avatarScale);
+  const audioData = useAvatarStore((s) => s.audioData);
+  const audioReactiveEnabled = useAvatarStore((s) => s.audioReactiveEnabled);
   const { getAnimationState } = useAvatarAnimation();
 
   useFrame(() => {

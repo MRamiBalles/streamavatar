@@ -22,8 +22,11 @@ export const PillAvatar = () => {
   const rightEyeRef = useRef<THREE.Mesh>(null);
   const bodyRef = useRef<THREE.Mesh>(null);
 
-  // Get static config from store
-  const { avatarColor, avatarScale, audioData, audioReactiveEnabled } = useAvatarStore();
+  // Get static config from store with selectors to avoid re-render loops
+  const avatarColor = useAvatarStore((s) => s.avatarColor);
+  const avatarScale = useAvatarStore((s) => s.avatarScale);
+  const audioData = useAvatarStore((s) => s.audioData);
+  const audioReactiveEnabled = useAvatarStore((s) => s.audioReactiveEnabled);
 
   // Get unified animation state (tracking + idle)
   const { getAnimationState } = useAvatarAnimation();

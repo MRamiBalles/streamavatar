@@ -140,7 +140,8 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
   const enableDebugHud = useFeatureFlag('ENABLE_DEBUG_HUD');
   const enable3DGS = useFeatureFlag('ENABLE_3DGS');
 
-  const { avatarScale, activeExpression } = useAvatarStore();
+  const avatarScale = useAvatarStore((s) => s.avatarScale);
+  const activeExpression = useAvatarStore((s) => s.activeExpression);
   const { getAnimationState } = useAvatarAnimation();
 
   // -------------------------------------------------------------------------
