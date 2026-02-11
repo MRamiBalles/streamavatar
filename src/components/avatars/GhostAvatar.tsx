@@ -20,7 +20,10 @@ export const GhostAvatar = () => {
   const bodyRef = useRef<THREE.Mesh>(null);
   const tailRefs = useRef<THREE.Mesh[]>([]);
 
-  const { avatarColor, avatarScale, audioData, audioReactiveEnabled } = useAvatarStore();
+  const avatarColor = useAvatarStore((s) => s.avatarColor);
+  const avatarScale = useAvatarStore((s) => s.avatarScale);
+  const audioData = useAvatarStore((s) => s.audioData);
+  const audioReactiveEnabled = useAvatarStore((s) => s.audioReactiveEnabled);
   const { getAnimationState } = useAvatarAnimation();
 
   // Timer for floating animation

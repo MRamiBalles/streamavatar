@@ -12,7 +12,7 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const App = () => {
-  const { initPersistentModels } = useAvatarStore();
+  const initPersistentModels = useAvatarStore((s) => s.initPersistentModels);
 
   useEffect(() => {
     initPersistentModels();

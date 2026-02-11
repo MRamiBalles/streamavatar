@@ -14,7 +14,7 @@ import { VRMAvatar } from './VRMAvatar';
 import { SplatScene } from '../scene/SplatScene';
 
 const AvatarModel = ({ type }: { type: AvatarType }) => {
-  const { customModel } = useAvatarStore();
+  const customModel = useAvatarStore((s) => s.customModel);
 
   // Unified rendering logic: 
   // Primitives are treated as separate components for now, 
@@ -61,7 +61,9 @@ interface AvatarRendererProps {
 }
 
 export const AvatarRenderer = ({ isCleanView = false }: AvatarRendererProps) => {
-  const { selectedAvatar, background, graphicsQuality } = useAvatarStore();
+  const selectedAvatar = useAvatarStore((s) => s.selectedAvatar);
+  const background = useAvatarStore((s) => s.background);
+  const graphicsQuality = useAvatarStore((s) => s.graphicsQuality);
   const isHighQuality = graphicsQuality === 'high';
 
   // Experimental: Hardcoded Splat URL for demo

@@ -90,16 +90,14 @@ export interface AvatarAnimationState {
 // =============================================================================
 
 export function useAvatarAnimation() {
-    // Get store data
-    const {
-        faceData,
-        isTracking,
-        isCameraActive,
-        audioData,
-        audioReactiveEnabled,
-        lipSyncEnabled,
-        activeExpression
-    } = useAvatarStore();
+    // Get store data with individual selectors to prevent unnecessary re-renders
+    const faceData = useAvatarStore((s) => s.faceData);
+    const isTracking = useAvatarStore((s) => s.isTracking);
+    const isCameraActive = useAvatarStore((s) => s.isCameraActive);
+    const audioData = useAvatarStore((s) => s.audioData);
+    const audioReactiveEnabled = useAvatarStore((s) => s.audioReactiveEnabled);
+    const lipSyncEnabled = useAvatarStore((s) => s.lipSyncEnabled);
+    const activeExpression = useAvatarStore((s) => s.activeExpression);
 
     // Initialize idle animations system
     const { getIdleState } = useIdleAnimations({

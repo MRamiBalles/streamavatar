@@ -144,7 +144,8 @@ function getProceduralBlink(state: { nextBlinkTime: number; isBlinking: boolean;
 }
 
 export const CompositeAvatar = () => {
-    const { currentParts, avatarScale } = useAvatarStore();
+    const currentParts = useAvatarStore((s) => s.currentParts);
+    const avatarScale = useAvatarStore((s) => s.avatarScale);
     const { getAnimationState } = useAvatarAnimation();
     const groupRef = useRef<THREE.Group>(null);
 

@@ -16,7 +16,7 @@ interface AnimationControllerProps {
  * This follows the AHA! architecture: Synthesis of motion is a separate layer.
  */
 export const AnimationController = ({ vrm }: AnimationControllerProps) => {
-    const { lipSyncEnabled } = useAvatarStore();
+    const lipSyncEnabled = useAvatarStore((s) => s.lipSyncEnabled);
 
     // 1. MOTION SIGNAL: Face Tracking (MediaPipe)
     // We pass ignoreMouth if Audio Lip Sync is active to avoid conflicts
