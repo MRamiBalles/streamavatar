@@ -41,18 +41,22 @@ const AvatarModel = ({ type }: { type: AvatarType }) => {
   };
 
   return (
-    <Suspense fallback={null}>
-      {renderModel()}
-    </Suspense>
+    <group>
+      <Suspense fallback={null}>
+        {renderModel()}
+      </Suspense>
+    </group>
   );
 };
 
 const LoadingFallback = () => {
   const { progress } = useProgress();
   return (
-    <Html center>
-      <div className="text-white font-bold text-xl">{progress.toFixed(0)}%</div>
-    </Html>
+    <group>
+      <Html center>
+        <div className="text-white font-bold text-xl">{progress.toFixed(0)}%</div>
+      </Html>
+    </group>
   );
 };
 
