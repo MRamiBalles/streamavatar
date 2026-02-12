@@ -22,8 +22,6 @@ export const BoxyAvatar = () => {
 
   const avatarColor = useAvatarStore((s) => s.avatarColor);
   const avatarScale = useAvatarStore((s) => s.avatarScale);
-  const audioData = useAvatarStore((s) => s.audioData);
-  const audioReactiveEnabled = useAvatarStore((s) => s.audioReactiveEnabled);
   const { getAnimationState } = useAvatarAnimation();
 
   // Timer for antenna wobble
@@ -53,14 +51,18 @@ export const BoxyAvatar = () => {
 
     // Antenna wobble + audio reactive
     if (antennaRef.current) {
+      const { audioData, audioReactiveEnabled } = useAvatarStore.getState();
       const audioWobble = audioReactiveEnabled ? audioData.treble * 0.3 : 0;
       antennaRef.current.rotation.z = Math.sin(timeRef.current * 2) * 0.1 + audioWobble;
     }
 
     // Antenna ball glow with audio
-    if (antennaBallRef.current && audioReactiveEnabled) {
-      const material = antennaBallRef.current.material as THREE.MeshStandardMaterial;
-      material.emissiveIntensity = 0.5 + audioData.volume * 1.5;
+    if (antennaBallRef.current) {
+      const { audioData, audioReactiveEnabled } = useAvatarStore.getState();
+      if (audioReactiveEnabled) {
+        const material = antennaBallRef.current.material as THREE.MeshStandardMaterial;
+        material.emissiveIntensity = 0.5 + audioData.volume * 1.5;
+      }
     }
 
     if (mouthRef.current) {

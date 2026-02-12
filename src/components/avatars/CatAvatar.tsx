@@ -24,8 +24,6 @@ export const CatAvatar = () => {
 
   const avatarColor = useAvatarStore((s) => s.avatarColor);
   const avatarScale = useAvatarStore((s) => s.avatarScale);
-  const audioData = useAvatarStore((s) => s.audioData);
-  const audioReactiveEnabled = useAvatarStore((s) => s.audioReactiveEnabled);
   const { getAnimationState } = useAvatarAnimation();
 
   // Timer for animations
@@ -55,12 +53,14 @@ export const CatAvatar = () => {
 
     // Tail wag + audio reactive
     if (tailRef.current) {
+      const { audioData, audioReactiveEnabled } = useAvatarStore.getState();
       const audioWag = audioReactiveEnabled ? audioData.volume * 0.5 : 0;
       tailRef.current.rotation.z = Math.sin(timeRef.current * 3) * (0.3 + audioWag);
     }
 
     // Ear twitch + audio reactive
     if (leftEarRef.current && rightEarRef.current) {
+      const { audioData, audioReactiveEnabled } = useAvatarStore.getState();
       const twitch = Math.sin(timeRef.current * 5) * 0.05;
       const audioTwitch = audioReactiveEnabled ? audioData.treble * 0.15 : 0;
       leftEarRef.current.rotation.z = -0.2 + twitch + audioTwitch;
@@ -69,6 +69,7 @@ export const CatAvatar = () => {
 
     // Body scale with breathing + audio
     if (bodyRef.current) {
+      const { audioData, audioReactiveEnabled } = useAvatarStore.getState();
       let targetScale = anim.breathScale;
       if (audioReactiveEnabled) {
         targetScale = Math.max(targetScale, 1 + audioData.bass * 0.08);

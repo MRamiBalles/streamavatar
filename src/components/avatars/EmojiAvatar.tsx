@@ -23,8 +23,6 @@ export const EmojiAvatar = () => {
 
   const avatarColor = useAvatarStore((s) => s.avatarColor);
   const avatarScale = useAvatarStore((s) => s.avatarScale);
-  const audioData = useAvatarStore((s) => s.audioData);
-  const audioReactiveEnabled = useAvatarStore((s) => s.audioReactiveEnabled);
   const { getAnimationState } = useAvatarAnimation();
 
   useFrame(() => {
@@ -50,15 +48,16 @@ export const EmojiAvatar = () => {
 
     // Audio reactive body bounce + breathing
     if (bodyRef.current) {
+      const { audioData, audioReactiveEnabled } = useAvatarStore.getState();
       let targetScale = anim.breathScale;
       if (audioReactiveEnabled) {
         targetScale = Math.max(targetScale, 1 + audioData.bass * 0.08);
       }
-      bodyRef.current.scale.y = THREE.MathUtils.lerp(bodyRef.current.scale.y, targetScale, 0.2);
     }
 
     // Eyebrow movement based on mouth (expressive) + audio
     if (leftBrowRef.current && rightBrowRef.current) {
+      const { audioData, audioReactiveEnabled } = useAvatarStore.getState();
       const browRaise = anim.mouthOpen * 0.15;
       const audioBrow = audioReactiveEnabled ? audioData.volume * 0.1 : 0;
       leftBrowRef.current.position.y = 0.55 + browRaise + audioBrow;

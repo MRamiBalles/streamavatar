@@ -21,8 +21,6 @@ export const SphereAvatar = () => {
 
   const avatarColor = useAvatarStore((s) => s.avatarColor);
   const avatarScale = useAvatarStore((s) => s.avatarScale);
-  const audioData = useAvatarStore((s) => s.audioData);
-  const audioReactiveEnabled = useAvatarStore((s) => s.audioReactiveEnabled);
   const { getAnimationState } = useAvatarAnimation();
 
   useFrame(() => {
@@ -48,6 +46,7 @@ export const SphereAvatar = () => {
 
     // Body breathing + audio reactive
     if (bodyRef.current) {
+      const { audioData, audioReactiveEnabled } = useAvatarStore.getState();
       let targetScale = anim.breathScale;
       if (audioReactiveEnabled) {
         targetScale = Math.max(targetScale, 1 + audioData.bass * 0.2);

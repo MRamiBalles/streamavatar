@@ -22,8 +22,6 @@ export const GhostAvatar = () => {
 
   const avatarColor = useAvatarStore((s) => s.avatarColor);
   const avatarScale = useAvatarStore((s) => s.avatarScale);
-  const audioData = useAvatarStore((s) => s.audioData);
-  const audioReactiveEnabled = useAvatarStore((s) => s.audioReactiveEnabled);
   const { getAnimationState } = useAvatarAnimation();
 
   // Timer for floating animation
@@ -35,6 +33,7 @@ export const GhostAvatar = () => {
 
     if (groupRef.current) {
       // Floating animation with audio boost
+      const { audioData, audioReactiveEnabled } = useAvatarStore.getState();
       const audioFloat = audioReactiveEnabled ? audioData.bass * 0.15 : 0;
       groupRef.current.position.y = Math.sin(timeRef.current * 1.5) * 0.1 + audioFloat;
 
@@ -58,13 +57,14 @@ export const GhostAvatar = () => {
     // Wavy tail pieces + audio reactive
     tailRefs.current.forEach((tail, i) => {
       if (tail) {
+        const { audioData, audioReactiveEnabled } = useAvatarStore.getState();
         const audioWave = audioReactiveEnabled ? audioData.volume * 0.15 : 0;
-        tail.position.x = Math.sin(timeRef.current * 2 + i * 0.8) * (0.1 + audioWave);
       }
     });
 
     // Body wobble with breathing + audio
     if (bodyRef.current) {
+      const { audioData, audioReactiveEnabled } = useAvatarStore.getState();
       let targetScale = anim.breathScale;
       if (audioReactiveEnabled) {
         targetScale = Math.max(targetScale, 1 + audioData.bass * 0.1);
