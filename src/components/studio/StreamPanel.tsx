@@ -1,4 +1,4 @@
-import { Share2, Copy, Check, Settings, PlayCircle, ChevronDown, ChevronUp, Camera } from 'lucide-react';
+import { Share2, Copy, Check, Settings, PlayCircle, ChevronDown, ChevronUp, Camera, Monitor, ExternalLink } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
