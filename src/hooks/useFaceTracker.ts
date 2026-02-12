@@ -99,14 +99,14 @@ export const useFaceTracker = () => {
             z: Math.atan2(matrix[4], matrix[0]) * 0.3,
           };
 
-          // SDD: Extract Position (Translation)
+          // SDD: Extract Position (Translation) - Moved to landmark-based calculation below
           // Matrix indices [12, 13, 14] correspond to x, y, z translation in column-major order
           // We normalize and scale them to fit the 3D scene
-          headPosition = {
-            x: -matrix[12] * 0.1, // Scale down and invert X for mirror effect
-            y: -matrix[13] * 0.1, // Scale down and invert Y
-            z: -matrix[14] * 0.1, // Scale down Z
-          };
+          // headPosition = {
+          //   x: -matrix[12] * 0.1, // Scale down and invert X for mirror effect
+          //   y: -matrix[13] * 0.1, // Scale down and invert Y
+          //   z: -matrix[14] * 0.1, // Scale down Z
+          // };
 
           // SDD: Extract Quaternion from matrix
           const threeMatrix = new THREE.Matrix4().fromArray(matrix);
@@ -114,16 +114,12 @@ export const useFaceTracker = () => {
           rawRotation = [quat.x, quat.y, quat.z, quat.w];
         }
 
-        // --- EXTRACT LANDMARKS FOR DIAGNOSTIC (Requested by User) ---
+        // --- EXTRACT LANDMARKS FOR DIAGNOSTIC & POSITIONING ---
         let facePoints: { x: number, y: number, z: number }[] = [];
         if (result.faceLandmarks && result.faceLandmarks.length > 0) {
           const landmarks = result.faceLandmarks[0];
 
-          // Selection of key indices:
-          // Eyes: 33, 133 (left border), 362, 263 (right border)
-          // Nose: 1, 2, 3, 4
-          // Mouth: 61, 291, 0, 17, 78, 308 (corners and centers)
-          // Silhouette: 10, 152, 234, 454 (top, bottom, left, right) + some others for 10 total
+          // Indices for diagnostics
           const diagnosticIndices = [
             33, 133, 362, 263, // Eyes (4)
             1, 2, 3, 4,       // Nose (4)
@@ -133,7 +129,7 @@ export const useFaceTracker = () => {
 
           facePoints = diagnosticIndices.map(idx => {
             const p = landmarks[idx];
-            // MediaPipe gives normalized [0,1] coordinates. 
+            // MediaPipe gives normalized [0,1] coordinates.
             // We map to [-0.5, 0.5] range for consistency with our tracking logic
             return {
               x: (p.x - 0.5) * -1, // Flip X for mirror
@@ -141,6 +137,15 @@ export const useFaceTracker = () => {
               z: p.z
             };
           });
+
+          // Use Landmark 1 (Nose Tip) as the primary anchor for 3D positioning
+          // This is more stable than the transformation matrix translation for AR alignment
+          const noseTip = landmarks[1];
+          headPosition = {
+            x: (noseTip.x - 0.5) * -1,
+            y: (noseTip.y - 0.5) * -1,
+            z: noseTip.z
+          };
         }
 
         setFaceData({

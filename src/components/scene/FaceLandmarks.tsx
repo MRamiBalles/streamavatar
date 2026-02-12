@@ -25,16 +25,22 @@ export const FaceLandmarks = () => {
 
         groupRef.current.visible = true;
 
-        // Visual multipliers to match the AR background plane coverage
-        // Plane is at z=-10, visible dims are roughly viewport.width/height * scaling
-        // Since we are at z=0, we use specific scene scale
-        const scaleX = 8;
-        const scaleY = 6;
+        // Match the background plane scaling math
+        const planeZ = -9.9; // Just in front of the video plane at -10
+        const cameraZ = 4;
+        const distanceToCamera = Math.abs(cameraZ - planeZ);
+
+        const fov = (useThree.getState().camera as THREE.PerspectiveCamera).fov || 50;
+        const aspect = viewport.aspect;
+
+        const activeHeight = 2 * Math.tan((fov * Math.PI) / 180 / 2) * distanceToCamera;
+        const activeWidth = activeHeight * aspect;
 
         const points = groupRef.current.children;
         faceData.facePoints.forEach((p, i) => {
             if (points[i]) {
-                points[i].position.set(p.x * scaleX, p.y * scaleY, 0.1);
+                // p.x/y are in [-0.5, 0.5] range. Map to unit space.
+                points[i].position.set(p.x * activeWidth, p.y * activeHeight, planeZ);
             }
         });
     });
