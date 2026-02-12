@@ -28,6 +28,8 @@ export interface UISlice {
   setObfuscationMode: (enabled: boolean) => void;
   setPrivacyShieldActive: (active: boolean) => void;
   setOnboardingCompleted: (completed: boolean) => void;
+  publishedUrl: string | null; // URL pública personalizada para OBS / Custom public URL for OBS
+  setPublishedUrl: (url: string | null) => void; // Acción para actualizar la URL / Action to update URL
 }
 
 // =============================================================================
@@ -41,6 +43,7 @@ export const uiDefaults = {
   obfuscationMode: false,
   privacyShieldActive: true,
   onboardingCompleted: false,
+  publishedUrl: null, // Por defecto es null / Default is null
 };
 
 // =============================================================================
@@ -56,4 +59,5 @@ export const createUISlice: StateCreator<UISlice, [], [], UISlice> = (set) => ({
   setObfuscationMode: (enabled) => set({ obfuscationMode: enabled }),
   setPrivacyShieldActive: (active) => set({ privacyShieldActive: active }),
   setOnboardingCompleted: (completed) => set({ onboardingCompleted: completed }),
+  setPublishedUrl: (url) => set({ publishedUrl: url }),
 });

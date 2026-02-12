@@ -41,6 +41,8 @@ export const createConfigSlice: StateCreator<FullStore, [], [], ConfigSlice> = (
       audioSensitivity: state.audioSensitivity,
       language: state.language,
       graphicsQuality: state.graphicsQuality,
+      onboardingCompleted: state.onboardingCompleted, // Persistir estado de onboarding / Persist onboarding state
+      publishedUrl: state.publishedUrl, // Incluir URL personalizada en el backup / Include custom URL in backup
     };
     return JSON.stringify(exportData, null, 2);
   },
@@ -55,7 +57,9 @@ export const createConfigSlice: StateCreator<FullStore, [], [], ConfigSlice> = (
         background: config.background || 'dark',
         audioSensitivity: config.audioSensitivity || 1.5,
         language: config.language || 'es',
+        language: config.language || 'es',
         graphicsQuality: config.graphicsQuality || 'high',
+        publishedUrl: config.publishedUrl || null, // Restaurar URL si existe / Restore URL if exists
       });
       return true;
     } catch {
