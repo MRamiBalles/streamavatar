@@ -66,7 +66,8 @@ export const BoxyAvatar = () => {
     }
 
     if (mouthRef.current) {
-      const mouthScale = 0.05 + anim.mouthOpen * 0.3;
+      // Boosted sensitivity for clearer AR expressions
+      const mouthScale = 0.05 + anim.mouthOpen * 0.7;
       mouthRef.current.scale.y = THREE.MathUtils.lerp(
         mouthRef.current.scale.y,
         mouthScale,

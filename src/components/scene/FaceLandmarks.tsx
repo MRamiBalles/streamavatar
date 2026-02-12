@@ -23,7 +23,9 @@ export const FaceLandmarks = () => {
             return;
         }
 
-        groupRef.current.visible = true;
+        // Diagnostic dots hidden by default for production feel
+        // Set to true if you want to debug alignment
+        groupRef.current.visible = false;
 
         // Match the background plane scaling math
         const planeZ = -9.9; // Just in front of the video plane at -10

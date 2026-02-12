@@ -67,12 +67,13 @@ export const EmojiAvatar = () => {
     if (mouthRef.current) {
       mouthRef.current.scale.y = THREE.MathUtils.lerp(
         mouthRef.current.scale.y,
-        0.3 + anim.mouthOpen * 0.7,
+        // Boosted sensitivity for clearer AR expressions
+        0.3 + anim.mouthOpen * 0.9,
         0.2
       );
       mouthRef.current.scale.x = THREE.MathUtils.lerp(
         mouthRef.current.scale.x,
-        1.2 - anim.mouthOpen * 0.4,
+        1.2 - anim.mouthOpen * 0.5,
         0.2
       );
     }
