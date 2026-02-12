@@ -161,32 +161,60 @@ export const StreamPanel = () => {
         )}
 
         {/* Action Buttons / Botones de Acción */}
-        <div className="flex gap-2">
-          {/* Display logic for current URL being used (debug helper) */}
-          <div className="hidden">Using: {baseOrigin}</div>
+        <div className="flex flex-col gap-2">
+          {/* Environment Status Indicator / Indicador de Estado del Entorno */}
+          {!publishedUrl && (
+            <div className={`text-[11px] px-3 py-2 rounded-md border flex items-start gap-2 ${isPreview
+              ? 'bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400'
+              : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+              }`}>
+              {isPreview ? (
+                <>
+                  <span className="mt-0.5">⚠️</span>
+                  <span>
+                    <strong>Preview Mode (Cloud):</strong> OBS might show a login screen because this link is private.
+                    <br />
+                    Use <strong>"Simulate OBS"</strong> or configure a <strong>Published URL</strong> above.
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="mt-0.5">✅</span>
+                  <span>
+                    <strong>Local Mode:</strong> You are on localhost. This link will work perfectly in OBS!
+                  </span>
+                </>
+              )}
+            </div>
+          )}
 
-          <Button
-            variant="default"
-            size="sm"
-            onClick={handleCopyLink}
-            className="flex-1 gap-2"
-          >
-            <Copy className="w-4 h-4" />
-            {t.copyLink}
-          </Button>
+          <div className="flex gap-2">
+            {/* Display logic for current URL being used (debug helper) */}
+            <div className="hidden">Using: {baseOrigin}</div>
 
-          {/* Simulate OBS Button - New Feature! */}
-          {/* Botón Simular OBS - ¡Nueva Funcionalidad! */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSimulateOBS}
-            className="gap-2"
-            title="Abre una ventana popup para probar sin OBS / Open popup to test without OBS"
-          >
-            <PlayCircle className="w-4 h-4 text-green-500" />
-            Simular OBS
-          </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleCopyLink}
+              className="flex-1 gap-2"
+            >
+              <Copy className="w-4 h-4" />
+              {t.copyLink}
+            </Button>
+
+            {/* Simulate OBS Button - New Feature! */}
+            {/* Botón Simular OBS - ¡Nueva Funcionalidad! */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSimulateOBS}
+              className="gap-2"
+              title="Abre una ventana popup para probar sin OBS / Open popup to test without OBS"
+            >
+              <PlayCircle className="w-4 h-4 text-green-500" />
+              Simular OBS
+            </Button>
+          </div>
         </div>
       </div>
 
