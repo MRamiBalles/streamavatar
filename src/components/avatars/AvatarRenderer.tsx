@@ -1,7 +1,9 @@
-import { Suspense } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Suspense, useRef } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Environment, ContactShadows, Html, useProgress } from '@react-three/drei';
+import * as THREE from 'three';
 import { useAvatarStore, AvatarType } from '@/stores/avatarStore';
+import { useTrackingStore } from '@/stores/slices/trackingSlice';
 import { PillAvatar } from './PillAvatar';
 import { BoxyAvatar } from './BoxyAvatar';
 import { SphereAvatar } from './SphereAvatar';
@@ -12,6 +14,7 @@ import { CustomModelAvatar } from './CustomModelAvatar';
 import { CompositeAvatar } from './CompositeAvatar';
 import { VRMAvatar } from './VRMAvatar';
 import { SplatScene } from '../scene/SplatScene';
+import { ARPassthrough } from '../scene/ARPassthrough';
 
 const AvatarModel = ({ type }: { type: AvatarType }) => {
   const customModel = useAvatarStore((s) => s.customModel);
@@ -60,6 +63,38 @@ const LoadingFallback = () => {
   );
 };
 
+const AvatarGroup = ({ children }: { children: React.ReactNode }) => {
+  const groupRef = useRef<THREE.Group>(null);
+  const background = useAvatarStore((s) => s.background);
+  // We need to access the store directly for per-frame updates without re-renders
+  // Necesitamos acceder al store directamente para actualizaciones por frame sin re-renders
+
+  useFrame(() => {
+    if (background === 'ar-camera' && groupRef.current) {
+      const { faceData } = useTrackingStore.getState();
+      if (faceData.headPosition) {
+        // Apply head position with smoothing
+        // Aplicar posición de la cabeza con suavizado
+        // Map the position to a reasonable range for the scene
+        // Assuming Matrix extraction is roughly in meters/units
+        const targetPos = new THREE.Vector3(
+          faceData.headPosition.x * 12, // Scale factor effectively tuned for 3D scene
+          faceData.headPosition.y * 12,
+          faceData.headPosition.z * 5
+        );
+
+        groupRef.current.position.lerp(targetPos, 0.5);
+      }
+    } else if (groupRef.current) {
+      // Reset position in other modes
+      // Resetear posición en otros modos
+      groupRef.current.position.lerp(new THREE.Vector3(0, -1, 0), 0.1);
+    }
+  });
+
+  return <group ref={groupRef}>{children}</group>;
+};
+
 interface AvatarRendererProps {
   isCleanView?: boolean;
 }
@@ -83,6 +118,8 @@ export const AvatarRenderer = ({ isCleanView = false }: AvatarRendererProps) => 
       case 'transparent':
         return 'bg-transparent';
       case 'splat': // New experimental mode
+        return 'bg-black';
+      case 'ar-camera': // New AR mode
         return 'bg-black';
       default:
         // Improved gradient background
@@ -119,97 +156,44 @@ export const AvatarRenderer = ({ isCleanView = false }: AvatarRendererProps) => 
           {/* IBL: Realistic reflections */}
           <Environment preset="city" />
 
-          import {ARPassthrough} from '../scene/ARPassthrough';
-          import {useTrackingStore} from '@/stores/slices/trackingSlice';
-          import {useFrame} from '@react-three/fiber';
-          import {useRef} from 'react';
-          import * as THREE from 'three';
+          {/* AVATAR with Position Logic */}
+          <AvatarGroup>
+            <AvatarModel type={selectedAvatar} />
+          </AvatarGroup>
 
-          // ... (existing imports)
+          {/* CONTACT SHADOWS: Grounding the avatar (Disable in AR and Splat) */}
+          {background !== 'splat' && background !== 'ar-camera' && (
+            <ContactShadows
+              resolution={1024}
+              scale={10}
+              blur={2}
+              opacity={0.5}
+              far={10}
+              color="#000000"
+            />
+          )}
 
-          const AvatarGroup = ({children}: {children: React.ReactNode }) => {
-  const groupRef = useRef<THREE.Group>(null);
-  const background = useAvatarStore((s) => s.background);
-  // We need to access the store directly for per-frame updates without re-renders
-  // Necesitamos acceder al store directamente para actualizaciones por frame sin re-renders
+          {/* EXPERIMENTAL: 3D Gaussian Splatting Background */}
+          {background === 'splat' && splatUrl && (
+            <SplatScene url={splatUrl} />
+          )}
 
-  useFrame(() => {
-    if (background === 'ar-camera' && groupRef.current) {
-       const {faceData} = useTrackingStore.getState();
-            if (faceData.headPosition) {
-              // Apply head position with smoothing
-              // Aplicar posición de la cabeza con suavizado
-              groupRef.current.position.lerp(new THREE.Vector3(
-                faceData.headPosition.x,
-                faceData.headPosition.y,
-                faceData.headPosition.z
-              ), 0.5);
-       }
-    } else if (groupRef.current) {
-              // Reset position in other modes
-              // Resetear posición en otros modos
-              groupRef.current.position.lerp(new THREE.Vector3(0, -1, 0), 0.1);
-    }
-  });
+          {/* AR BACKGROUND */}
+          {background === 'ar-camera' && <ARPassthrough />}
 
-            return <group ref={groupRef}>{children}</group>;
-};
-
-            // ... (existing components)
-
-            export const AvatarRenderer = ({isCleanView = false}: AvatarRendererProps) => {
-  // ... (existing state)
-
-  const getBackgroundClass = () => {
-    switch (background) {
-      // ... (existing cases)
-      case 'ar-camera': // New AR mode
-            return 'bg-black';
-            default:
-            return 'bg-gradient-to-b from-gray-900 to-gray-800';
-    }
-  };
-
-            return (
-            <div className={`canvas-container w-full h-full ${getBackgroundClass()}`}>
-              <Canvas
-              // ... (existing props)
-              >
-                <Suspense fallback={<LoadingFallback />}>
-                  {/* ... (lights and environment) */}
-
-                  {/* AVATAR with Position Logic */}
-                  <AvatarGroup>
-                    <AvatarModel type={selectedAvatar} />
-                  </AvatarGroup>
-
-                  {/* CONTACT SHADOWS: Grounding the avatar (Disable in AR) */}
-                  {background !== 'splat' && background !== 'ar-camera' && (
-                    <ContactShadows
-                    // ...
-                    />
-                  )}
-
-                  {/* AR BACKGROUND */}
-                  {background === 'ar-camera' && <ARPassthrough />}
-
-                  {/* ... */}
-
-
-
-                  {/* Controls - only in non-clean view */}
-                  {!isCleanView && (
-                    <OrbitControls
-                      enablePan={false}
-                      enableZoom={true}
-                      minDistance={2}
-                      maxDistance={8}
-                      minPolarAngle={Math.PI / 4}
-                      maxPolarAngle={Math.PI / 1.5}
-                    />
-                  )}
-                </Suspense>
-              </Canvas>
-            </div>
-            );
+          {/* Controls - only in non-clean view */}
+          {!isCleanView && (
+            <OrbitControls
+              enablePan={false}
+              enableZoom={true}
+              minDistance={2}
+              maxDistance={8}
+              minPolarAngle={Math.PI / 4}
+              maxPolarAngle={Math.PI / 1.5}
+            />
+          )}
+        </Suspense>
+      </Canvas>
+    </div>
+  );
 };
