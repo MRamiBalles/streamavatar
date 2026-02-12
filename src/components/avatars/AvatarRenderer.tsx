@@ -3,6 +3,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Environment, ContactShadows, Html, useProgress } from '@react-three/drei';
 import * as THREE from 'three';
 import { useAvatarStore, AvatarType } from '@/stores/avatarStore';
+import { useFaceTracker } from '@/hooks/useFaceTracker';
 import { PillAvatar } from './PillAvatar';
 import { BoxyAvatar } from './BoxyAvatar';
 import { SphereAvatar } from './SphereAvatar';
@@ -139,6 +140,23 @@ export const AvatarRenderer = ({ isCleanView = false }: AvatarRendererProps) => 
   // Memory optimization: Only defined when active to avoid pre-fetching in some loaders
   const splatUrl = background === 'splat' ? "https://antimatter15.com/splat/nike.splat" : null;
 
+  // AR Camera Logic
+  const { startCamera, stopCamera, videoRef } = useFaceTracker();
+
+  useEffect(() => {
+    if (background === 'ar-camera') {
+      startCamera();
+    } else {
+      stopCamera();
+    }
+    // Cleanup on unmount
+    return () => {
+      // Only stop if we are unmounting, 
+      // but ideally we should only stop if switching away from AR mode.
+      // The dependency array handles the switch case.
+    };
+  }, [background, startCamera, stopCamera]);
+
   const getBackgroundClass = () => {
     switch (background) {
       case 'chroma-green':
@@ -228,7 +246,17 @@ export const AvatarRenderer = ({ isCleanView = false }: AvatarRendererProps) => 
             />
           )}
         </Suspense>
-      </Canvas>
-    </div>
+      </Suspense>
+    </Canvas>
+      
+      {/* Hidden video element for Face Tracking */ }
+  <video
+    ref={videoRef}
+    className="hidden absolute top-0 left-0 w-px h-px opacity-0 pointer-events-none"
+    playsInline
+    muted
+    autoPlay
+  />
+    </div >
   );
 };
