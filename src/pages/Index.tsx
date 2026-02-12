@@ -39,7 +39,7 @@ const Index = () => {
     }
   };
 
-  const PanelContent = () => (
+  const panelContent = (
     <div className="p-4 space-y-6">
       {/* Studio Tab */}
       {activeTab === 'studio' && (
@@ -149,7 +149,7 @@ const Index = () => {
                 </div>
 
                 <ScrollArea className="h-[calc(100vh-120px)]">
-                  <PanelContent />
+                  {panelContent}
                 </ScrollArea>
               </SheetContent>
             </Sheet>
@@ -193,7 +193,7 @@ const Index = () => {
           </div>
 
           <ScrollArea className="flex-1">
-            <PanelContent />
+            {panelContent}
           </ScrollArea>
         </div>
       </div>
