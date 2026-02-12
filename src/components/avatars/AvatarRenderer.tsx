@@ -178,7 +178,10 @@ export const AvatarRenderer = ({ isCleanView = false }: AvatarRendererProps) => 
           )}
 
           {/* AR BACKGROUND */}
-          {background === 'ar-camera' && <ARPassthrough />}
+          {background === 'ar-camera' && (() => {
+            console.log('[AvatarRenderer] Rendering ARPassthrough');
+            return <ARPassthrough />;
+          })()}
 
           {/* Controls - only in non-clean view */}
           {!isCleanView && (
