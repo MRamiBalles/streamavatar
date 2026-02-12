@@ -22,11 +22,9 @@ export const PillAvatar = () => {
   const rightEyeRef = useRef<THREE.Mesh>(null);
   const bodyRef = useRef<THREE.Mesh>(null);
 
-  // Get static config from store with selectors to avoid re-render loops
+  // Only subscribe to static config that rarely changes
   const avatarColor = useAvatarStore((s) => s.avatarColor);
   const avatarScale = useAvatarStore((s) => s.avatarScale);
-  const audioData = useAvatarStore((s) => s.audioData);
-  const audioReactiveEnabled = useAvatarStore((s) => s.audioReactiveEnabled);
 
   // Get unified animation state (tracking + idle)
   const { getAnimationState } = useAvatarAnimation();
@@ -56,6 +54,8 @@ export const PillAvatar = () => {
 
     // Body breathing + audio reactive scaling
     if (bodyRef.current) {
+      // Read high-frequency data imperatively inside useFrame
+      const { audioData, audioReactiveEnabled } = useAvatarStore.getState();
       let targetScaleX = anim.breathScale;
       let targetScaleZ = anim.breathScale;
 

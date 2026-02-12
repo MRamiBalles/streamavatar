@@ -90,14 +90,11 @@ export interface AvatarAnimationState {
 // =============================================================================
 
 export function useAvatarAnimation() {
-    // Get store data with individual selectors to prevent unnecessary re-renders
-    const faceData = useAvatarStore((s) => s.faceData);
-    const isTracking = useAvatarStore((s) => s.isTracking);
-    const isCameraActive = useAvatarStore((s) => s.isCameraActive);
-    const audioData = useAvatarStore((s) => s.audioData);
-    const audioReactiveEnabled = useAvatarStore((s) => s.audioReactiveEnabled);
+    // CRITICAL: Do NOT subscribe to high-frequency store fields (faceData, audioData)
+    // via React selectors inside R3F components. This causes re-renders that trigger
+    // the R3F reconciler's ref detach/attach cycle → infinite setState loop (Error #185).
+    // Instead, read these values imperatively inside useFrame via getState().
     const lipSyncEnabled = useAvatarStore((s) => s.lipSyncEnabled);
-    const activeExpression = useAvatarStore((s) => s.activeExpression);
 
     // Initialize idle animations system
     const { getIdleState } = useIdleAnimations({
@@ -142,6 +139,7 @@ export function useAvatarAnimation() {
     const updateBlendFactor = useCallback(() => {
         const now = Date.now();
         const blend = blendRef.current;
+        const { isTracking, isCameraActive } = useAvatarStore.getState();
 
         if (isTracking && isCameraActive) {
             // Tracking is active
@@ -161,7 +159,7 @@ export function useAvatarAnimation() {
 
         // Clamp
         blend.currentBlend = Math.max(0, Math.min(1, blend.currentBlend));
-    }, [isTracking, isCameraActive]);
+    }, []);
 
     /**
      * Blend tracking data with idle animations
@@ -169,6 +167,8 @@ export function useAvatarAnimation() {
     const blendAnimations = useCallback((idleState: IdleAnimationState) => {
         const blend = blendRef.current.currentBlend;
         const output = outputRef.current;
+        // Read high-frequency data imperatively to avoid triggering re-renders
+        const { faceData, audioData, audioReactiveEnabled, activeExpression } = useAvatarStore.getState();
 
         // Determine blend state for debugging
         if (blend > 0.95) {
@@ -180,7 +180,7 @@ export function useAvatarAnimation() {
         }
 
         // Head rotation - blend between tracking and idle
-        // When tracking, add subtle idle on top for organic feel
+        // When tracking, add subtle idle on top of tracking for organic feel
         const additiveIdle = BLEND_CONFIG.additiveIdleIntensity;
 
         output.headRotation = {
@@ -244,7 +244,7 @@ export function useAvatarAnimation() {
         // SDD: Data propagation
         output.rawCoefficients = faceData.rawCoefficients;
         output.rawRotation = faceData.rawRotation;
-    }, [faceData, audioData, audioReactiveEnabled, activeExpression]);
+    }, []);
 
     /**
      * Main animation frame - runs every frame via R3F
