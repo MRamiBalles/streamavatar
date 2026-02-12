@@ -18,24 +18,7 @@ import { HotkeysPanel } from '@/components/studio/HotkeysPanel';
 import { useHotkeys } from '@/hooks/useHotkeys';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import { StudioSidebar } from '@/components/studio/StudioSidebar';
-import { AvatarRenderer } from '@/components/avatars/AvatarRenderer';
-import { AvatarSelector } from '@/components/studio/AvatarSelector';
-import { AvatarCustomizer } from '@/components/studio/AvatarCustomizer';
-import { CameraControls } from '@/components/studio/CameraControls';
-import { StreamPanel } from '@/components/studio/StreamPanel';
-import { SettingsPanel } from '@/components/studio/SettingsPanel';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { useTranslation } from '@/stores/avatarStore';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Menu, Shield } from 'lucide-react';
-import { useAvatarStore } from '@/stores/avatarStore';
-import { ComposerPanel } from '@/components/studio/ComposerPanel';
-import { AvatarGallery } from '@/components/studio/AvatarGallery';
-import { HotkeysPanel } from '@/components/studio/HotkeysPanel';
-import { useHotkeys } from '@/hooks/useHotkeys';
-import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
+
 
 type TabType = 'studio' | 'avatar' | 'stream' | 'settings';
 
