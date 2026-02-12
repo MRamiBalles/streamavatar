@@ -179,7 +179,7 @@ const Index = () => {
         </div>
 
         {/* Right Panel - Hidden on mobile, use Sheet instead */}
-        <div className="hidden md:flex w-80 border-l border-border bg-card/50 flex-col">
+        <div className="hidden md:flex w-80 border-l border-border bg-card/50 flex-col min-h-0 max-h-screen">
           <div className="p-4 border-b border-border flex items-center justify-between">
             <h2 className="font-display font-semibold text-lg">
               {getPanelTitle()}
@@ -192,9 +192,9 @@ const Index = () => {
             )}
           </div>
 
-          <ScrollArea className="flex-1">
+          <div className="flex-1 overflow-y-auto min-h-0">
             {panelContent}
-          </ScrollArea>
+          </div>
         </div>
       </div>
     </div>
