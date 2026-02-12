@@ -7,7 +7,7 @@ import { StateCreator } from 'zustand';
 // Types
 // =============================================================================
 
-export type BackgroundType = 'dark' | 'chroma-green' | 'chroma-blue' | 'transparent' | 'splat';
+export type BackgroundType = 'transparent' | 'chroma-green' | 'chroma-blue' | 'dark' | 'splat' | 'ar-camera';
 export type Language = 'es' | 'en';
 
 // =============================================================================

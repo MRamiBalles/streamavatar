@@ -16,6 +16,8 @@ export interface FaceData {
   rawCoefficients?: Float32Array;
   /** SDD: Raw head rotation as quaternion [x, y, z, w] */
   rawRotation?: [number, number, number, number];
+  /** SDD: Head position from transformation matrix (x, y, z) */
+  headPosition?: { x: number; y: number; z: number };
 }
 
 // =============================================================================
@@ -44,6 +46,7 @@ export const trackingDefaults = {
     rightEyeBlink: 0,
     rawCoefficients: new Float32Array(52),
     rawRotation: [0, 0, 0, 1],
+    headPosition: { x: 0, y: 0, z: 0 },
   } as FaceData,
   isCameraActive: false,
   isTracking: false,

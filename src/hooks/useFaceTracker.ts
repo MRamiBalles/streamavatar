@@ -77,6 +77,7 @@ export const useFaceTracker = () => {
 
         // Get head rotation from transformation matrix
         let headRotation = { x: 0, y: 0, z: 0 };
+        let headPosition = { x: 0, y: 0, z: 0 };
         let rawRotation: [number, number, number, number] = [0, 0, 0, 1];
 
         if (result.facialTransformationMatrixes && result.facialTransformationMatrixes.length > 0) {
@@ -89,6 +90,15 @@ export const useFaceTracker = () => {
             z: Math.atan2(matrix[4], matrix[0]) * 0.3,
           };
 
+          // SDD: Extract Position (Translation)
+          // Matrix indices [12, 13, 14] correspond to x, y, z translation in column-major order
+          // We normalize and scale them to fit the 3D scene
+          headPosition = {
+            x: -matrix[12] * 0.1, // Scale down and invert X for mirror effect
+            y: -matrix[13] * 0.1, // Scale down and invert Y
+            z: -matrix[14] * 0.1, // Scale down Z
+          };
+
           // SDD: Extract Quaternion from matrix
           const threeMatrix = new THREE.Matrix4().fromArray(matrix);
           const quat = new THREE.Quaternion().setFromRotationMatrix(threeMatrix);
@@ -97,6 +107,7 @@ export const useFaceTracker = () => {
 
         setFaceData({
           headRotation,
+          headPosition,
           mouthOpen: jawOpen,
           leftEyeBlink: eyeBlinkLeft,
           rightEyeBlink: eyeBlinkRight,

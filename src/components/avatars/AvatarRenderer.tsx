@@ -119,42 +119,97 @@ export const AvatarRenderer = ({ isCleanView = false }: AvatarRendererProps) => 
           {/* IBL: Realistic reflections */}
           <Environment preset="city" />
 
-          {/* AVATAR */}
-          <group position={[0, -1, 0]}>
-            <AvatarModel type={selectedAvatar} />
-          </group>
+          import {ARPassthrough} from '../scene/ARPassthrough';
+          import {useTrackingStore} from '@/stores/slices/trackingSlice';
+          import {useFrame} from '@react-three/fiber';
+          import {useRef} from 'react';
+          import * as THREE from 'three';
 
-          {/* CONTACT SHADOWS: Grounding the avatar */}
-          {background !== 'splat' && (
-            <ContactShadows
-              resolution={1024}
-              scale={10}
-              blur={2}
-              opacity={0.5}
-              far={10}
-              color="#000000"
-            />
-          )}
+          // ... (existing imports)
 
-          {/* EXPERIMENTAL: 3D Gaussian Splatting Background */}
-          {background === 'splat' && splatUrl && (
-            <SplatScene url={splatUrl} />
-          )}
+          const AvatarGroup = ({children}: {children: React.ReactNode }) => {
+  const groupRef = useRef<THREE.Group>(null);
+  const background = useAvatarStore((s) => s.background);
+  // We need to access the store directly for per-frame updates without re-renders
+  // Necesitamos acceder al store directamente para actualizaciones por frame sin re-renders
+
+  useFrame(() => {
+    if (background === 'ar-camera' && groupRef.current) {
+       const {faceData} = useTrackingStore.getState();
+            if (faceData.headPosition) {
+              // Apply head position with smoothing
+              // Aplicar posición de la cabeza con suavizado
+              groupRef.current.position.lerp(new THREE.Vector3(
+                faceData.headPosition.x,
+                faceData.headPosition.y,
+                faceData.headPosition.z
+              ), 0.5);
+       }
+    } else if (groupRef.current) {
+              // Reset position in other modes
+              // Resetear posición en otros modos
+              groupRef.current.position.lerp(new THREE.Vector3(0, -1, 0), 0.1);
+    }
+  });
+
+            return <group ref={groupRef}>{children}</group>;
+};
+
+            // ... (existing components)
+
+            export const AvatarRenderer = ({isCleanView = false}: AvatarRendererProps) => {
+  // ... (existing state)
+
+  const getBackgroundClass = () => {
+    switch (background) {
+      // ... (existing cases)
+      case 'ar-camera': // New AR mode
+            return 'bg-black';
+            default:
+            return 'bg-gradient-to-b from-gray-900 to-gray-800';
+    }
+  };
+
+            return (
+            <div className={`canvas-container w-full h-full ${getBackgroundClass()}`}>
+              <Canvas
+              // ... (existing props)
+              >
+                <Suspense fallback={<LoadingFallback />}>
+                  {/* ... (lights and environment) */}
+
+                  {/* AVATAR with Position Logic */}
+                  <AvatarGroup>
+                    <AvatarModel type={selectedAvatar} />
+                  </AvatarGroup>
+
+                  {/* CONTACT SHADOWS: Grounding the avatar (Disable in AR) */}
+                  {background !== 'splat' && background !== 'ar-camera' && (
+                    <ContactShadows
+                    // ...
+                    />
+                  )}
+
+                  {/* AR BACKGROUND */}
+                  {background === 'ar-camera' && <ARPassthrough />}
+
+                  {/* ... */}
 
 
-          {/* Controls - only in non-clean view */}
-          {!isCleanView && (
-            <OrbitControls
-              enablePan={false}
-              enableZoom={true}
-              minDistance={2}
-              maxDistance={8}
-              minPolarAngle={Math.PI / 4}
-              maxPolarAngle={Math.PI / 1.5}
-            />
-          )}
-        </Suspense>
-      </Canvas>
-    </div>
-  );
+
+                  {/* Controls - only in non-clean view */}
+                  {!isCleanView && (
+                    <OrbitControls
+                      enablePan={false}
+                      enableZoom={true}
+                      minDistance={2}
+                      maxDistance={8}
+                      minPolarAngle={Math.PI / 4}
+                      maxPolarAngle={Math.PI / 1.5}
+                    />
+                  )}
+                </Suspense>
+              </Canvas>
+            </div>
+            );
 };
