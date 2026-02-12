@@ -10,7 +10,12 @@ export const StreamPanel = () => {
   const t = useTranslation();
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
 
-  const cleanViewUrl = `${window.location.origin}/view`;
+  // Use published URL for OBS (preview URLs require Lovable auth)
+  const isPreview = window.location.hostname.includes('lovableproject.com') || window.location.hostname.includes('lovable.app') && window.location.hostname.includes('preview');
+  const publishedOrigin = 'https://streamavatar.lovable.app';
+  const baseOrigin = isPreview ? publishedOrigin : window.location.origin;
+  const bgParam = background ? `?bg=${background}` : '';
+  const cleanViewUrl = `${baseOrigin}/view${bgParam}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(cleanViewUrl);
