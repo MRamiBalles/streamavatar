@@ -17,6 +17,25 @@ import { AvatarGallery } from '@/components/studio/AvatarGallery';
 import { HotkeysPanel } from '@/components/studio/HotkeysPanel';
 import { useHotkeys } from '@/hooks/useHotkeys';
 import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { StudioSidebar } from '@/components/studio/StudioSidebar';
+import { AvatarRenderer } from '@/components/avatars/AvatarRenderer';
+import { AvatarSelector } from '@/components/studio/AvatarSelector';
+import { AvatarCustomizer } from '@/components/studio/AvatarCustomizer';
+import { CameraControls } from '@/components/studio/CameraControls';
+import { StreamPanel } from '@/components/studio/StreamPanel';
+import { SettingsPanel } from '@/components/studio/SettingsPanel';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useTranslation } from '@/stores/avatarStore';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Menu, Shield } from 'lucide-react';
+import { useAvatarStore } from '@/stores/avatarStore';
+import { ComposerPanel } from '@/components/studio/ComposerPanel';
+import { AvatarGallery } from '@/components/studio/AvatarGallery';
+import { HotkeysPanel } from '@/components/studio/HotkeysPanel';
+import { useHotkeys } from '@/hooks/useHotkeys';
+import { OnboardingFlow } from '@/components/onboarding/OnboardingFlow';
 
 type TabType = 'studio' | 'avatar' | 'stream' | 'settings';
 
@@ -81,21 +100,45 @@ const Index = () => {
     </div>
   );
 
+  // Determine if we should use mobile layout
+  // Only using CSS hidden classes isn't enough for ResizablePanels which need structural changes
+  // We use a simple check to render the ResizableGroup only on desktop
+  const isDesktop = window.innerWidth >= 768; // Simple initial check, could use hook but we want to keep it simple
+
+  // Define the main content (Canvas + Overlays) to reuse it
+  const MainContent = (
+    <div className="flex-1 flex flex-col p-4 h-full relative overflow-hidden">
+      <div className="flex-1 relative w-full h-full rounded-xl overflow-hidden shadow-sm border border-border/50 bg-background/50">
+        <AvatarRenderer />
+
+        {/* Overlay controls */}
+        <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end pointer-events-none z-10">
+          <div className="glass-panel p-3 pointer-events-auto">
+            <p className="text-xs text-muted-foreground mb-1">{t.preview}</p>
+            <p className="text-sm font-medium">{t.dragToRotate}</p>
+          </div>
+
+          {/* Mobile menu hint */}
+          <div className="md:hidden glass-panel p-3 pointer-events-auto">
+            <p className="text-xs text-muted-foreground">
+              {t.tapForOptions} <Menu className="w-3 h-3 inline" />
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden">
       {/* Onboarding overlay */}
       {showOnboarding && (
         <OnboardingFlow onComplete={() => setShowOnboarding(false)} />
       )}
-      {/* Sidebar - Hidden on mobile */}
-      <div className="hidden md:block">
-        <StudioSidebar activeTab={activeTab} onTabChange={setActiveTab} />
-      </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col md:flex-row">
-        {/* Mobile Header */}
-        <div className="md:hidden flex items-center justify-between p-3 border-b border-border bg-card">
+      {/* MOBILE LAYOUT (Default CSS Grid/Flex) */}
+      <div className="md:hidden flex flex-col w-full h-full">
+        <div className="flex items-center justify-between p-3 border-b border-border bg-card">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-neon-pink flex items-center justify-center">
               <span className="text-sm font-bold text-white">SA</span>
@@ -155,47 +198,46 @@ const Index = () => {
             </Sheet>
           </div>
         </div>
+        {MainContent}
+      </div>
 
-        {/* Center - Avatar Canvas */}
-        <div className="flex-1 flex flex-col p-4">
-          <div className="flex-1 relative">
-            <AvatarRenderer />
+      {/* DESKTOP LAYOUT (Resizable Panels) */}
+      <div className="hidden md:block w-full h-full">
+        <ResizablePanelGroup direction="horizontal">
+          {/* Left Sidebar */}
+          <ResizablePanel defaultSize={4} minSize={4} maxSize={15} collapsible={true} collapsedSize={4} className="border-r border-border bg-card/30">
+            <StudioSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+          </ResizablePanel>
 
-            {/* Overlay controls */}
-            <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end pointer-events-none">
-              <div className="glass-panel p-3 pointer-events-auto">
-                <p className="text-xs text-muted-foreground mb-1">{t.preview}</p>
-                <p className="text-sm font-medium">{t.dragToRotate}</p>
+          <ResizableHandle withHandle />
+
+          {/* Center Content */}
+          <ResizablePanel defaultSize={76}>
+            {MainContent}
+          </ResizablePanel>
+
+          <ResizableHandle withHandle />
+
+          {/* Right Panel */}
+          <ResizablePanel defaultSize={20} minSize={15} maxSize={40} className="bg-card/50">
+            <div className="flex flex-col h-full overflow-hidden">
+              <div className="p-4 border-b border-border flex items-center justify-between shrink-0">
+                <h2 className="font-display font-semibold text-lg">
+                  {getPanelTitle()}
+                </h2>
+                {useAvatarStore.getState().privacyShieldActive && (
+                  <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-500">
+                    <Shield className="w-3 h-3" />
+                    <span className="text-[10px] font-bold uppercase tracking-tighter">{t.privacyShield}</span>
+                  </div>
+                )}
               </div>
-
-              {/* Mobile menu hint */}
-              <div className="md:hidden glass-panel p-3 pointer-events-auto">
-                <p className="text-xs text-muted-foreground">
-                  {t.tapForOptions} <Menu className="w-3 h-3 inline" />
-                </p>
+              <div className="flex-1 overflow-y-auto custom-scrollbar">
+                {panelContent}
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Right Panel - Hidden on mobile, use Sheet instead */}
-        <div className="hidden md:flex w-80 border-l border-border bg-card/50 flex-col min-h-0 overflow-hidden">
-          <div className="p-4 border-b border-border flex items-center justify-between shrink-0">
-            <h2 className="font-display font-semibold text-lg">
-              {getPanelTitle()}
-            </h2>
-            {useAvatarStore.getState().privacyShieldActive && (
-              <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-500">
-                <Shield className="w-3 h-3" />
-                <span className="text-[10px] font-bold uppercase tracking-tighter">{t.privacyShield}</span>
-              </div>
-            )}
-          </div>
-
-          <div className="flex-1 overflow-y-auto">
-            {panelContent}
-          </div>
-        </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
     </div>
   );
