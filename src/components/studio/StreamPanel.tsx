@@ -339,14 +339,29 @@ export const StreamPanel = () => {
             {t.transparent}
           </Button>
         </div>
-        <div className="grid grid-cols-1 gap-2 pt-2">
+
+        <div className="grid grid-cols-2 gap-2 pt-2">
+          {/* Splat Button */}
           <Button
             variant={background === 'splat' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setBackground('splat')}
             className="w-full border-primary/50 text-primary hover:bg-primary/10"
+            title="Experimental Gaussian Splatting"
           >
             {t.splat}
+          </Button>
+
+          {/* AR Camera Button */}
+          <Button
+            variant={background === 'ar-camera' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setBackground('ar-camera')}
+            className="w-full border-green-500/50 text-green-500 hover:bg-green-500/10"
+            title="Use your webcam as background + Head Tracking"
+          >
+            <Camera className="w-4 h-4 mr-2" />
+            AR Camera
           </Button>
         </div>
       </div>
