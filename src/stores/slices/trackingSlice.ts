@@ -28,10 +28,12 @@ export interface TrackingSlice {
   faceData: FaceData;
   isCameraActive: boolean;
   isTracking: boolean;
+  videoElement: HTMLVideoElement | null;
 
   setFaceData: (data: FaceData) => void;
   setCameraActive: (active: boolean) => void;
   setTracking: (tracking: boolean) => void;
+  setVideoElement: (element: HTMLVideoElement | null) => void;
 }
 
 // =============================================================================
@@ -50,6 +52,7 @@ export const trackingDefaults = {
   } as FaceData,
   isCameraActive: false,
   isTracking: false,
+  videoElement: null,
 };
 
 // =============================================================================
@@ -62,4 +65,5 @@ export const createTrackingSlice: StateCreator<TrackingSlice, [], [], TrackingSl
   setFaceData: (data) => set({ faceData: data }),
   setCameraActive: (active) => set({ isCameraActive: active }),
   setTracking: (tracking) => set({ isTracking: tracking }),
+  setVideoElement: (element) => set({ videoElement: element }),
 });

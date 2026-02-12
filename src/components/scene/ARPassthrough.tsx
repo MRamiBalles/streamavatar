@@ -1,18 +1,19 @@
+```typescript
 import { useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import { useThree, useFrame } from '@react-three/fiber';
-import { useFaceTracker } from '@/hooks/useFaceTracker';
+import { useAvatarStore } from '@/stores/avatarStore';
 
 export const ARPassthrough = () => {
-    const { videoRef } = useFaceTracker();
+    const videoElement = useAvatarStore((state) => state.videoElement);
     const meshRef = useRef<THREE.Mesh>(null);
     const textureRef = useRef<THREE.VideoTexture | null>(null);
     const { size, viewport } = useThree();
 
     useEffect(() => {
-        if (videoRef.current && !textureRef.current) {
+        if (videoElement && !textureRef.current) {
             // Create video texture from the existing video element in FaceTracker
-            const texture = new THREE.VideoTexture(videoRef.current);
+            const texture = new THREE.VideoTexture(videoElement);
             texture.colorSpace = THREE.SRGBColorSpace;
             textureRef.current = texture;
 
@@ -21,7 +22,7 @@ export const ARPassthrough = () => {
                 (meshRef.current.material as THREE.MeshBasicMaterial).needsUpdate = true;
             }
         }
-    }, [videoRef]);
+    }, [videoElement]);
 
     // Keep the plane filling the screen
     const scale = [viewport.width, viewport.height, 1] as [number, number, number];

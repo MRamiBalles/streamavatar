@@ -3,7 +3,6 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Environment, ContactShadows, Html, useProgress } from '@react-three/drei';
 import * as THREE from 'three';
 import { useAvatarStore, AvatarType } from '@/stores/avatarStore';
-import { useTrackingStore } from '@/stores/slices/trackingSlice';
 import { PillAvatar } from './PillAvatar';
 import { BoxyAvatar } from './BoxyAvatar';
 import { SphereAvatar } from './SphereAvatar';

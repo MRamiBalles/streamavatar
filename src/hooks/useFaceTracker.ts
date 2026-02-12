@@ -11,7 +11,14 @@ export const useFaceTracker = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { setFaceData, setCameraActive, setTracking, isCameraActive } = useAvatarStore();
+  const { setFaceData, setCameraActive, setTracking, isCameraActive, setVideoElement } = useAvatarStore();
+
+  // Sync usage of local ref with global store
+  useEffect(() => {
+    if (videoRef.current) {
+      setVideoElement(videoRef.current);
+    }
+  }, [setVideoElement]);
 
   const initializeFaceLandmarker = useCallback(async () => {
     try {
