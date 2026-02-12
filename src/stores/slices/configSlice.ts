@@ -57,7 +57,6 @@ export const createConfigSlice: StateCreator<FullStore, [], [], ConfigSlice> = (
         background: config.background || 'dark',
         audioSensitivity: config.audioSensitivity || 1.5,
         language: config.language || 'es',
-        language: config.language || 'es',
         graphicsQuality: config.graphicsQuality || 'high',
         publishedUrl: config.publishedUrl || null, // Restaurar URL si existe / Restore URL if exists
       });

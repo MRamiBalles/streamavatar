@@ -1,22 +1,46 @@
-import { Copy, ExternalLink, Monitor, ChevronDown, ChevronUp } from 'lucide-react';
-import { useState } from 'react';
+import { Copy, ExternalLink, Monitor, ChevronDown, ChevronUp, Settings } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useAvatarStore, useTranslation } from '@/stores/avatarStore';
 import { useToast } from '@/hooks/use-toast';
 
 export const StreamPanel = () => {
-  const { background, setBackground } = useAvatarStore();
+  // Access global state for background and published URL
+  const { background, setBackground, publishedUrl, setPublishedUrl } = useAvatarStore();
   const { toast } = useToast();
   const t = useTranslation();
-  const [expandedStep, setExpandedStep] = useState<number | null>(null);
 
-  // Use published URL for OBS (preview URLs require Lovable auth)
+  // State for UI interaction
+  const [expandedStep, setExpandedStep] = useState<number | null>(null);
+  const [isEditingUrl, setIsEditingUrl] = useState(false);
+  const [tempUrl, setTempUrl] = useState('');
+
+  // Initialize temp URL from store on mount
+  useEffect(() => {
+    if (publishedUrl) setTempUrl(publishedUrl);
+  }, [publishedUrl]);
+
+  // Determine if running in preview mode
   const isPreview = window.location.hostname.includes('lovableproject.com') || window.location.hostname.includes('lovable.app') && window.location.hostname.includes('preview');
-  const publishedOrigin = 'https://streamavatar.lovable.app';
-  const baseOrigin = isPreview ? publishedOrigin : window.location.origin;
+
+  // Default published origin (matches internal Lovable convention)
+  const defaultPublishedOrigin = 'https://streamavatar.lovable.app';
+
+  // Determine the base origin to use for the link:
+  // 1. If user set a custom URL, use it (highest priority)
+  // 2. If locally in preview, use the deafault published origin (so user gets a public link)
+  // 3. Otherwise use the current window origin
+  const baseOrigin = publishedUrl
+    ? publishedUrl.replace(/\/$/, '') // Remove trailing slash if present
+    : (isPreview ? defaultPublishedOrigin : window.location.origin);
+
+  // Construct the Clean View URL
   const bgParam = background ? `?bg=${background}` : '';
   const cleanViewUrl = `${baseOrigin}/view${bgParam}`;
 
+  // Handler to copy link to clipboard
   const handleCopyLink = () => {
     navigator.clipboard.writeText(cleanViewUrl);
     toast({
@@ -25,28 +49,86 @@ export const StreamPanel = () => {
     });
   };
 
+  // Handler to open link in new tab
   const handleOpenCleanView = () => {
     window.open(cleanViewUrl, '_blank');
   };
 
+  // Toggle guide steps
   const toggleStep = (step: number) => {
     setExpandedStep(expandedStep === step ? null : step);
+  };
+
+  // Save custom URL to store
+  const handleSaveUrl = () => {
+    if (!tempUrl.trim()) {
+      setPublishedUrl(null); // Reset to default if empty
+    } else {
+      // Basic validation: ensure it starts with http/https
+      let formattedUrl = tempUrl.trim();
+      if (!/^https?:\/\//i.test(formattedUrl)) {
+        formattedUrl = `https://${formattedUrl}`;
+      }
+      setPublishedUrl(formattedUrl);
+      setTempUrl(formattedUrl);
+    }
+    setIsEditingUrl(false);
+    toast({
+      title: "URL Actualizada / URL Updated",
+      description: "El enlace de OBS ahora usa tu URL personalizada. / OBS link now uses your custom URL.",
+    });
   };
 
   return (
     <div className="space-y-4">
       {/* OBS Setup Section */}
       <div className="glass-panel p-4 space-y-3">
-        <div className="flex items-center gap-2">
-          <Monitor className="w-5 h-5 text-primary" />
-          <h3 className="font-medium">{t.obsSetup}</h3>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Monitor className="w-5 h-5 text-primary" />
+            <h3 className="font-medium">{t.obsSetup}</h3>
+          </div>
+          {/* Toggle for URL editing */}
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsEditingUrl(!isEditingUrl)}>
+            <Settings className="w-4 h-4 text-muted-foreground" />
+          </Button>
         </div>
 
         <p className="text-sm text-muted-foreground">
           {t.obsInstructions}
         </p>
 
+        {/* Custom URL Editor - Configurable! */}
+        {isEditingUrl && (
+          <div className="p-3 bg-muted/30 rounded-md space-y-2 border border-border/50">
+            <Label htmlFor="custom-url" className="text-xs font-semibold text-primary">
+              URL Publicada / Published URL
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                id="custom-url"
+                value={tempUrl}
+                onChange={(e) => setTempUrl(e.target.value)}
+                placeholder="https://tu-proyecto.lovable.app"
+                className="h-8 text-xs"
+              />
+              <Button size="sm" onClick={handleSaveUrl} className="h-8">
+                Guardar
+              </Button>
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              Si el avatar no carga en OBS, asegúrate de que esta URL sea la correcta de tu proyecto publicado.
+              <br />
+              If avatar fails in OBS, ensure this URL matches your published project.
+            </p>
+          </div>
+        )}
+
+        {/* Action Buttons */}
         <div className="flex gap-2">
+          {/* Display logic for current URL being used (debug helper) */}
+          <div className="hidden">Using: {baseOrigin}</div>
+
           <Button
             variant="default"
             size="sm"
@@ -106,6 +188,10 @@ export const StreamPanel = () => {
             <p>2. En OBS: <strong>Fuentes → + → Navegador</strong></p>
             <p>3. Pega la URL, ancho <strong>1920</strong>, alto <strong>1080</strong></p>
             <p>4. Acepta</p>
+            {/* Added helpful tip about URL */}
+            <p className="text-yellow-500/80 mt-1 font-semibold">
+              ⚠️ Si ves la pantalla de login, clic en el engranaje arriba y pega tu URL publicada correcta.
+            </p>
           </div>
         )}
 

@@ -265,7 +265,7 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
         entity.dispose();
       }
     };
-  }, [modelUrl, modelType, entity]); // Added entity to deps to ensure cleanup of previous
+  }, [modelUrl, modelType]); // IMPORTANT: removed 'entity' to prevent infinite loop / IMPORTANTE: removido 'entity' para prevenir bucle infinito
 
   // -------------------------------------------------------------------------
   // Animation Frame
