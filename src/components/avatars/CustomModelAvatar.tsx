@@ -36,11 +36,12 @@ import { useFeatureFlag } from '@/lib/featureFlags';
 // =============================================================================
 
 interface CustomModelAvatarProps {
-  modelUrl: string;
-  modelType: 'glb' | 'vrm';
+  modelUrl: string; // URL of the 3D model (GLB or VRM) / URL del modelo 3D
+  modelType: 'glb' | 'vrm'; // Type of the model / Tipo de modelo
 }
 
 /** Trusted domains for remote model loading (SSRF prevention) */
+/** Dominios de confianza para carga remota (prevención SSRF) */
 const ALLOWED_MODEL_DOMAINS = [
   'localhost',
   '127.0.0.1',
@@ -59,6 +60,7 @@ const ALLOWED_MODEL_DOMAINS = [
 ];
 
 /** Spring Bones configuration for different avatar styles */
+/** Configuración de huesos dinámicos para estilos de avatar */
 const SPRING_BONE_CONFIG = {
   /** Stiffness multiplier (higher = stiffer hair/clothes) */
   stiffnessMultiplier: 1.0,
@@ -74,11 +76,13 @@ const SPRING_BONE_CONFIG = {
 
 function validateModelUrl(url: string): { valid: boolean; error?: string } {
   // Blob URLs - safe, created by URL.createObjectURL()
+  // URLs Blob - seguras, creadas localmente
   if (url.startsWith('blob:')) {
     return { valid: true };
   }
 
   // Data URLs - safe if correct MIME type
+  // URLs Data - seguras si el tipo MIME es correcto
   if (url.startsWith('data:')) {
     if (url.startsWith('data:model/') || url.startsWith('data:application/octet-stream')) {
       return { valid: true };
@@ -87,15 +91,19 @@ function validateModelUrl(url: string): { valid: boolean; error?: string } {
   }
 
   // Remote URLs - strict validation
+  // URLs remotas - validación estricta
   try {
     const parsed = new URL(url);
     const isLocalhost = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
 
+    // Must be HTTPS unless localhost
+    // Debe ser HTTPS a menos que sea localhost
     if (parsed.protocol !== 'https:' && !isLocalhost) {
       return { valid: false, error: 'Only HTTPS URLs are allowed' };
     }
 
     // SSRF prevention - block private networks
+    // Prevención SSRF - bloquear redes privadas
     const hostname = parsed.hostname.toLowerCase();
     const privatePatterns = [
       /^10\./, /^172\.(1[6-9]|2[0-9]|3[0-1])\./, /^192\.168\./,
@@ -109,6 +117,7 @@ function validateModelUrl(url: string): { valid: boolean; error?: string } {
     }
 
     // Domain whitelist
+    // Lista blanca de dominios
     const isAllowedDomain = ALLOWED_MODEL_DOMAINS.some(domain =>
       hostname === domain || hostname.endsWith('.' + domain)
     );
@@ -131,15 +140,18 @@ function validateModelUrl(url: string): { valid: boolean; error?: string } {
 // =============================================================================
 
 export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProps) => {
-  const groupRef = useRef<THREE.Group>(null);
-  const [entity, setEntity] = useState<AvatarEntity | null>(null);
-  const [gltfScene, setGltfScene] = useState<THREE.Group | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Refs and State
+  const groupRef = useRef<THREE.Group>(null); // Group for head rotation / Grupo para rotación de cabeza
+  const [entity, setEntity] = useState<AvatarEntity | null>(null); // VRM/3DGS Entity / Entidad VRM o 3DGS
+  const [gltfScene, setGltfScene] = useState<THREE.Group | null>(null); // Static GLB Scene / Escena GLB estática
+  const [error, setError] = useState<string | null>(null); // Error state / Estado de error
+  const [isLoading, setIsLoading] = useState(true); // Loading state / Estado de carga
 
+  // Feature Flags
   const enableDebugHud = useFeatureFlag('ENABLE_DEBUG_HUD');
   const enable3DGS = useFeatureFlag('ENABLE_3DGS');
 
+  // Store bindings
   const avatarScale = useAvatarStore((s) => s.avatarScale);
   const activeExpression = useAvatarStore((s) => s.activeExpression);
   const { getAnimationState } = useAvatarAnimation();
@@ -149,7 +161,8 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
   // -------------------------------------------------------------------------
 
   useEffect(() => {
-    // Validate URL
+    // 1. Validate URL before attempting load
+    // 1. Validar URL antes de intentar cargar
     const validation = validateModelUrl(modelUrl);
     if (!validation.valid) {
       console.warn('[CustomModelAvatar] URL validation failed:', validation.error);
@@ -162,9 +175,10 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
     setError(null);
 
     const loader = new GLTFLoader();
-    let mounted = true;
+    let mounted = true; // Cleanup flag / Bandera de limpieza
 
-    // Timeout for slow connections
+    // Timeout for slow connections (30s)
+    // Tiempo de espera para conexiones lentas
     const loadTimeout = setTimeout(() => {
       if (mounted) {
         setError('Model loading timed out (30s)');
@@ -173,38 +187,45 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
     }, 30000);
 
     // Register VRM plugin if loading VRM
+    // Registrar plugin VRM si se carga VRM
     if (modelType === 'vrm') {
       loader.register((parser) => new VRMLoaderPlugin(parser));
     }
 
+    // Load the model
+    // Cargar el modelo
     loader.load(
       modelUrl,
       (gltf) => {
         clearTimeout(loadTimeout);
         if (!mounted) return;
 
+        // Handle VRM Models
         if (modelType === 'vrm' && gltf.userData.vrm) {
           const vrmModel = gltf.userData.vrm as VRM;
 
-          // Optimize the model
+          // Optimization: Remove unnecessary geometry
+          // Optimización: Eliminar geometría innecesaria
           VRMUtils.removeUnnecessaryVertices(vrmModel.scene);
           VRMUtils.removeUnnecessaryJoints(vrmModel.scene);
 
-          // Disable frustum culling for VRM (prevents disappearing)
+          // Disable frustum culling to prevent avatar disappearing at angles
+          // Desactivar culling para evitar que desaparezca
           vrmModel.scene.traverse((obj) => {
             obj.frustumCulled = false;
           });
 
-          // Normalize model (center, scale, fix rotation)
+          // Normalize model (scale, position, rotation)
+          // Normalizar modelo
           const normResult = normalizeVRM(vrmModel);
           logNormalization(normResult, 'VRM Model');
 
           let newEntity: AvatarEntity;
 
+          // Initialize entity based on feature flags
+          // Inicializar entidad según flags
           if (enable3DGS) {
             console.log('[CustomModelAvatar] initializing Neural Shell (GaussianEntity)');
-            // For prototype: assume a .splat file exists with same name or use a placeholder
-            // Real impl: User would upload .hgs file or we derive path
             const splatUrl = modelUrl.replace('.vrm', '.splat').replace('.glb', '.splat');
             newEntity = new GaussianEntity(vrmModel, splatUrl);
           } else {
@@ -214,13 +235,13 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
           setEntity(newEntity);
 
           console.log('[CustomModelAvatar] VRM loaded successfully');
-          console.log('  - Spring Bones:', vrmModel.springBoneManager ? 'Yes' : 'No');
-          console.log('  - Expressions:', vrmModel.expressionManager ? Object.keys(vrmModel.expressionManager.expressionMap || {}).length : 0);
         } else {
-          // Regular GLB
+          // Handle Regular GLB Models
+          // Manejar modelos GLB regulares
           const scene = gltf.scene;
 
-          // Enable shadows
+          // Enable shadows on all meshes
+          // Habilitar sombras
           scene.traverse((child) => {
             if ((child as THREE.Mesh).isMesh) {
               child.castShadow = true;
@@ -255,7 +276,7 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
       }
     );
 
-    // Cleanup
+    // Cleanup function
     return () => {
       mounted = false;
       clearTimeout(loadTimeout);
@@ -273,9 +294,11 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
 
   useFrame((state, delta) => {
     // Get unified animation state (tracking + idle)
+    // Obtener estado unificado de animación
     const anim = getAnimationState();
 
-    // Head rotation
+    // Head rotation (apply to group, works for both VRM and GLB)
+    // Rotación de cabeza (aplica al grupo, funciona para ambos)
     if (groupRef.current) {
       groupRef.current.rotation.x = THREE.MathUtils.lerp(
         groupRef.current.rotation.x,
@@ -294,9 +317,10 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
       );
     }
 
-    // VRM-specific updates
+    // VRM-specific updates (BlendShapes, Physics)
+    // Actualizaciones específicas de VRM
     if (entity) {
-      // Update entity (physics, internal vrm update)
+      // Update entity physics
       entity.update(delta, state.camera);
 
       // Priority: Phonetic Visemes > Simple Tracking
@@ -354,6 +378,7 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
       {entity && <primitive object={entity.model} />}
       {gltfScene && <primitive object={gltfScene} />}
 
+      {/* Debug HUD Overlay */}
       {enableDebugHud && (
         <>
           <Stats />

@@ -35,6 +35,8 @@ const VALID_AVATARS: AvatarType[] = ['pill', 'sphere', 'boxy', 'cat', 'ghost', '
 // Note: 'splat' is excluded from CleanView as it's experimental
 const VALID_BACKGROUNDS: BackgroundType[] = ['transparent', 'chroma-green', 'chroma-blue', 'dark'];
 
+// Mapping of background IDs to CSS values
+// Mapeo de IDs de fondo a valores CSS
 const BACKGROUND_COLORS: Record<BackgroundType, string> = {
   'transparent': 'transparent',
   'chroma-green': '#00ff00',
@@ -52,17 +54,20 @@ const MAX_PARAM_LENGTH = 20; // Maximum characters for any URL parameter
 /**
  * Safely get a URL parameter with length validation
  * Returns null if parameter exceeds maximum length
+ * 
+ * Obtiene parámetro de URL de forma segura con validación de longitud
  */
 function safeGetParam(searchParams: URLSearchParams, key: string): string | null {
   const value = searchParams.get(key);
   if (value === null) return null;
-  
-  // Reject overly long parameters
+
+  // Reject overly long parameters to prevent abuse
+  // Rechaza parámetros demasiado largos para prevenir abuso
   if (value.length > MAX_PARAM_LENGTH) {
     console.warn(`[CleanView] Parameter "${key}" exceeded max length (${MAX_PARAM_LENGTH}), ignoring`);
     return null;
   }
-  
+
   return value;
 }
 
@@ -79,10 +84,15 @@ interface URLConfig {
   validationErrors: string[];
 }
 
+/**
+ * Parses and validates all URL parameters
+ * Enforces whitelists and numeric ranges
+ */
 function parseURLConfig(searchParams: URLSearchParams): URLConfig {
   const validationErrors: string[] = [];
 
   // Avatar type - whitelist validation
+  // Tipo de avatar - validación por lista blanca
   const avatarParam = safeGetParam(searchParams, 'avatar')?.toLowerCase();
   let avatar: AvatarType = 'pill';
   if (avatarParam) {
@@ -94,6 +104,7 @@ function parseURLConfig(searchParams: URLSearchParams): URLConfig {
   }
 
   // Color - strict hex validation (6 characters, alphanumeric only)
+  // Color - validación hexagonal estricta
   const colorParam = safeGetParam(searchParams, 'color');
   let color: string | null = null;
   if (colorParam) {
@@ -106,6 +117,7 @@ function parseURLConfig(searchParams: URLSearchParams): URLConfig {
   }
 
   // Background - whitelist validation
+  // Fondo - validación por lista blanca
   const bgParam = safeGetParam(searchParams, 'bg')?.toLowerCase();
   let background: BackgroundType = 'transparent';
   if (bgParam) {
@@ -117,6 +129,7 @@ function parseURLConfig(searchParams: URLSearchParams): URLConfig {
   }
 
   // Scale - numeric validation with strict range (0.5 - 3.0)
+  // Escala - validación numérica con rango estricto
   const scaleParam = safeGetParam(searchParams, 'scale');
   let scale = 1;
   if (scaleParam) {
@@ -129,6 +142,7 @@ function parseURLConfig(searchParams: URLSearchParams): URLConfig {
   }
 
   // Idle animations - boolean validation
+  // Animaciones reposo - validación booleana
   const idleParam = safeGetParam(searchParams, 'idle')?.toLowerCase();
   const idleEnabled = idleParam !== 'false';
 
@@ -148,9 +162,13 @@ interface ConfigErrorProps {
   errors: string[];
 }
 
+/**
+ * Displays configuration errors briefly on screen
+ * Useful for debugging URL issues in OBS
+ */
 const ConfigErrorNotice = ({ errors }: ConfigErrorProps) => {
   if (errors.length === 0) return null;
-  
+
   return (
     <div className="fixed top-2 left-2 bg-yellow-500/20 border border-yellow-500/40 rounded px-2 py-1 text-xs text-yellow-200 max-w-xs">
       <span className="font-medium">Config warnings:</span>
@@ -174,9 +192,11 @@ const CleanView = () => {
   const [showErrors, setShowErrors] = useState(true);
 
   // Parse URL config (memoized to avoid recalculation)
+  // Parsear config URL (memoizado para evitar recálculos)
   const config = useMemo(() => parseURLConfig(searchParams), [searchParams]);
 
   // Apply URL config to store on mount
+  // Aplicar configuración al store al montar
   useEffect(() => {
     console.log('[CleanView] Applying URL configuration:', {
       avatar: config.avatar,
@@ -200,11 +220,13 @@ const CleanView = () => {
     setBackground(config.background);
 
     // Hide errors after 5 seconds in production use
+    // Ocultar errores tras 5 segundos
     const timer = setTimeout(() => setShowErrors(false), 5000);
     return () => clearTimeout(timer);
   }, [config, setSelectedAvatar, setAvatarColor, setAvatarScale, setBackground]);
 
   // Determine container styles
+  // Determinar estilos del contenedor
   const containerStyle: React.CSSProperties = {
     width: '100vw',
     height: '100vh',
@@ -215,8 +237,11 @@ const CleanView = () => {
   return (
     <div style={containerStyle}>
       {/* Show validation errors briefly for debugging */}
+      {/* Mostrar errores de validación brevemente */}
       {showErrors && <ConfigErrorNotice errors={config.validationErrors} />}
-      
+
+      {/* Render the avatar in clean mode (no controls) */}
+      {/* Renderizar avatar en modo limpio (sin controles) */}
       <AvatarRenderer isCleanView />
     </div>
   );

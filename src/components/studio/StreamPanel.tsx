@@ -1,4 +1,4 @@
-import { Copy, ExternalLink, Monitor, ChevronDown, ChevronUp, Settings } from 'lucide-react';
+import { Copy, ExternalLink, Monitor, ChevronDown, ChevronUp, Settings, PlayCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,41 +6,62 @@ import { Label } from '@/components/ui/label';
 import { useAvatarStore, useTranslation } from '@/stores/avatarStore';
 import { useToast } from '@/hooks/use-toast';
 
+/**
+ * StreamPanel Component
+ * 
+ * Manages OBS integration settings and instructions.
+ * Provides tools to copy the streaming URL and simulate the OBS view.
+ */
 export const StreamPanel = () => {
   // Access global state for background and published URL
+  // Accede al estado global para el fondo y la URL publicada
   const { background, setBackground, publishedUrl, setPublishedUrl } = useAvatarStore();
+
+  // Hooks for UI feedback and translations
+  // Hooks para feedback de UI y traducciones
   const { toast } = useToast();
   const t = useTranslation();
 
-  // State for UI interaction
-  const [expandedStep, setExpandedStep] = useState<number | null>(null);
-  const [isEditingUrl, setIsEditingUrl] = useState(false);
-  const [tempUrl, setTempUrl] = useState('');
+  // Local state for UI interaction
+  // Estado local para interacción de UI
+  const [expandedStep, setExpandedStep] = useState<number | null>(null); // Controls which help step is open / Controla qué paso de ayuda está abierto
+  const [isEditingUrl, setIsEditingUrl] = useState(false); // Toggles URL input visibility / Alterna visibilidad del input de URL
+  const [tempUrl, setTempUrl] = useState(''); // Stores URL while editing / Almacena URL mientras se edita
 
   // Initialize temp URL from store on mount
+  // Inicializa la URL temporal desde el store al montar
   useEffect(() => {
     if (publishedUrl) setTempUrl(publishedUrl);
   }, [publishedUrl]);
 
-  // Determine if running in preview mode
+  // Determine if running in preview mode (Lovable environment)
+  // Determina si se está ejecutando en modo previsualización (entorno Lovable)
   const isPreview = window.location.hostname.includes('lovableproject.com') || window.location.hostname.includes('lovable.app') && window.location.hostname.includes('preview');
 
   // Default published origin (matches internal Lovable convention)
+  // Origen publicado por defecto (coincide con convención interna de Lovable)
   const defaultPublishedOrigin = 'https://streamavatar.lovable.app';
 
   // Determine the base origin to use for the link:
   // 1. If user set a custom URL, use it (highest priority)
   // 2. If locally in preview, use the deafault published origin (so user gets a public link)
   // 3. Otherwise use the current window origin
+  //
+  // Determina el origen base para el enlace:
+  // 1. Si el usuario definió una URL, úsala (prioridad más alta)
+  // 2. Si está en preview local, usa el origen publicado por defecto
+  // 3. De lo contrario, usa el origen de la ventana actual
   const baseOrigin = publishedUrl
-    ? publishedUrl.replace(/\/$/, '') // Remove trailing slash if present
+    ? publishedUrl.replace(/\/$/, '') // Remove trailing slash if present / Elimina barra final si existe
     : (isPreview ? defaultPublishedOrigin : window.location.origin);
 
-  // Construct the Clean View URL
+  // Construct the Clean View URL with background parameter
+  // Construye la URL de Vista Limpia con el parámetro de fondo
   const bgParam = background ? `?bg=${background}` : '';
   const cleanViewUrl = `${baseOrigin}/view${bgParam}`;
 
   // Handler to copy link to clipboard
+  // Manejador para copiar enlace al portapapeles
   const handleCopyLink = () => {
     navigator.clipboard.writeText(cleanViewUrl);
     toast({
@@ -49,22 +70,36 @@ export const StreamPanel = () => {
     });
   };
 
-  // Handler to open link in new tab
-  const handleOpenCleanView = () => {
-    window.open(cleanViewUrl, '_blank');
+  /**
+   * Simulate OBS View
+   * Opens the Clean View in a popup window sized exactly like a 1080p stream source (scaled down).
+   * This allows testing the layout without needing OBS installed.
+   * 
+   * Simular Vista OBS
+   * Abre la Vista Limpia en una ventana emergente dimensionada como una fuente de stream 1080p.
+   * Permite probar el diseño sin necesitar OBS instalado.
+   */
+  const handleSimulateOBS = () => {
+    // Open a popup window with 16:9 aspect ratio (1280x720 simulate 720p stream)
+    // Abre una ventana popup con relación de aspecto 16:9 (1280x720 simula stream 720p)
+    window.open(cleanViewUrl, 'obs-simulator', 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no');
   };
 
-  // Toggle guide steps
+  // Toggle guide steps visibility
+  // Alterna visibilidad de pasos de guía
   const toggleStep = (step: number) => {
     setExpandedStep(expandedStep === step ? null : step);
   };
 
-  // Save custom URL to store
+  // Save custom URL to store with validation
+  // Guarda URL personalizada en el store con validación
   const handleSaveUrl = () => {
     if (!tempUrl.trim()) {
+      // If empty, reset to default / Si está vacío, resetear a defecto
       setPublishedUrl(null); // Reset to default if empty
     } else {
       // Basic validation: ensure it starts with http/https
+      // Validación básica: asegurar que empieza con http/https
       let formattedUrl = tempUrl.trim();
       if (!/^https?:\/\//i.test(formattedUrl)) {
         formattedUrl = `https://${formattedUrl}`;
@@ -81,14 +116,14 @@ export const StreamPanel = () => {
 
   return (
     <div className="space-y-4">
-      {/* OBS Setup Section */}
+      {/* OBS Setup Section / Sección de Configuración OBS */}
       <div className="glass-panel p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Monitor className="w-5 h-5 text-primary" />
             <h3 className="font-medium">{t.obsSetup}</h3>
           </div>
-          {/* Toggle for URL editing */}
+          {/* Toggle for URL editing / Botón para editar URL */}
           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsEditingUrl(!isEditingUrl)}>
             <Settings className="w-4 h-4 text-muted-foreground" />
           </Button>
@@ -99,6 +134,7 @@ export const StreamPanel = () => {
         </p>
 
         {/* Custom URL Editor - Configurable! */}
+        {/* Editor de URL Personalizada - ¡Configurable! */}
         {isEditingUrl && (
           <div className="p-3 bg-muted/30 rounded-md space-y-2 border border-border/50">
             <Label htmlFor="custom-url" className="text-xs font-semibold text-primary">
@@ -124,7 +160,7 @@ export const StreamPanel = () => {
           </div>
         )}
 
-        {/* Action Buttons */}
+        {/* Action Buttons / Botones de Acción */}
         <div className="flex gap-2">
           {/* Display logic for current URL being used (debug helper) */}
           <div className="hidden">Using: {baseOrigin}</div>
@@ -138,19 +174,23 @@ export const StreamPanel = () => {
             <Copy className="w-4 h-4" />
             {t.copyLink}
           </Button>
+
+          {/* Simulate OBS Button - New Feature! */}
+          {/* Botón Simular OBS - ¡Nueva Funcionalidad! */}
           <Button
             variant="outline"
             size="sm"
-            onClick={handleOpenCleanView}
+            onClick={handleSimulateOBS}
             className="gap-2"
+            title="Abre una ventana popup para probar sin OBS / Open popup to test without OBS"
           >
-            <ExternalLink className="w-4 h-4" />
-            {t.openPreview}
+            <PlayCircle className="w-4 h-4 text-green-500" />
+            Simular OBS
           </Button>
         </div>
       </div>
 
-      {/* Step-by-step Guide */}
+      {/* Step-by-step Guide / Guía Paso a Paso */}
       <div className="glass-panel p-4 space-y-2">
         <h4 className="text-sm font-medium mb-3">Guía paso a paso</h4>
 
@@ -238,7 +278,7 @@ export const StreamPanel = () => {
         )}
       </div>
 
-      {/* Quick Background Selector */}
+      {/* Quick Background Selector / Selector Rápido de Fondo */}
       <div className="glass-panel p-4 space-y-3">
         <h4 className="text-sm font-medium">{t.quickBackground}</h4>
         <div className="grid grid-cols-2 gap-2">
@@ -285,7 +325,7 @@ export const StreamPanel = () => {
         </div>
       </div>
 
-      {/* Documentation Link */}
+      {/* Documentation Link / Enlace a Documentación */}
       <a
         href="https://github.com/MRamiBalles/streamavatar/blob/main/docs/OBS_SETUP_GUIDE.md"
         target="_blank"
