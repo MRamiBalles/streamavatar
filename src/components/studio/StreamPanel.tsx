@@ -13,52 +13,50 @@ import { useToast } from '@/hooks/use-toast';
  * Provides tools to copy the streaming URL and simulate the OBS view.
  */
 export const StreamPanel = () => {
-  // Access global state for background and published URL
-  // Accede al estado global para el fondo y la URL publicada
-  const { background, setBackground, publishedUrl, setPublishedUrl } = useAvatarStore();
+  // Access global state
+  // Accede al estado global
+  const selectedAvatar = useAvatarStore((s) => s.selectedAvatar);
+  const avatarColor = useAvatarStore((s) => s.avatarColor);
+  const avatarScale = useAvatarStore((s) => s.avatarScale);
+  const background = useAvatarStore((s) => s.background);
+  const setBackground = useAvatarStore((s) => s.setBackground);
+  const publishedUrl = useAvatarStore((s) => s.publishedUrl);
+  const setPublishedUrl = useAvatarStore((s) => s.setPublishedUrl);
+  const isTracking = useAvatarStore((s) => s.isTracking);
+  const toggleBackground = useAvatarStore((s) => s.toggleBackground);
 
-  // Hooks for UI feedback and translations
-  // Hooks para feedback de UI y traducciones
-  const { toast } = useToast();
   const t = useTranslation();
+  const { toast } = useToast();
 
   // Local state for UI interaction
   // Estado local para interacción de UI
-  const [expandedStep, setExpandedStep] = useState<number | null>(null); // Controls which help step is open / Controla qué paso de ayuda está abierto
-  const [isEditingUrl, setIsEditingUrl] = useState(false); // Toggles URL input visibility / Alterna visibilidad del input de URL
-  const [tempUrl, setTempUrl] = useState(''); // Stores URL while editing / Almacena URL mientras se edita
+  const [expandedStep, setExpandedStep] = useState<number | null>(1);
+  const [isEditingUrl, setIsEditingUrl] = useState(false);
+  const [tempUrl, setTempUrl] = useState(publishedUrl || '');
 
   // Initialize temp URL from store on mount
-  // Inicializa la URL temporal desde el store al montar
   useEffect(() => {
     if (publishedUrl) setTempUrl(publishedUrl);
   }, [publishedUrl]);
 
-  // Determine if running in preview mode (Lovable environment)
-  // Determina si se está ejecutando en modo previsualización (entorno Lovable)
-  const isPreview = window.location.hostname.includes('lovableproject.com') || window.location.hostname.includes('lovable.app') && window.location.hostname.includes('preview');
+  // Determine enviroment
+  const isPreview = window.location.hostname.includes('lovableproject.com') || (window.location.hostname.includes('lovable.app') && window.location.hostname.includes('preview'));
 
-  // Default published origin (matches internal Lovable convention)
-  // Origen publicado por defecto (coincide con convención interna de Lovable)
-  const defaultPublishedOrigin = 'https://streamavatar.lovable.app';
-
-  // Determine the base origin to use for the link:
-  // 1. If user set a custom URL, use it (highest priority)
-  // 2. If locally in preview, use the deafault published origin (so user gets a public link)
-  // 3. Otherwise use the current window origin
-  //
-  // Determina el origen base para el enlace:
-  // 1. Si el usuario definió una URL, úsala (prioridad más alta)
-  // 2. Si está en preview local, usa el origen publicado por defecto
-  // 3. De lo contrario, usa el origen de la ventana actual
+  // Determine base origin
   const baseOrigin = publishedUrl
-    ? publishedUrl.replace(/\/$/, '') // Remove trailing slash if present / Elimina barra final si existe
-    : (isPreview ? defaultPublishedOrigin : window.location.origin);
+    ? publishedUrl.replace(/\/$/, '')
+    : (isPreview ? 'https://streamavatar.lovable.app' : window.location.origin);
 
-  // Construct the Clean View URL with background parameter
-  // Construye la URL de Vista Limpia con el parámetro de fondo
-  const bgParam = background ? `?bg=${background}` : '';
-  const cleanViewUrl = `${baseOrigin}/view${bgParam}`;
+  // Construct query parameters for the Clean View URL
+  // Construye parámetros de consulta para la URL de Vista Limpia
+  const params = new URLSearchParams();
+  if (background) params.append('bg', background);
+  if (selectedAvatar) params.append('avatar', selectedAvatar);
+  // Remove # from hex color for URL safety
+  if (avatarColor) params.append('color', avatarColor.replace('#', ''));
+  if (avatarScale !== 1) params.append('scale', avatarScale.toString());
+
+  const cleanViewUrl = `${baseOrigin}/view?${params.toString()}`;
 
   // Handler to copy link to clipboard
   // Manejador para copiar enlace al portapapeles
