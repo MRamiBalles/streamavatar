@@ -51,7 +51,7 @@ export const useFaceTracker = () => {
 
     if (video.readyState >= 2) {
       const startTimeMs = performance.now();
-      const result: FaceLandmarkerResult = faceLandmarkerRef.current.detectForVideo(video, startTimeMs);
+      let result: FaceLandmarkerResult = faceLandmarkerRef.current.detectForVideo(video, startTimeMs);
 
       if (result.faceBlendshapes && result.faceBlendshapes.length > 0) {
         const blendshapes = result.faceBlendshapes[0].categories;
