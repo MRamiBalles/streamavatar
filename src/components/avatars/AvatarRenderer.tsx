@@ -108,21 +108,30 @@ const AvatarGroup = ({ children }: { children: React.ReactNode }) => {
         // Apply head position with smoothing and clamping
         // Aplicar posición con suavizado y límites
 
-        // 1. Scale: Reduced from 12 to 8 for X/Y to keep it closer to center
-        //    Z depth reduced from 5 to 2 to prevent getting too close/far
-        const scaleX = 8;
-        const scaleY = 8;
-        const scaleZ = 2;
+        // Map [0,1] face coordinates to 3D scene coordinates
+        // FaceLandmarker returns x,y,z in normalized coordinates centered at 0?
+        // Actually FaceLandmarker returns normalized x,y in [0,1] relative to image
+        // center is 0.5, 0.5. But here we are using the matrix translation which is different.
+        // matrix translation is typically in "meters" relative to camera.
 
-        const x = Math.max(-2.5, Math.min(2.5, faceData.headPosition.x * scaleX));
-        const y = Math.max(-1.5, Math.min(1.5, faceData.headPosition.y * scaleY));
-        const z = Math.max(-1.0, Math.min(2.0, faceData.headPosition.z * scaleZ));
+        // Let's use a simpler mapping based on viewport coverage
+        // The camera is at z=4. The avatar is at z=0.
+        // The visible height at z=0 is: 2 * tan(50/2 * deg2rad) * 4 ≈ 3.73
+        // We boost this slightly to allow movement to edges.
+        const visibleHeightAt0 = 4.0;
+        const visibleWidthAt0 = visibleHeightAt0 * (16 / 9); // Assumed aspect or allow dynamic
+
+        // Face position from data is roughly -0.5 to 0.5 range after matrix extraction?
+        // Let's amplify it to cover the screen.
+
+        const x = Math.max(-visibleWidthAt0 / 2, Math.min(visibleWidthAt0 / 2, faceData.headPosition.x * 30));
+        const y = Math.max(-visibleHeightAt0 / 2, Math.min(visibleHeightAt0 / 2, faceData.headPosition.y * 30));
+        const z = 0; // Keep at 0 plane for simplicity
 
         const targetPos = new THREE.Vector3(x, y, z);
 
-        // 2. Smoothing: Reduced lerp factor from 0.5 to 0.15 for smoother movement
-        //    Reducción de factor lerp para movimiento más fluido
-        groupRef.current.position.lerp(targetPos, 0.15);
+        // 2. Smoothing
+        groupRef.current.position.lerp(targetPos, 0.2);
       }
     } else if (groupRef.current) {
       // Reset position in other modes

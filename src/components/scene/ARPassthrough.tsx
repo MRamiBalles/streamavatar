@@ -23,11 +23,18 @@ export const ARPassthrough = () => {
         }
     }, [videoElement]);
 
-    // Keep the plane filling the screen
-    const scale = [viewport.width, viewport.height, 1] as [number, number, number];
+    // Calculate the size of the plane at depth -10 to fill the view
+    // Using standard FoV math: height = 2 * tan(fov/2) * distance
+    const distance = 10;
+    const fov = useThree((state) => state.camera instanceof THREE.PerspectiveCamera ? state.camera.fov : 50);
+    const aspect = useThree((state) => state.viewport.aspect);
+
+    // Height of the view at z = -10
+    const viewHeight = 2 * Math.tan((fov * Math.PI) / 180 / 2) * distance;
+    const viewWidth = viewHeight * aspect;
 
     return (
-        <mesh ref={meshRef} position={[0, 0, -10]} scale={scale}>
+        <mesh ref={meshRef} position={[0, 0, -distance]} scale={[viewWidth, viewHeight, 1]}>
             <planeGeometry />
             <meshBasicMaterial toneMapped={false} />
         </mesh>
