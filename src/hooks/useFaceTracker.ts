@@ -16,7 +16,10 @@ export const useFaceTracker = () => {
   // Sync usage of local ref with global store
   useEffect(() => {
     if (videoRef.current) {
+      console.log('[useFaceTracker] Setting global video element', videoRef.current);
       setVideoElement(videoRef.current);
+    } else {
+      console.log('[useFaceTracker] videoRef.current is null');
     }
   }, [setVideoElement]);
 

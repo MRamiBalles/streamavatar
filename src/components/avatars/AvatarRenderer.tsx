@@ -70,7 +70,7 @@ const AvatarGroup = ({ children }: { children: React.ReactNode }) => {
 
   useFrame(() => {
     if (background === 'ar-camera' && groupRef.current) {
-      const { faceData } = useTrackingStore.getState();
+      const { faceData } = useAvatarStore.getState();
       if (faceData.headPosition) {
         // Apply head position with smoothing
         // Aplicar posición de la cabeza con suavizado
