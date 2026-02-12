@@ -1,4 +1,4 @@
-import { Suspense, useRef } from 'react';
+import React, { Suspense, useRef, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Environment, ContactShadows, Html, useProgress } from '@react-three/drei';
 import * as THREE from 'three';
@@ -14,6 +14,37 @@ import { CompositeAvatar } from './CompositeAvatar';
 import { VRMAvatar } from './VRMAvatar';
 import { SplatScene } from '../scene/SplatScene';
 import { ARPassthrough } from '../scene/ARPassthrough';
+
+// Simple Error Boundary for SplatScene to prevent app crash
+class SplatErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("SplatScene crashed:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <group>
+          <mesh>
+            <boxGeometry args={[1, 1, 1]} />
+            <meshBasicMaterial color="red" wireframe />
+          </mesh>
+        </group>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 const AvatarModel = ({ type }: { type: AvatarType }) => {
   const customModel = useAvatarStore((s) => s.customModel);
@@ -172,9 +203,14 @@ export const AvatarRenderer = ({ isCleanView = false }: AvatarRendererProps) => 
             />
           )}
 
+
+
+
           {/* EXPERIMENTAL: 3D Gaussian Splatting Background */}
           {background === 'splat' && splatUrl && (
-            <SplatScene url={splatUrl} />
+            <SplatErrorBoundary>
+              <SplatScene url={splatUrl} />
+            </SplatErrorBoundary>
           )}
 
           {/* AR BACKGROUND */}
