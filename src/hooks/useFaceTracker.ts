@@ -163,6 +163,10 @@ export const useFaceTracker = () => {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
+
+        // Ensure store is updated with the active video element
+        setVideoElement(videoRef.current);
+
         setCameraActive(true);
         animationFrameRef.current = requestAnimationFrame(processFrame);
       }

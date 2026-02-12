@@ -181,7 +181,7 @@ export const AvatarRenderer = ({ isCleanView = false }: AvatarRendererProps) => 
         shadows
         camera={{ position: [0, 0, 4], fov: 50 }}
         gl={{
-          alpha: background === 'transparent',
+          alpha: true, // Always true to let CSS background show through (Chroma, Gradients)
           antialias: !isHighQuality, // Let EffectComposer handle AA in HQ mode
           preserveDrawingBuffer: true,
           toneMappingExposure: 1.2,
@@ -245,18 +245,18 @@ export const AvatarRenderer = ({ isCleanView = false }: AvatarRendererProps) => 
               maxPolarAngle={Math.PI / 1.5}
             />
           )}
+
         </Suspense>
-      </Suspense>
-    </Canvas>
-      
-      {/* Hidden video element for Face Tracking */ }
-  <video
-    ref={videoRef}
-    className="hidden absolute top-0 left-0 w-px h-px opacity-0 pointer-events-none"
-    playsInline
-    muted
-    autoPlay
-  />
+      </Canvas>
+
+      {/* Hidden video element for Face Tracking */}
+      <video
+        ref={videoRef}
+        className="hidden absolute top-0 left-0 w-px h-px opacity-0 pointer-events-none"
+        playsInline
+        muted
+        autoPlay
+      />
     </div >
   );
 };
