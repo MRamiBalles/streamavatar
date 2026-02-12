@@ -18,6 +18,8 @@ export interface FaceData {
   rawRotation?: [number, number, number, number];
   /** SDD: Head position from transformation matrix (x, y, z) */
   headPosition?: { x: number; y: number; z: number };
+  /** SDD: Subset of normalized face points for visualization/diagnostics */
+  facePoints?: { x: number; y: number; z: number }[];
 }
 
 // =============================================================================
@@ -49,6 +51,7 @@ export const trackingDefaults = {
     rawCoefficients: new Float32Array(52),
     rawRotation: [0, 0, 0, 1],
     headPosition: { x: 0, y: 0, z: 0 },
+    facePoints: [],
   } as FaceData,
   isCameraActive: false,
   isTracking: false,

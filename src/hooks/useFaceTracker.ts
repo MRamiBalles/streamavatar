@@ -114,6 +114,35 @@ export const useFaceTracker = () => {
           rawRotation = [quat.x, quat.y, quat.z, quat.w];
         }
 
+        // --- EXTRACT LANDMARKS FOR DIAGNOSTIC (Requested by User) ---
+        let facePoints: { x: number, y: number, z: number }[] = [];
+        if (result.faceLandmarks && result.faceLandmarks.length > 0) {
+          const landmarks = result.faceLandmarks[0];
+
+          // Selection of key indices:
+          // Eyes: 33, 133 (left border), 362, 263 (right border)
+          // Nose: 1, 2, 3, 4
+          // Mouth: 61, 291, 0, 17, 78, 308 (corners and centers)
+          // Silhouette: 10, 152, 234, 454 (top, bottom, left, right) + some others for 10 total
+          const diagnosticIndices = [
+            33, 133, 362, 263, // Eyes (4)
+            1, 2, 3, 4,       // Nose (4)
+            61, 291, 0, 17, 78, 308, // Mouth (6)
+            10, 152, 234, 454, 58, 288, 172, 397, 132, 361 // Face Shape (10)
+          ];
+
+          facePoints = diagnosticIndices.map(idx => {
+            const p = landmarks[idx];
+            // MediaPipe gives normalized [0,1] coordinates. 
+            // We map to [-0.5, 0.5] range for consistency with our tracking logic
+            return {
+              x: (p.x - 0.5) * -1, // Flip X for mirror
+              y: (p.y - 0.5) * -1, // Flip Y for R3F convention
+              z: p.z
+            };
+          });
+        }
+
         setFaceData({
           headRotation,
           headPosition,
@@ -122,6 +151,7 @@ export const useFaceTracker = () => {
           rightEyeBlink: eyeBlinkRight,
           rawCoefficients,
           rawRotation,
+          facePoints
         });
 
         setTracking(true);

@@ -15,6 +15,7 @@ import { CompositeAvatar } from './CompositeAvatar';
 import { VRMAvatar } from './VRMAvatar';
 import { SplatScene } from '../scene/SplatScene';
 import { ARPassthrough } from '../scene/ARPassthrough';
+import { FaceLandmarks } from '../scene/FaceLandmarks';
 
 // Simple Error Boundary for SplatScene to prevent app crash
 class SplatErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
@@ -248,8 +249,13 @@ export const AvatarRenderer = ({ isCleanView = false }: AvatarRendererProps) => 
             </SplatErrorBoundary>
           )}
 
-          {/* AR BACKGROUND */}
-          {background === 'ar-camera' && <ARPassthrough />}
+          {/* AR BACKGROUND & DIAGNOSTICS */}
+          {background === 'ar-camera' && (
+            <>
+              <ARPassthrough />
+              <FaceLandmarks />
+            </>
+          )}
 
           {/* Controls - only in non-clean view */}
           {!isCleanView && (
