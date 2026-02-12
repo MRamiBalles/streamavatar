@@ -73,15 +73,21 @@ export const GhostAvatar = () => {
     }
 
     if (mouthRef.current) {
-      const mouthScale = 0.1 + anim.mouthOpen * 0.5;
+      // Mouth opening calculation
+      // Ranges: Closed (scaleY=0.1, scaleX=0.8) -> Open (scaleY=0.8, scaleX=1.2)
+      const mouthOpenAmount = anim.mouthOpen;
+
+      const targetScaleY = 0.1 + mouthOpenAmount * 0.7; // Boosted from 0.5
+      const targetScaleX = 0.8 + mouthOpenAmount * 0.4;
+
       mouthRef.current.scale.y = THREE.MathUtils.lerp(
         mouthRef.current.scale.y,
-        mouthScale,
+        targetScaleY,
         0.2
       );
       mouthRef.current.scale.x = THREE.MathUtils.lerp(
         mouthRef.current.scale.x,
-        0.8 + anim.mouthOpen * 0.4,
+        targetScaleX,
         0.2
       );
     }

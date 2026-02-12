@@ -104,17 +104,25 @@ const AvatarGroup = ({ children }: { children: React.ReactNode }) => {
     if (background === 'ar-camera' && groupRef.current) {
       const { faceData } = useAvatarStore.getState();
       if (faceData.headPosition) {
-        // Apply head position with smoothing
-        // Aplicar posición de la cabeza con suavizado
-        // Map the position to a reasonable range for the scene
-        // Assuming Matrix extraction is roughly in meters/units
-        const targetPos = new THREE.Vector3(
-          faceData.headPosition.x * 12, // Scale factor effectively tuned for 3D scene
-          faceData.headPosition.y * 12,
-          faceData.headPosition.z * 5
-        );
 
-        groupRef.current.position.lerp(targetPos, 0.5);
+        // Apply head position with smoothing and clamping
+        // Aplicar posición con suavizado y límites
+
+        // 1. Scale: Reduced from 12 to 8 for X/Y to keep it closer to center
+        //    Z depth reduced from 5 to 2 to prevent getting too close/far
+        const scaleX = 8;
+        const scaleY = 8;
+        const scaleZ = 2;
+
+        const x = Math.max(-2.5, Math.min(2.5, faceData.headPosition.x * scaleX));
+        const y = Math.max(-1.5, Math.min(1.5, faceData.headPosition.y * scaleY));
+        const z = Math.max(-1.0, Math.min(2.0, faceData.headPosition.z * scaleZ));
+
+        const targetPos = new THREE.Vector3(x, y, z);
+
+        // 2. Smoothing: Reduced lerp factor from 0.5 to 0.15 for smoother movement
+        //    Reducción de factor lerp para movimiento más fluido
+        groupRef.current.position.lerp(targetPos, 0.15);
       }
     } else if (groupRef.current) {
       // Reset position in other modes
