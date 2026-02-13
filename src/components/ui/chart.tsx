@@ -58,6 +58,13 @@ const ChartContainer = React.forwardRef<
 });
 ChartContainer.displayName = "Chart";
 
+// Sanitize a CSS key to only allow safe characters
+const sanitizeCSSKey = (key: string) => key.replace(/[^a-zA-Z0-9\-_]/g, '');
+
+// Validate a CSS color value (hex, hsl, rgb, named colors, oklch)
+const isSafeCSSColor = (color: string) =>
+  /^(#[0-9a-fA-F]{3,8}|(?:rgb|hsl|oklch)a?\([^)]{1,80}\)|[a-zA-Z]{1,30})$/.test(color.trim());
+
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(([_, config]) => config.theme || config.color);
 
@@ -65,24 +72,30 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null;
   }
 
+  // Sanitize the chart id
+  const safeId = sanitizeCSSKey(id);
+
+  // Build CSS string with sanitized values
+  const cssText = Object.entries(THEMES)
+    .map(([theme, prefix]) => {
+      const vars = colorConfig
+        .map(([key, itemConfig]) => {
+          const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
+          const safeKey = sanitizeCSSKey(key);
+          if (color && isSafeCSSColor(color)) {
+            return `  --color-${safeKey}: ${color};`;
+          }
+          return null;
+        })
+        .filter(Boolean)
+        .join("\n");
+      return `${prefix} [data-chart=${safeId}] {\n${vars}\n}`;
+    })
+    .join("\n");
+
   return (
     <style
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
-${colorConfig
-  .map(([key, itemConfig]) => {
-    const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
-  })
-  .join("\n")}
-}
-`,
-          )
-          .join("\n"),
-      }}
+      dangerouslySetInnerHTML={{ __html: cssText }}
     />
   );
 };

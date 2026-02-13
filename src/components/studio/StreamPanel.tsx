@@ -23,7 +23,7 @@ export const StreamPanel = () => {
   const publishedUrl = useAvatarStore((s) => s.publishedUrl);
   const setPublishedUrl = useAvatarStore((s) => s.setPublishedUrl);
   const isTracking = useAvatarStore((s) => s.isTracking);
-  const toggleBackground = useAvatarStore((s) => s.toggleBackground);
+  
 
   const t = useTranslation();
   const { toast } = useToast();
