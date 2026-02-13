@@ -28,7 +28,7 @@ export const FaceLandmarks = () => {
         groupRef.current.visible = true;
 
         // Match the background plane scaling math
-        const planeZ = -9.9; // Just in front of the video plane at -10
+        const planeZ = -9.0; // Just in front of the video plane at -10
         const cameraZ = 4;
         const distanceToCamera = Math.abs(cameraZ - planeZ);
 

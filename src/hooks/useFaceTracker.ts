@@ -103,9 +103,9 @@ export const useFaceTracker = () => {
           // FIXED: Adjusted signs to match the "Mirror" effect of the position
           headRotation = {
             x: Math.atan2(matrix[9], matrix[10]) * 0.5,
-            // Invert Y rotation to match the mirrored X position
+            // Reverted Y rotation to match the non-inverted X position
             // If I rotate head Left (my physical left), the avatar should look to Screen Left.
-            y: -Math.atan2(-matrix[8], Math.sqrt(matrix[9] * matrix[9] + matrix[10] * matrix[10])) * 0.5,
+            y: Math.atan2(-matrix[8], Math.sqrt(matrix[9] * matrix[9] + matrix[10] * matrix[10])) * 0.5,
             z: Math.atan2(matrix[4], matrix[0]) * 0.3,
           };
 
@@ -133,7 +133,7 @@ export const useFaceTracker = () => {
             // MediaPipe gives normalized [0,1] coordinates.
             // We map to [-0.5, 0.5] range for consistency with our tracking logic
             return {
-              x: (p.x - 0.5) * -1, // Flip X for mirror
+              x: (p.x - 0.5), // No flip, match screen space
               y: (p.y - 0.5) * -1, // Flip Y for R3F convention
               z: p.z
             };
@@ -143,7 +143,7 @@ export const useFaceTracker = () => {
           // This is more stable than the transformation matrix translation for AR alignment
           const noseTip = landmarks[1];
           headPosition = {
-            x: (noseTip.x - 0.5) * -1, // Mirror X
+            x: (noseTip.x - 0.5), // No flip, match screen space
             y: (noseTip.y - 0.5) * -1, // Invert Y for screen space
             z: noseTip.z // Z is depth
           };
