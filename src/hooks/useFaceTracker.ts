@@ -51,6 +51,9 @@ export const useFaceTracker = () => {
     }
   }, []);
 
+  /* 
+   * FIXED: Face Tracking Logic for Mirroring & Responsiveness
+   */
   const processFrame = useCallback(() => {
     if (!videoRef.current || !faceLandmarkerRef.current || !isCameraActive) {
       return;
@@ -79,10 +82,14 @@ export const useFaceTracker = () => {
           }
         });
 
-        // Extract relevant blendshapes
-        const jawOpen = getBlendshapeValue('jawOpen');
-        const eyeBlinkLeft = getBlendshapeValue('eyeBlinkLeft');
-        const eyeBlinkRight = getBlendshapeValue('eyeBlinkRight');
+        // Extract relevant blendshapes with sensitivity boosting
+        // We boost the raw values to make expressions easier to trigger
+        const boost = (val: number, multiplier: number = 1.5) => Math.min(1, val * multiplier);
+
+        const jawOpen = boost(getBlendshapeValue('jawOpen'), 1.8); // Make mouth opening easier
+        // Eye blinks are often subtle, boost them significantly so "normal" blinks register fully
+        const eyeBlinkLeft = boost(getBlendshapeValue('eyeBlinkLeft'), 1.5);
+        const eyeBlinkRight = boost(getBlendshapeValue('eyeBlinkRight'), 1.5);
 
         // Get head rotation from transformation matrix
         let headRotation = { x: 0, y: 0, z: 0 };
@@ -93,20 +100,14 @@ export const useFaceTracker = () => {
           const matrix = result.facialTransformationMatrixes[0].data;
 
           // Extract rotation from transformation matrix (Legacy Euler)
+          // FIXED: Adjusted signs to match the "Mirror" effect of the position
           headRotation = {
             x: Math.atan2(matrix[9], matrix[10]) * 0.5,
-            y: Math.atan2(-matrix[8], Math.sqrt(matrix[9] * matrix[9] + matrix[10] * matrix[10])) * 0.5,
+            // Invert Y rotation to match the mirrored X position
+            // If I rotate head Left (my physical left), the avatar should look to Screen Left.
+            y: -Math.atan2(-matrix[8], Math.sqrt(matrix[9] * matrix[9] + matrix[10] * matrix[10])) * 0.5,
             z: Math.atan2(matrix[4], matrix[0]) * 0.3,
           };
-
-          // SDD: Extract Position (Translation) - Moved to landmark-based calculation below
-          // Matrix indices [12, 13, 14] correspond to x, y, z translation in column-major order
-          // We normalize and scale them to fit the 3D scene
-          // headPosition = {
-          //   x: -matrix[12] * 0.1, // Scale down and invert X for mirror effect
-          //   y: -matrix[13] * 0.1, // Scale down and invert Y
-          //   z: -matrix[14] * 0.1, // Scale down Z
-          // };
 
           // SDD: Extract Quaternion from matrix
           const threeMatrix = new THREE.Matrix4().fromArray(matrix);
@@ -142,9 +143,9 @@ export const useFaceTracker = () => {
           // This is more stable than the transformation matrix translation for AR alignment
           const noseTip = landmarks[1];
           headPosition = {
-            x: (noseTip.x - 0.5) * -1,
-            y: (noseTip.y - 0.5) * -1,
-            z: noseTip.z
+            x: (noseTip.x - 0.5) * -1, // Mirror X
+            y: (noseTip.y - 0.5) * -1, // Invert Y for screen space
+            z: noseTip.z // Z is depth
           };
         }
 
