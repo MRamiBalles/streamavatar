@@ -12,7 +12,7 @@ import * as THREE from 'three';
  */
 export const FaceLandmarks = () => {
     const groupRef = useRef<THREE.Group>(null);
-    const { viewport } = useThree();
+    const { viewport, camera } = useThree();
 
     useFrame(() => {
         if (!groupRef.current) return;
@@ -32,7 +32,7 @@ export const FaceLandmarks = () => {
         const cameraZ = 4;
         const distanceToCamera = Math.abs(cameraZ - planeZ);
 
-        const fov = (useThree.getState().camera as THREE.PerspectiveCamera).fov || 50;
+        const fov = (camera as THREE.PerspectiveCamera).fov || 50;
         const aspect = viewport.aspect;
 
         const activeHeight = 2 * Math.tan((fov * Math.PI) / 180 / 2) * distanceToCamera;

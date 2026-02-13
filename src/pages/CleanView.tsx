@@ -43,6 +43,7 @@ const BACKGROUND_COLORS: Record<BackgroundType, string> = {
   'chroma-blue': '#0000ff',
   'dark': '#0a0a0a',
   'splat': '#0a0a0a', // Fallback for splat (not used in CleanView)
+  'ar-camera': '#0a0a0a', // Fallback for ar-camera (not used in CleanView)
 };
 
 // =============================================================================
