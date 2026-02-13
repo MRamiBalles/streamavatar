@@ -105,7 +105,7 @@ export const useFaceTracker = () => {
             x: Math.atan2(matrix[9], matrix[10]) * 0.5,
             // Reverted Y rotation to match the non-inverted X position
             // If I rotate head Left (my physical left), the avatar should look to Screen Left.
-            y: Math.atan2(-matrix[8], Math.sqrt(matrix[9] * matrix[9] + matrix[10] * matrix[10])) * 0.5,
+            y: -Math.atan2(-matrix[8], Math.sqrt(matrix[9] * matrix[9] + matrix[10] * matrix[10])) * 0.5, // Negated for natural mirror
             z: Math.atan2(matrix[4], matrix[0]) * 0.3,
           };
 

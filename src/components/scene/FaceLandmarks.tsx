@@ -17,18 +17,17 @@ export const FaceLandmarks = () => {
     useFrame(() => {
         if (!groupRef.current) return;
 
-        const { faceData, isTracking } = useAvatarStore.getState();
-        if (!isTracking || !faceData.facePoints) {
+        const { faceData, isTracking, background } = useAvatarStore.getState();
+        if (!isTracking || !faceData.facePoints || faceData.facePoints.length === 0) {
             groupRef.current.visible = false;
             return;
         }
 
-        // Diagnostic dots hidden by default for production feel
-        // Set to true if you want to debug alignment
         groupRef.current.visible = true;
 
-        // Match the background plane scaling math
-        const planeZ = -9.0; // Just in front of the video plane at -10
+        // In AR mode, place dots near the video plane; otherwise place near camera
+        const isAR = background === 'ar-camera';
+        const planeZ = isAR ? -9.0 : 1.0; // z=1 is in front of camera at z=4
         const cameraZ = 4;
         const distanceToCamera = Math.abs(cameraZ - planeZ);
 
@@ -41,7 +40,6 @@ export const FaceLandmarks = () => {
         const points = groupRef.current.children;
         faceData.facePoints.forEach((p, i) => {
             if (points[i]) {
-                // p.x/y are in [-0.5, 0.5] range. Map to unit space.
                 points[i].position.set(p.x * activeWidth, p.y * activeHeight, planeZ);
             }
         });

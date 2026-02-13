@@ -253,11 +253,11 @@ export const AvatarRenderer = ({ isCleanView = false }: AvatarRendererProps) => 
 
           {/* AR BACKGROUND & DIAGNOSTICS */}
           {background === 'ar-camera' && (
-            <>
-              <ARPassthrough />
-              <FaceLandmarks />
-            </>
+            <ARPassthrough />
           )}
+
+          {/* Debug Face Landmarks — visible in any mode when tracking is active */}
+          <FaceLandmarks />
 
           {/* Controls - only in non-clean view */}
           {!isCleanView && (
