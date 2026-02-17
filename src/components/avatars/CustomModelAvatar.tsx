@@ -153,6 +153,7 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
 
   // Store bindings
   const avatarScale = useAvatarStore((s) => s.avatarScale);
+  const customModelRotation = useAvatarStore((s) => s.customModelRotation);
   const activeExpression = useAvatarStore((s) => s.activeExpression);
   const { getAnimationState } = useAvatarAnimation();
 
@@ -375,8 +376,10 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
 
   return (
     <group ref={groupRef} scale={avatarScale}>
-      {entity && <primitive object={entity.model} />}
-      {gltfScene && <primitive object={gltfScene} />}
+      <group rotation={customModelRotation.map(d => THREE.MathUtils.degToRad(d)) as unknown as THREE.Euler}>
+        {entity && <primitive object={entity.model} />}
+        {gltfScene && <primitive object={gltfScene} />}
+      </group>
 
       {/* Debug HUD Overlay */}
       {enableDebugHud && (
@@ -404,3 +407,5 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
     </group>
   );
 };
+
+export default CustomModelAvatar;

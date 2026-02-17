@@ -54,6 +54,7 @@ export interface AvatarSlice {
   avatarColor: string;
   avatarScale: number;
   customModel: CustomModel | null;
+  customModelRotation: [number, number, number];
   activeExpression: ExpressionType;
   hotkeyMappings: HotkeyMapping[];
   currentParts: AvatarPart[];
@@ -64,6 +65,7 @@ export interface AvatarSlice {
   setSelectedAvatar: (avatar: AvatarType) => void;
   setAvatarColor: (color: string) => void;
   setAvatarScale: (scale: number) => void;
+  setCustomModelRotation: (rotation: [number, number, number]) => void;
   setCustomModel: (model: CustomModel | null) => Promise<void>;
   initPersistentModels: () => Promise<void>;
 
@@ -90,6 +92,7 @@ export const avatarDefaults = {
   avatarColor: '#c97d3d',
   avatarScale: 1,
   customModel: null as CustomModel | null,
+  customModelRotation: [0, 0, 0] as [number, number, number],
   activeExpression: 'neutral' as ExpressionType,
   hotkeyMappings: [
     { key: '1', expression: 'happy', intensity: 1 },
@@ -113,6 +116,7 @@ export const createAvatarSlice: StateCreator<AvatarSlice, [], [], AvatarSlice> =
   setSelectedAvatar: (avatar) => set({ selectedAvatar: avatar }),
   setAvatarColor: (color) => set({ avatarColor: color }),
   setAvatarScale: (scale) => set({ avatarScale: scale }),
+  setCustomModelRotation: (rotation) => set({ customModelRotation: rotation }),
 
   setCustomModel: async (model) => {
     if (!model) {

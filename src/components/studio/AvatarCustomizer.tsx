@@ -3,6 +3,7 @@ import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { RotateCw } from 'lucide-react';
 
 const presetColors = [
   '#c97d3d', // Peanut brown
@@ -16,7 +17,7 @@ const presetColors = [
 ];
 
 export const AvatarCustomizer = () => {
-  const { avatarColor, setAvatarColor, avatarScale, setAvatarScale, background, setBackground } = useAvatarStore();
+  const { avatarColor, setAvatarColor, avatarScale, setAvatarScale, background, setBackground, selectedAvatar, customModelRotation, setCustomModelRotation } = useAvatarStore();
   const t = useTranslation();
 
   const backgroundOptions: { type: BackgroundType; label: string; color: string }[] = [
@@ -73,6 +74,38 @@ export const AvatarCustomizer = () => {
           className="w-full"
         />
       </div>
+
+      {/* Model Rotation (only for custom models) */}
+      {selectedAvatar === 'custom' && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <RotateCw className="w-4 h-4 text-muted-foreground" />
+            <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+              {t.modelRotation || 'Rotación del modelo'}
+            </Label>
+          </div>
+          {(['X', 'Y', 'Z'] as const).map((axis, i) => (
+            <div key={axis} className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">{axis}</span>
+                <span className="text-xs text-muted-foreground">{customModelRotation[i]}°</span>
+              </div>
+              <Slider
+                value={[customModelRotation[i]]}
+                onValueChange={([v]) => {
+                  const next = [...customModelRotation] as [number, number, number];
+                  next[i] = v;
+                  setCustomModelRotation(next);
+                }}
+                min={-180}
+                max={180}
+                step={1}
+                className="w-full"
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Background Selector */}
       <div className="space-y-3">

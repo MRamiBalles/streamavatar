@@ -64,6 +64,7 @@ export const useAvatarStore = create<AvatarStore>()(
         selectedAvatar: state.selectedAvatar,
         avatarColor: state.avatarColor,
         avatarScale: state.avatarScale,
+        customModelRotation: state.customModelRotation,
         background: state.background,
         audioSensitivity: state.audioSensitivity,
         language: state.language,
