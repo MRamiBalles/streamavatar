@@ -130,5 +130,6 @@
   "onboardingActivateLater": "Activar después",
   "graphicsQuality": "Calidad Gráfica",
   "graphicsHigh": "Alta",
-  "graphicsLow": "Baja"
+  "graphicsLow": "Baja",
+  "modelRotation": "Rotación del modelo"
 }
