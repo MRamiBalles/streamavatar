@@ -78,7 +78,7 @@ const SPRING_BONE_CONFIG = {
 function validateModelUrl(url: string): { valid: boolean; error?: string } {
   // Blob URLs - safe, created by URL.createObjectURL()
   // URLs Blob - seguras, creadas localmente
-  if (url.startsWith('blob:')) {
+  if (url.startsWith('blob:') || url.startsWith('/')) {
     return { valid: true };
   }
 
