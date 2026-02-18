@@ -1,6 +1,7 @@
 import { useLoader, useFrame } from '@react-three/fiber';
 import { useRef, useMemo, useEffect } from 'react';
 import * as THREE from 'three';
+// @ts-ignore - three examples loaders lack type declarations
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader';
 import { useAvatarStore } from '@/stores/avatarStore';
 import { useAvatarAnimation } from '@/hooks/useAvatarAnimation';

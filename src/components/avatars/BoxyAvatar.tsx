@@ -140,7 +140,7 @@ export const BoxyAvatar = () => {
       </group>
 
       {/* Half body */}
-      <AvatarHalfBodyFixed color={avatarColor} yOffset={-1.5} />
+      <AvatarHalfBody color={avatarColor} yOffset={-1.5} />
     </group>
   );
 };
