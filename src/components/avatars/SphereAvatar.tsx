@@ -11,7 +11,7 @@ import { Sphere } from '@react-three/drei';
 import * as THREE from 'three';
 import { useAvatarStore } from '@/stores/avatarStore';
 import { useAvatarAnimation } from '@/hooks/useAvatarAnimation';
-import { AvatarHalfBody } from './AvatarHalfBody';
+import { AvatarHalfBodyFixed } from './AvatarHalfBodyFixed';
 
 export const SphereAvatar = () => {
   const groupRef = useRef<THREE.Group>(null);
@@ -153,7 +153,7 @@ export const SphereAvatar = () => {
       </group>
 
       {/* Half body */}
-      <AvatarHalfBody color={avatarColor} yOffset={-1.6} />
+      <AvatarHalfBodyFixed color={avatarColor} yOffset={-1.6} />
     </group>
   );
 };

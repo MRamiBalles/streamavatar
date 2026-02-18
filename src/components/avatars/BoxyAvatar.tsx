@@ -11,7 +11,7 @@ import { Box, Sphere, RoundedBox } from '@react-three/drei';
 import * as THREE from 'three';
 import { useAvatarStore } from '@/stores/avatarStore';
 import { useAvatarAnimation } from '@/hooks/useAvatarAnimation';
-import { AvatarHalfBody } from './AvatarHalfBody';
+import { AvatarHalfBodyFixed } from './AvatarHalfBodyFixed';
 
 export const BoxyAvatar = () => {
   const groupRef = useRef<THREE.Group>(null);
@@ -140,7 +140,7 @@ export const BoxyAvatar = () => {
       </group>
 
       {/* Half body */}
-      <AvatarHalfBody color={avatarColor} yOffset={-1.5} />
+      <AvatarHalfBodyFixed color={avatarColor} yOffset={-1.5} />
     </group>
   );
 };
