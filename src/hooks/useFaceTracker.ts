@@ -8,6 +8,7 @@ export const useFaceTracker = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const faceLandmarkerRef = useRef<FaceLandmarker | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const startingRef = useRef(false); // Guard against concurrent startCamera calls
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,7 +56,7 @@ export const useFaceTracker = () => {
    * FIXED: Face Tracking Logic for Mirroring & Responsiveness
    */
   const processFrame = useCallback(() => {
-    if (!videoRef.current || !faceLandmarkerRef.current || !isCameraActive) {
+    if (!videoRef.current || !faceLandmarkerRef.current || !useAvatarStore.getState().isCameraActive) {
       return;
     }
 
@@ -197,14 +198,25 @@ export const useFaceTracker = () => {
     }
 
     animationFrameRef.current = requestAnimationFrame(processFrame);
-  }, [isCameraActive, setFaceData, setTracking]);
+  }, [setFaceData, setTracking]);
 
   const startCamera = useCallback(async () => {
+    // Prevent concurrent startCamera calls (race condition guard)
+    if (startingRef.current) return;
+    startingRef.current = true;
+
     try {
       setError(null);
 
       if (!faceLandmarkerRef.current) {
         await initializeFaceLandmarker();
+      }
+
+      // Stop any existing stream before starting a new one
+      if (videoRef.current?.srcObject) {
+        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+        tracks.forEach(track => track.stop());
+        videoRef.current.srcObject = null;
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -217,6 +229,12 @@ export const useFaceTracker = () => {
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+
+        // Wait for the video to be ready before calling play()
+        await new Promise<void>((resolve) => {
+          videoRef.current!.onloadeddata = () => resolve();
+        });
+
         await videoRef.current.play();
 
         // Ensure store is updated with the active video element
@@ -225,11 +243,16 @@ export const useFaceTracker = () => {
         setCameraActive(true);
         animationFrameRef.current = requestAnimationFrame(processFrame);
       }
-    } catch (err) {
-      console.error('Failed to start camera:', err);
-      setError('Failed to access camera. Please check permissions.');
+    } catch (err: any) {
+      // Ignore AbortError from play() interruptions — they are benign
+      if (err?.name !== 'AbortError') {
+        console.error('Failed to start camera:', err);
+        setError('Failed to access camera. Please check permissions.');
+      }
+    } finally {
+      startingRef.current = false;
     }
-  }, [initializeFaceLandmarker, setCameraActive, processFrame]);
+  }, [initializeFaceLandmarker, setCameraActive, processFrame, setVideoElement]);
 
   const stopCamera = useCallback(() => {
     if (videoRef.current && videoRef.current.srcObject) {

@@ -122,20 +122,23 @@ const AvatarGroup = ({ children }: { children: React.ReactNode }) => {
         const activeHeight = 2 * Math.tan((fov * Math.PI) / 180 / 2) * distanceToCamera;
         const activeWidth = activeHeight * aspect;
 
-        // Position: use our normalized headPosition (anchored to nose tip)
+        // Position: use normalized headPosition (nose tip) but offset Y
+        // to center the FULL BODY (head + torso), not just the head.
+        // The half-body extends ~2 units below the head origin, so we shift
+        // the anchor upward by ~40% of the avatar's visual height.
+        const avatarBodyOffset = 1.4; // units in avatar-local space
+        const scale = 3.5;
         const x = faceData.headPosition.x * activeWidth;
-        const y = faceData.headPosition.y * activeHeight;
+        const y = faceData.headPosition.y * activeHeight + avatarBodyOffset * scale * 0.15;
         const z = planeZ;
 
         const targetPos = new THREE.Vector3(x, y, z);
 
-        // 2. Smoothing
+        // Smoothing
         groupRef.current.position.lerp(targetPos, 0.2);
 
-        // 3. Scaling for AR mode: Since we are far (z=-9.5), we need to scale up
-        // A normal avatar is 1 unit tall. At 14 units distance vs 4 original distance,
-        // we scale up by roughly 3.5x to keep visual size roughly similar or as requested.
-        groupRef.current.scale.setScalar(3.5);
+        // Scaling for AR mode: far plane needs scale-up
+        groupRef.current.scale.setScalar(scale);
       }
     } else if (groupRef.current) {
       // Reset position and scale in other modes
