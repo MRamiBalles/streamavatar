@@ -15,6 +15,7 @@ export interface CustomModel {
   url: string;
   name: string;
   type: 'glb' | 'vrm' | 'stl';
+  initialRotation?: [number, number, number];
 }
 
 export interface AvatarPart {

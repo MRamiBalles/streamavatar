@@ -39,6 +39,7 @@ import { useFeatureFlag } from '@/lib/featureFlags';
 interface CustomModelAvatarProps {
   modelUrl: string; // URL of the 3D model (GLB or VRM) / URL del modelo 3D
   modelType: 'glb' | 'vrm'; // Type of the model / Tipo de modelo
+  initialRotation?: [number, number, number]; // Optional fix for bad model orientation
 }
 
 /** Trusted domains for remote model loading (SSRF prevention) */
@@ -140,7 +141,7 @@ function validateModelUrl(url: string): { valid: boolean; error?: string } {
 // Component
 // =============================================================================
 
-export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProps) => {
+export const CustomModelAvatar = ({ modelUrl, modelType, initialRotation = [0, 0, 0] }: CustomModelAvatarProps) => {
   // Refs and State
   const groupRef = useRef<THREE.Group>(null); // Group for head rotation / Grupo para rotación de cabeza
   const [entity, setEntity] = useState<AvatarEntity | null>(null); // VRM/3DGS Entity / Entidad VRM o 3DGS
@@ -378,8 +379,10 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
   return (
     <group ref={groupRef} scale={avatarScale}>
       <group rotation={customModelRotation.map(d => THREE.MathUtils.degToRad(d)) as unknown as THREE.Euler}>
-        {entity && <primitive object={entity.model} />}
-        {gltfScene && <primitive object={gltfScene} />}
+        <group rotation={new THREE.Euler(...initialRotation)}>
+          {entity && <primitive object={entity.model} />}
+          {gltfScene && <primitive object={gltfScene} />}
+        </group>
       </group>
 
       {/* Debug HUD Overlay */}
