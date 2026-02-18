@@ -4,6 +4,7 @@ import { OrbitControls, Environment, ContactShadows, Html, useProgress } from '@
 import * as THREE from 'three';
 import { useAvatarStore, AvatarType } from '@/stores/avatarStore';
 import { useFaceTracker } from '@/hooks/useFaceTracker';
+import { useHandTracker } from '@/hooks/useHandTracker';
 import { PillAvatar } from './PillAvatar';
 import { BoxyAvatar } from './BoxyAvatar';
 import { SphereAvatar } from './SphereAvatar';
@@ -162,20 +163,23 @@ export const AvatarRenderer = ({ isCleanView = false }: AvatarRendererProps) => 
 
   // AR Camera Logic
   const { startCamera, stopCamera, videoRef } = useFaceTracker();
+  const { startHandTracking, stopHandTracking } = useHandTracker();
 
   useEffect(() => {
     if (background === 'ar-camera') {
       startCamera();
+      // Start hand tracking slightly delayed to avoid GPU contention
+      const timer = setTimeout(() => startHandTracking(), 500);
+      return () => {
+        clearTimeout(timer);
+        stopCamera();
+        stopHandTracking();
+      };
     } else {
       stopCamera();
+      stopHandTracking();
     }
-    // Cleanup on unmount
-    return () => {
-      // Only stop if we are unmounting, 
-      // but ideally we should only stop if switching away from AR mode.
-      // The dependency array handles the switch case.
-    };
-  }, [background, startCamera, stopCamera]);
+  }, [background, startCamera, stopCamera, startHandTracking, stopHandTracking]);
 
   const getBackgroundClass = () => {
     switch (background) {
