@@ -58,16 +58,20 @@ export const STLAvatar = ({ url }: STLAvatarProps) => {
 
     return (
         <group scale={avatarScale}>
-            <group ref={groupRef} rotation={customModelRotation.map(d => THREE.MathUtils.degToRad(d)) as unknown as THREE.Euler}>
-                {normalizedGeometry && (
-                    <mesh ref={meshRef} geometry={normalizedGeometry} castShadow receiveShadow>
-                        <meshStandardMaterial
-                            color={avatarColor}
-                            roughness={0.5}
-                            metalness={0.2}
-                        />
-                    </mesh>
-                )}
+            {/* Outer Group: Controlled by head tracking (useFrame) */}
+            <group ref={groupRef}>
+                {/* Inner Group: Controlled by User Custom Rotation slider */}
+                <group rotation={customModelRotation.map(d => THREE.MathUtils.degToRad(d)) as unknown as THREE.Euler}>
+                    {normalizedGeometry && (
+                        <mesh ref={meshRef} geometry={normalizedGeometry} castShadow receiveShadow>
+                            <meshStandardMaterial
+                                color={avatarColor}
+                                roughness={0.5}
+                                metalness={0.2}
+                            />
+                        </mesh>
+                    )}
+                </group>
             </group>
         </group>
     );
