@@ -12,6 +12,7 @@
  */
 
 import { useRef, useEffect, useState, useCallback } from 'react';
+import { debugLog, debugWarn, debugError } from '@/lib/debugLog';
 import { useFrame } from '@react-three/fiber';
 import { Sphere, Stats, Html } from '@react-three/drei';
 import * as THREE from 'three';
@@ -166,7 +167,7 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
     // 1. Validar URL antes de intentar cargar
     const validation = validateModelUrl(modelUrl);
     if (!validation.valid) {
-      console.warn('[CustomModelAvatar] URL validation failed:', validation.error);
+      debugWarn('[CustomModelAvatar] URL validation failed:', validation.error);
       setError(validation.error || 'Invalid model URL');
       setIsLoading(false);
       return;
@@ -226,7 +227,7 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
           // Initialize entity based on feature flags
           // Inicializar entidad según flags
           if (enable3DGS) {
-            console.log('[CustomModelAvatar] initializing Neural Shell (GaussianEntity)');
+            debugLog('[CustomModelAvatar] initializing Neural Shell (GaussianEntity)');
             const splatUrl = modelUrl.replace('.vrm', '.splat').replace('.glb', '.splat');
             newEntity = new GaussianEntity(vrmModel, splatUrl);
           } else {
@@ -235,7 +236,7 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
 
           setEntity(newEntity);
 
-          console.log('[CustomModelAvatar] VRM loaded successfully');
+          debugLog('[CustomModelAvatar] VRM loaded successfully');
         } else {
           // Handle Regular GLB Models
           // Manejar modelos GLB regulares
@@ -255,7 +256,7 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
           logNormalization(normResult, 'GLB Model');
 
           setGltfScene(scene);
-          console.log('[CustomModelAvatar] GLB loaded successfully');
+          debugLog('[CustomModelAvatar] GLB loaded successfully');
         }
 
         setIsLoading(false);
@@ -264,14 +265,14 @@ export const CustomModelAvatar = ({ modelUrl, modelType }: CustomModelAvatarProp
       (progress) => {
         if (progress.total > 0) {
           const pct = Math.round((progress.loaded / progress.total) * 100);
-          console.log(`[CustomModelAvatar] Loading: ${pct}%`);
+          debugLog(`[CustomModelAvatar] Loading: ${pct}%`);
         }
       },
       // Error callback
       (err) => {
         clearTimeout(loadTimeout);
         if (!mounted) return;
-        console.error('[CustomModelAvatar] Load error:', err);
+        debugError('[CustomModelAvatar] Load error:', err);
         setError('Failed to load model. Check console for details.');
         setIsLoading(false);
       }

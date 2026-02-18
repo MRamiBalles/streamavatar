@@ -15,6 +15,7 @@
  */
 
 import { useRef, useEffect, useCallback, useState } from 'react';
+import { debugLog, debugError } from '@/lib/debugLog';
 
 // =============================================================================
 // Types
@@ -292,11 +293,11 @@ export function useVisemeAnalyzer(options: UseVisemeAnalyzerOptions = {}) {
             animationFrameRef.current = requestAnimationFrame(analyze);
 
             setState(prev => ({ ...prev, isActive: true, error: null }));
-            console.log('[VisemeAnalyzer] Started successfully');
+            debugLog('[VisemeAnalyzer] Started successfully');
 
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to access microphone';
-            console.error('[VisemeAnalyzer] Error:', errorMessage);
+            debugError('[VisemeAnalyzer] Error:', errorMessage);
             setState(prev => ({ ...prev, error: errorMessage }));
         }
     }, [source, fftSize, analyze]);
@@ -332,7 +333,7 @@ export function useVisemeAnalyzer(options: UseVisemeAnalyzerOptions = {}) {
             error: null,
         });
 
-        console.log('[VisemeAnalyzer] Stopped');
+        debugLog('[VisemeAnalyzer] Stopped');
     }, []);
 
     /**

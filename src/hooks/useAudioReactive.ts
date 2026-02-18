@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useAvatarStore } from '@/stores/avatarStore';
+import { debugError } from '@/lib/debugLog';
 
 export const useAudioReactive = () => {
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -64,7 +65,7 @@ export const useAudioReactive = () => {
       setIsListening(true);
       animationFrameRef.current = requestAnimationFrame(processAudio);
     } catch (err) {
-      console.error('Failed to access microphone:', err);
+      debugError('[AudioReactive] Failed to access microphone:', err);
       setError('Failed to access microphone. Please check permissions.');
     }
   }, [processAudio]);
