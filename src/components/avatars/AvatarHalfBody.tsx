@@ -383,13 +383,14 @@ export const AvatarHalfBody = ({ color, yOffset = -1.6, bodyScale = 1 }: AvatarH
 // --- Reactive Hand Component ---
 // Reads store directly to avoid React render cycles
 
-const ReactiveHand = ({ color, side }: { color: string, side: 'left' | 'right' }) => {
+const ReactiveHand = ({ color, side, dataSource }: { color: string, side: 'left' | 'right', dataSource?: 'left' | 'right' }) => {
   const isLeft = side === 'left';
-  const dir = isLeft ? 1 : -1; // Original code had mirror logic: Left (dir=1), Right (dir=-1)
-  // Wait, let's check original:
-  // Left Arm -> passed mirror={false}. Hand code: dir = mirror ? -1 : 1. So Left = 1.
-  // Right Arm -> passed mirror={true}. Hand code: dir = -1.
-  // Correct.
+  const dir = isLeft ? 1 : -1;
+
+  // Use explicit dataSource if provided, otherwise default to side
+  // But we want to SWAP them for the avatar.
+  // If dataSource="right" (User Right Hand), we read state.rightHandData
+  const sourceSide = dataSource || side;
 
   const skinColor = useMemo(() => {
     const c = new THREE.Color(color);
@@ -397,51 +398,35 @@ const ReactiveHand = ({ color, side }: { color: string, side: 'left' | 'right' }
     return '#' + c.getHexString();
   }, [color]);
 
-  // Refs for fingers to animate them imperatively
+  // Refs for fingers... (unchanged)
   const thumbRef = useRef<THREE.Group>(null);
   const indexRef = useRef<THREE.Group>(null);
   const middleRef = useRef<THREE.Group>(null);
   const ringRef = useRef<THREE.Group>(null);
   const pinkyRef = useRef<THREE.Group>(null);
 
-  // Helper to rotate a finger group safely
+  // Helper... (unchanged)
   const updateFinger = (ref: THREE.Group | null, rotations: { proximal: number, distal: number }, baseRot: [number, number, number]) => {
     if (!ref) return;
-    // Apply base rotation + proximal curl
-    // Rotation X is the main curl axis for these fingers
-    ref.rotation.set(
-      baseRot[0] + rotations.proximal,
-      baseRot[1],
-      baseRot[2]
-    );
-
-    // The simplified Finger component in this file doesn't expose the Distal joint ref directly 
-    // without forwardRef or querying children. 
-    // To solve this properly, we need to access the child group (PIP Joint).
-    // Structure: ref (Group) -> [Limb, Group(PIP), ...]
-    // The PIP group is the 2nd child usually, or we can find it.
-    // Let's assume child index 1 is the PIP group based on JSX structure above.
+    ref.rotation.set(baseRot[0] + rotations.proximal, baseRot[1], baseRot[2]);
     const pipGroup = ref.children[1] as THREE.Group;
-    if (pipGroup && pipGroup.isGroup) {
-      pipGroup.rotation.x = rotations.distal;
-    }
+    if (pipGroup && pipGroup.isGroup) pipGroup.rotation.x = rotations.distal;
   };
 
   const getFingerRotations = (landmarks: any[], indices: number[]) => {
     if (!landmarks || landmarks.length === 0) return { proximal: 0, distal: 0 };
-    const p1 = landmarks[indices[0]]; // MCP
-    const p2 = landmarks[indices[1]]; // PIP
-    const p3 = landmarks[indices[2]]; // DIP
-    const p4 = landmarks[indices[3]]; // Tip
+    const p1 = landmarks[indices[0]];
+    const p2 = landmarks[indices[1]];
+    const p3 = landmarks[indices[2]];
+    const p4 = landmarks[indices[3]];
 
     const v1 = new THREE.Vector3(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z).normalize();
     const v2 = new THREE.Vector3(p3.x - p2.x, p3.y - p2.y, p3.z - p2.z).normalize();
-    const v3 = new THREE.Vector3(p4.x - p3.x, p4.y - p3.y, p4.z - p3.z).normalize();
-
     const dot1 = v1.dot(v2);
-    const dot2 = v2.dot(v3);
-
     const angle1 = Math.acos(Math.min(Math.max(dot1, -1), 1));
+
+    const v3 = new THREE.Vector3(p4.x - p3.x, p4.y - p3.y, p4.z - p3.z).normalize();
+    const dot2 = v2.dot(v3);
     const angle2 = Math.acos(Math.min(Math.max(dot2, -1), 1));
 
     return { proximal: angle1 * 1.8, distal: angle2 * 1.8 };
@@ -449,7 +434,9 @@ const ReactiveHand = ({ color, side }: { color: string, side: 'left' | 'right' }
 
   useFrame(() => {
     const state = useAvatarStore.getState();
-    const data = isLeft ? state.leftHandData : state.rightHandData;
+    const data = sourceSide === 'left' ? state.leftHandData : state.rightHandData;
+
+    // ... (rest of logic same)
 
     if (data.isTracked && data.landmarks.length > 0) {
       const l = data.landmarks;
