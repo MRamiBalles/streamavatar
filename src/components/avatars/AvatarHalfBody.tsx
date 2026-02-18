@@ -3,23 +3,12 @@
  * 
  * Arms follow hand tracking when available, otherwise procedural animation.
  * 
- * MediaPipe handedness on non-mirrored video:
- *   - MediaPipe "Left"  = user's LEFT hand  = appears on screen RIGHT
- *   - MediaPipe "Right" = user's RIGHT hand = appears on screen LEFT
- * 
- * SWAPPED mapping so avatar mirrors the user:
- *   - leftArmRef  (screen left)  ← rightHandData (user RIGHT, screen left)
- *   - rightArmRef (screen right) ← leftHandData  (user LEFT, screen right)
- * 
- * Rotation axes (arm hangs down from shoulder, children at local -Y):
- *   rotation.z < 0 → left arm swings outward LEFT
- *   rotation.z > 0 → right arm swings outward RIGHT  
- *   rotation.x < 0 → arm comes FORWARD (toward camera, +Z)
- *   rotation.x > 0 → arm goes BACKWARD (behind avatar, -Z)
+ * DEBUG MODE ENABLED: Visualizing tracking state above head.
  */
 
 import { useRef, useMemo, forwardRef } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { Text } from '@react-three/drei';
 import * as THREE from 'three';
 import { useAvatarStore } from '@/stores/avatarStore';
 
@@ -174,6 +163,11 @@ export const AvatarHalfBody = ({ color, yOffset = -1.6, bodyScale = 1 }: AvatarH
   const rightHandRef = useRef<THREE.Group>(null);
   const timeRef = useRef(0);
 
+  // Subscribe to tracking state for debug UI
+  const leftHandTracked = useAvatarStore((s) => s.leftHandData.isTracked);
+  const rightHandTracked = useAvatarStore((s) => s.rightHandData.isTracked);
+  const debugText = `L: ${leftHandTracked ? 'ON' : '.'} | R: ${rightHandTracked ? 'ON' : '.'}`;
+
   const bodyColor = useMemo(() => {
     const c = new THREE.Color(color);
     c.multiplyScalar(0.92);
@@ -196,16 +190,14 @@ export const AvatarHalfBody = ({ color, yOffset = -1.6, bodyScale = 1 }: AvatarH
     const proceduralSway = Math.sin(timeRef.current * 1.0) * 0.04;
     const audioSway = audioReactiveEnabled ? Math.sin(timeRef.current * 2.5) * audioData.volume * 0.06 : 0;
 
-    // DEBUG: Verify mapping is active
-    // console.log("LeftHandData:", leftHandData.isTracked, "RightHandData:", rightHandData.isTracked);
-
     // SWAPPED: user RIGHT hand (rightHandData) → screen left → leftArmRef
     //          user LEFT hand  (leftHandData)  → screen right → rightArmRef
 
-    // LEFT ARM ← rightHandData (user's RIGHT hand, screen left)
+    // LEFT ARM ← rightHandData
     if (leftArmRef.current) {
       if (rightHandData.isTracked && rightHandData.landmarks.length > 0) {
         const wrist = rightHandData.landmarks[0];
+        // wrist.x < 0 for user RIGHT hand (screen left)
         leftArmRef.current.rotation.z = THREE.MathUtils.lerp(
           leftArmRef.current.rotation.z, wrist.x * 2.5 + 0.12, 0.2
         );
@@ -222,10 +214,11 @@ export const AvatarHalfBody = ({ color, yOffset = -1.6, bodyScale = 1 }: AvatarH
       }
     }
 
-    // RIGHT ARM ← leftHandData (user's LEFT hand, screen right)
+    // RIGHT ARM ← leftHandData
     if (rightArmRef.current) {
       if (leftHandData.isTracked && leftHandData.landmarks.length > 0) {
         const wrist = leftHandData.landmarks[0];
+        // wrist.x > 0 for user LEFT hand (screen right)
         rightArmRef.current.rotation.z = THREE.MathUtils.lerp(
           rightArmRef.current.rotation.z, wrist.x * 2.5 - 0.12, 0.2
         );
@@ -254,6 +247,11 @@ export const AvatarHalfBody = ({ color, yOffset = -1.6, bodyScale = 1 }: AvatarH
 
   return (
     <group position={[0, yOffset, 0]} scale={bodyScale}>
+      {/* DEBUG TEXT OVERLAY */}
+      <Text position={[0, 1.3, 0]} fontSize={0.15} color="white" anchorX="center" anchorY="middle">
+        {debugText}
+      </Text>
+
       <Limb rTop={0.14} rBot={0.18} h={0.35} color={color} pos={[0, 0.7, 0]} />
 
       <group ref={torsoRef}>
@@ -263,7 +261,7 @@ export const AvatarHalfBody = ({ color, yOffset = -1.6, bodyScale = 1 }: AvatarH
         <Joint r={0.16} color={color} pos={[0.52, 0.38, 0]} />
       </group>
 
-      {/* Left arm ← rightHandData (user RIGHT hand, screen left) */}
+      {/* Left arm ← rightHandData */}
       <group ref={leftArmRef} position={[-0.52, 0.38, 0]}>
         <Limb rTop={0.13} rBot={0.11} h={0.55} color={color} pos={[0, -0.3, 0]} />
         <Joint r={0.11} color={bodyColor} pos={[0, -0.58, 0]} />
@@ -274,7 +272,7 @@ export const AvatarHalfBody = ({ color, yOffset = -1.6, bodyScale = 1 }: AvatarH
         </group>
       </group>
 
-      {/* Right arm ← leftHandData (user LEFT hand, screen right) */}
+      {/* Right arm ← leftHandData */}
       <group ref={rightArmRef} position={[0.52, 0.38, 0]}>
         <Limb rTop={0.13} rBot={0.11} h={0.55} color={color} pos={[0, -0.3, 0]} />
         <Joint r={0.11} color={bodyColor} pos={[0, -0.58, 0]} />
