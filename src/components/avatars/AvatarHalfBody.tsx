@@ -1,24 +1,23 @@
 /**
  * AvatarHalfBody — Shared torso + arms + hands with fingers for built-in avatars
  * 
- * Renders a smooth half-body with articulated fingers.
  * Arms follow hand tracking when available, otherwise procedural animation.
  * 
- * COORDINATE SYSTEM:
- * - MediaPipe raw image: X goes left→right, Y goes top→bottom (flipped to bottom→top in store)
- * - Video NOT mirrored: User's Left hand appears on screen RIGHT
- * - Avatar: Left arm at x=-0.52 (screen left), Right arm at x=0.52 (screen right)
- * - THREE.js: +X right, +Y up, +Z toward camera
+ * IMPORTANT — MediaPipe handedness on non-mirrored video:
+ * MediaPipe assumes a selfie/mirrored camera. On our NON-mirrored ARPassthrough,
+ * the labels are effectively swapped already:
+ *   - MediaPipe "Left"  → user's RIGHT hand → appears on screen LEFT
+ *   - MediaPipe "Right" → user's LEFT hand  → appears on screen RIGHT
  * 
- * MIRROR MAPPING (non-mirrored video):
- * - Avatar Left Arm (screen left)  ← rightHandData (user right hand, screen left)
- * - Avatar Right Arm (screen right) ← leftHandData (user left hand, screen right)
+ * Therefore DIRECT mapping works correctly:
+ *   - leftArmRef  (screen left)  ← leftHandData  (screen left)
+ *   - rightArmRef (screen right) ← rightHandData (screen right)
  * 
- * ROTATION AXES (arm hangs down from shoulder, children at -Y):
- * - rotation.z NEGATIVE → left arm swings LEFT (outward) ← what we want for raising
- * - rotation.z POSITIVE → left arm crosses body (wrong)
- * - rotation.x NEGATIVE → arm swings toward +Z (FORWARD, in front of body) 
- * - rotation.x POSITIVE → arm swings toward -Z (BACKWARD, behind body)
+ * Rotation axes (arm hangs down from shoulder, children at local -Y):
+ *   rotation.z < 0 → left arm swings outward LEFT
+ *   rotation.z > 0 → right arm swings outward RIGHT  
+ *   rotation.x < 0 → arm comes FORWARD (toward camera, +Z)
+ *   rotation.x > 0 → arm goes BACKWARD (behind avatar, -Z)
  */
 
 import { useRef, useMemo, forwardRef } from 'react';
@@ -32,7 +31,6 @@ interface AvatarHalfBodyProps {
   bodyScale?: number;
 }
 
-/** Tapered cylinder segment */
 const Limb = ({
   rTop, rBot, h, color, pos, rot,
 }: {
@@ -45,7 +43,6 @@ const Limb = ({
   </mesh>
 );
 
-/** Sphere joint */
 const Joint = ({ r, color, pos }: { r: number; color: string; pos: [number, number, number] }) => (
   <mesh position={pos}>
     <sphereGeometry args={[r, 10, 10]} />
@@ -53,7 +50,6 @@ const Joint = ({ r, color, pos }: { r: number; color: string; pos: [number, numb
   </mesh>
 );
 
-// MediaPipe landmark indices per finger
 const FINGER_INDICES = {
   thumb: [1, 2, 3, 4],
   index: [5, 6, 7, 8],
@@ -62,7 +58,6 @@ const FINGER_INDICES = {
   pinky: [17, 18, 19, 20]
 };
 
-// --- Finger component with forwardRef for imperative animation ---
 const RefFinger = forwardRef<THREE.Group, {
   color: string; pos: [number, number, number];
   length?: number; thickness?: number;
@@ -71,7 +66,6 @@ const RefFinger = forwardRef<THREE.Group, {
   return (
     <group ref={ref} position={pos}>
       <Limb rTop={thickness} rBot={thickness * 0.9} h={half} color={color} pos={[0, -half / 2, 0]} />
-      {/* PIP joint group — children[1] */}
       <group position={[0, -half, 0]}>
         <Joint r={thickness * 0.85} color={color} pos={[0, 0, 0]} />
         <Limb rTop={thickness * 0.9} rBot={thickness * 0.6} h={half * 0.8} color={color} pos={[0, -half * 0.4, 0]} />
@@ -81,7 +75,6 @@ const RefFinger = forwardRef<THREE.Group, {
   );
 });
 
-// --- Reactive Hand Component ---
 const ReactiveHand = ({ color, side, dataSource }: {
   color: string;
   side: 'left' | 'right';
@@ -205,34 +198,19 @@ export const AvatarHalfBody = ({ color, yOffset = -1.6, bodyScale = 1 }: AvatarH
     const proceduralSway = Math.sin(timeRef.current * 1.0) * 0.04;
     const audioSway = audioReactiveEnabled ? Math.sin(timeRef.current * 2.5) * audioData.volume * 0.06 : 0;
 
-    // =========================================================
-    // ARM TRACKING
-    // Video is NOT mirrored. User's RIGHT hand → screen LEFT → leftArmRef
-    // rightHandData = user's right hand (screen left)
-    // leftHandData  = user's left hand  (screen right)
-    //
-    // Rotation math for arm hanging down (-Y direction):
-    //   rotation.z < 0  → left arm swings outward LEFT  (correct for raising)
-    //   rotation.z > 0  → left arm crosses body          (wrong)
-    //   rotation.x < 0  → arm comes FORWARD  (+Z, toward camera)
-    //   rotation.x > 0  → arm goes BACKWARD  (-Z, behind body)
-    // =========================================================
+    // DIRECT MAPPING (MediaPipe labels are already "swapped" on non-mirrored feed)
+    // leftHandData → screen left → leftArmRef (screen left)
+    // rightHandData → screen right → rightArmRef (screen right)
 
-    // LEFT ARM ← rightHandData (user's right hand, appears screen left)
+    // LEFT ARM ← leftHandData
     if (leftArmRef.current) {
-      if (rightHandData.isTracked && rightHandData.landmarks.length > 0) {
-        const wrist = rightHandData.landmarks[0];
-        // wrist.x for right hand is NEGATIVE (left side of raw image)
-        // We want negative rotation.z to swing arm outward left.
-        // -wrist.x when wrist.x < 0 → positive. Add negative idle offset → becomes less negative.
-        // Actually: wrist.x ≈ -0.3. We want rotation.z ≈ -0.5 to -1.5 (outward).
-        // Formula: wrist.x * 2.5 → -0.3 * 2.5 = -0.75. Add idle +0.12 → -0.63. NEGATIVE = outward left ✓
+      if (leftHandData.isTracked && leftHandData.landmarks.length > 0) {
+        const wrist = leftHandData.landmarks[0];
+        // wrist.x < 0 (left side of image) → rotation.z < 0 → arm swings outward left ✓
         leftArmRef.current.rotation.z = THREE.MathUtils.lerp(
           leftArmRef.current.rotation.z, wrist.x * 2.5 + 0.12, 0.2
         );
-        // Forward: always keep arm slightly forward (rotation.x < 0)
-        // wrist.y > 0 = hand high. We want arm to come forward and up when hand is high.
-        // rotation.x = -0.5 (forward bias) + small y influence
+        // rotation.x < 0 → forward. Bias -0.5 keeps arm in front of body.
         leftArmRef.current.rotation.x = THREE.MathUtils.lerp(
           leftArmRef.current.rotation.x, -0.5 + wrist.y * 0.5, 0.2
         );
@@ -246,20 +224,11 @@ export const AvatarHalfBody = ({ color, yOffset = -1.6, bodyScale = 1 }: AvatarH
       }
     }
 
-    // RIGHT ARM ← leftHandData (user's left hand, appears screen right)
+    // RIGHT ARM ← rightHandData
     if (rightArmRef.current) {
-      if (leftHandData.isTracked && leftHandData.landmarks.length > 0) {
-        const wrist = leftHandData.landmarks[0];
-        // wrist.x for left hand is POSITIVE (right side of raw image)
-        // We want positive rotation.z to swing right arm outward right.
-        // wrist.x ≈ 0.3. wrist.x * 2.5 = 0.75. Add idle -0.12 → 0.63. POSITIVE = outward right ✓
-        // WAIT: for the RIGHT arm, positive rotation.z swings it LEFT (crossing body), not right!
-        // The right arm is at +0.52. Children at -Y. rotation.z > 0 swings -Y toward +X = more right.
-        // Actually no: rotation.z > 0 for point at (0,-1,0): x'=sin(θ), y'=-cos(θ). 
-        // x' > 0 → moves toward +X → the arm (at +0.52) goes further right? No, it's local rotation.
-        // From shoulder +0.52, child at local (0,-1,0). After rotation.z > 0:
-        //   local x'=sin(θ) → world: 0.52 + sin(θ). Moves further RIGHT. 
-        // So positive rotation.z on right arm = outward right ✓
+      if (rightHandData.isTracked && rightHandData.landmarks.length > 0) {
+        const wrist = rightHandData.landmarks[0];
+        // wrist.x > 0 (right side of image) → rotation.z > 0 → arm swings outward right ✓
         rightArmRef.current.rotation.z = THREE.MathUtils.lerp(
           rightArmRef.current.rotation.z, wrist.x * 2.5 - 0.12, 0.2
         );
@@ -278,10 +247,10 @@ export const AvatarHalfBody = ({ color, yOffset = -1.6, bodyScale = 1 }: AvatarH
 
     // Hand idle wiggle
     const handWiggle = Math.sin(timeRef.current * 2) * 0.03;
-    if (leftHandRef.current && !rightHandData.isTracked) {
+    if (leftHandRef.current && !leftHandData.isTracked) {
       leftHandRef.current.rotation.z = handWiggle;
     }
-    if (rightHandRef.current && !leftHandData.isTracked) {
+    if (rightHandRef.current && !rightHandData.isTracked) {
       rightHandRef.current.rotation.z = -handWiggle;
     }
   });
@@ -297,25 +266,25 @@ export const AvatarHalfBody = ({ color, yOffset = -1.6, bodyScale = 1 }: AvatarH
         <Joint r={0.16} color={color} pos={[0.52, 0.38, 0]} />
       </group>
 
-      {/* Left arm ← User's Right hand (rightHandData) */}
+      {/* Left arm ← leftHandData (direct mapping) */}
       <group ref={leftArmRef} position={[-0.52, 0.38, 0]}>
         <Limb rTop={0.13} rBot={0.11} h={0.55} color={color} pos={[0, -0.3, 0]} />
         <Joint r={0.11} color={bodyColor} pos={[0, -0.58, 0]} />
         <Limb rTop={0.1} rBot={0.08} h={0.45} color={bodyColor} pos={[0, -0.83, 0]} />
         <Joint r={0.075} color={bodyColor} pos={[0, -1.06, 0]} />
         <group ref={leftHandRef} position={[0, -1.14, 0]}>
-          <ReactiveHand color={color} side="left" dataSource="right" />
+          <ReactiveHand color={color} side="left" dataSource="left" />
         </group>
       </group>
 
-      {/* Right arm ← User's Left hand (leftHandData) */}
+      {/* Right arm ← rightHandData (direct mapping) */}
       <group ref={rightArmRef} position={[0.52, 0.38, 0]}>
         <Limb rTop={0.13} rBot={0.11} h={0.55} color={color} pos={[0, -0.3, 0]} />
         <Joint r={0.11} color={bodyColor} pos={[0, -0.58, 0]} />
         <Limb rTop={0.1} rBot={0.08} h={0.45} color={bodyColor} pos={[0, -0.83, 0]} />
         <Joint r={0.075} color={bodyColor} pos={[0, -1.06, 0]} />
         <group ref={rightHandRef} position={[0, -1.14, 0]}>
-          <ReactiveHand color={color} side="right" dataSource="left" />
+          <ReactiveHand color={color} side="right" dataSource="right" />
         </group>
       </group>
     </group>
