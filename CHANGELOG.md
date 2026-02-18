@@ -4,6 +4,29 @@ Historial de cambios significativos en StreamAvatar.
 
 ---
 
+## [2.1.0] - 2026-02-18
+
+### Corregido
+
+**AR Camera — Centrado del avatar (cuerpo completo)**
+- El avatar ahora se centra considerando cabeza + torso, no solo la cabeza.
+- Se añadió un offset vertical (`avatarBodyOffset`) que compensa la extensión del medio cuerpo (~1.4 unidades) para que el avatar completo quede centrado en la posición facial detectada.
+- Archivo: `src/components/avatars/AvatarRenderer.tsx` → `AvatarGroup`
+
+**AR Camera — Race condition en inicio de cámara**
+- Múltiples llamadas concurrentes a `startCamera()` causaban errores repetidos de `AbortError: play() interrupted`.
+- Se añadió un guard (`startingRef`) para prevenir llamadas simultáneas.
+- Se espera al evento `onloadeddata` del video antes de llamar a `play()`.
+- Se detiene cualquier stream previo antes de iniciar uno nuevo.
+- Los errores `AbortError` se ignoran silenciosamente (son benignos).
+- Archivo: `src/hooks/useFaceTracker.ts` → `startCamera()`
+
+**Face Tracking — Lectura de estado en loop de frames**
+- `processFrame()` ahora lee `isCameraActive` directamente del store (`getState()`) en lugar de usar la closure del hook, evitando stale references que impedían el procesamiento de frames.
+- Archivo: `src/hooks/useFaceTracker.ts` → `processFrame()`
+
+---
+
 ## [2.0.0] - 2026-02-01
 
 ### Añadido
