@@ -190,14 +190,19 @@ export const AvatarHalfBody = ({ color, yOffset = -1.6, bodyScale = 1 }: AvatarH
     const proceduralSway = Math.sin(timeRef.current * 1.0) * 0.04;
     const audioSway = audioReactiveEnabled ? Math.sin(timeRef.current * 2.5) * audioData.volume * 0.06 : 0;
 
-    // SWAPPED: user RIGHT hand (rightHandData) → screen left → leftArmRef
-    //          user LEFT hand  (leftHandData)  → screen right → rightArmRef
+    // DIRECT * MediaPipe handedness on non-mirrored video:
+    //   - MediaPipe "Left"  = User's RIGHT hand = Screen Left position
+    //   - MediaPipe "Right" = User's LEFT hand  = Screen Right position
+    // 
+    // DIRECT mapping works for Mirror effect:
+    //   - leftArmRef  (screen left)  ← leftHandData (User Right Hand)
+    //   - rightArmRef (screen right) ← rightHandData (User Left Hand)
 
-    // LEFT ARM ← rightHandData
+    // LEFT ARM ← leftHandData
     if (leftArmRef.current) {
-      if (rightHandData.isTracked && rightHandData.landmarks.length > 0) {
-        const wrist = rightHandData.landmarks[0];
-        // wrist.x < 0 for user RIGHT hand (screen left)
+      if (leftHandData.isTracked && leftHandData.landmarks.length > 0) {
+        const wrist = leftHandData.landmarks[0];
+        // wrist.x < 0 (left side of image) → rotation.z < 0 → arm swings outward left
         leftArmRef.current.rotation.z = THREE.MathUtils.lerp(
           leftArmRef.current.rotation.z, wrist.x * 2.5 + 0.12, 0.2
         );
@@ -214,11 +219,11 @@ export const AvatarHalfBody = ({ color, yOffset = -1.6, bodyScale = 1 }: AvatarH
       }
     }
 
-    // RIGHT ARM ← leftHandData
+    // RIGHT ARM ← rightHandData
     if (rightArmRef.current) {
-      if (leftHandData.isTracked && leftHandData.landmarks.length > 0) {
-        const wrist = leftHandData.landmarks[0];
-        // wrist.x > 0 for user LEFT hand (screen right)
+      if (rightHandData.isTracked && rightHandData.landmarks.length > 0) {
+        const wrist = rightHandData.landmarks[0];
+        // wrist.x > 0 (right side of image) → rotation.z > 0 → arm swings outward right
         rightArmRef.current.rotation.z = THREE.MathUtils.lerp(
           rightArmRef.current.rotation.z, wrist.x * 2.5 - 0.12, 0.2
         );
@@ -237,10 +242,10 @@ export const AvatarHalfBody = ({ color, yOffset = -1.6, bodyScale = 1 }: AvatarH
 
     // Hand idle wiggle
     const handWiggle = Math.sin(timeRef.current * 2) * 0.03;
-    if (leftHandRef.current && !rightHandData.isTracked) {
+    if (leftHandRef.current && !leftHandData.isTracked) {
       leftHandRef.current.rotation.z = handWiggle;
     }
-    if (rightHandRef.current && !leftHandData.isTracked) {
+    if (rightHandRef.current && !rightHandData.isTracked) {
       rightHandRef.current.rotation.z = -handWiggle;
     }
   });
@@ -261,25 +266,25 @@ export const AvatarHalfBody = ({ color, yOffset = -1.6, bodyScale = 1 }: AvatarH
         <Joint r={0.16} color={color} pos={[0.52, 0.38, 0]} />
       </group>
 
-      {/* Left arm ← rightHandData */}
+      {/* Left arm ← leftHandData */}
       <group ref={leftArmRef} position={[-0.52, 0.38, 0]}>
         <Limb rTop={0.13} rBot={0.11} h={0.55} color={color} pos={[0, -0.3, 0]} />
         <Joint r={0.11} color={bodyColor} pos={[0, -0.58, 0]} />
         <Limb rTop={0.1} rBot={0.08} h={0.45} color={bodyColor} pos={[0, -0.83, 0]} />
         <Joint r={0.075} color={bodyColor} pos={[0, -1.06, 0]} />
         <group ref={leftHandRef} position={[0, -1.14, 0]}>
-          <ReactiveHand color={color} side="left" dataSource="right" />
+          <ReactiveHand color={color} side="left" dataSource="left" />
         </group>
       </group>
 
-      {/* Right arm ← leftHandData */}
+      {/* Right arm ← rightHandData */}
       <group ref={rightArmRef} position={[0.52, 0.38, 0]}>
         <Limb rTop={0.13} rBot={0.11} h={0.55} color={color} pos={[0, -0.3, 0]} />
         <Joint r={0.11} color={bodyColor} pos={[0, -0.58, 0]} />
         <Limb rTop={0.1} rBot={0.08} h={0.45} color={bodyColor} pos={[0, -0.83, 0]} />
         <Joint r={0.075} color={bodyColor} pos={[0, -1.06, 0]} />
         <group ref={rightHandRef} position={[0, -1.14, 0]}>
-          <ReactiveHand color={color} side="right" dataSource="left" />
+          <ReactiveHand color={color} side="right" dataSource="right" />
         </group>
       </group>
     </group>
