@@ -62,8 +62,8 @@ export const AvatarSelector = () => {
     }
 
     // Prepare initial rotation if fix is enabled
-    // Meshy models often come Z-up, so we rotate -90 deg on X to be Y-up
-    const initialRotation: [number, number, number] | undefined = fixRotation ? [-Math.PI / 2, 0, 0] : undefined;
+    // Meshy models often come Z-up, so we rotate -90 deg on X to be Y-up, and 180 on Y to face camera
+    const initialRotation: [number, number, number] | undefined = fixRotation ? [-Math.PI / 2, Math.PI, 0] : undefined;
 
     // Save to IndexedDB for persistence (with enforced storage limits)
     saveModel('custom-avatar', file, { name: file.name, type: extension, initialRotation })
