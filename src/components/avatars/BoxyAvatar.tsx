@@ -11,6 +11,7 @@ import { Box, Sphere, RoundedBox } from '@react-three/drei';
 import * as THREE from 'three';
 import { useAvatarStore } from '@/stores/avatarStore';
 import { useAvatarAnimation } from '@/hooks/useAvatarAnimation';
+import { AvatarHalfBody } from './AvatarHalfBody';
 
 export const BoxyAvatar = () => {
   const groupRef = useRef<THREE.Group>(null);
@@ -92,49 +93,54 @@ export const BoxyAvatar = () => {
   });
 
   return (
-    <group ref={groupRef} scale={avatarScale}>
-      {/* Main body */}
-      <RoundedBox args={[1.4, 1.4, 1.2]} radius={0.15} smoothness={4}>
-        <meshStandardMaterial color={avatarColor} roughness={0.3} metalness={0.4} />
-      </RoundedBox>
+    <group scale={avatarScale}>
+      <group ref={groupRef}>
+        {/* Main body */}
+        <RoundedBox args={[1.4, 1.4, 1.2]} radius={0.15} smoothness={4}>
+          <meshStandardMaterial color={avatarColor} roughness={0.3} metalness={0.4} />
+        </RoundedBox>
 
-      {/* Screen face area */}
-      <RoundedBox args={[1.1, 0.8, 0.1]} radius={0.05} position={[0, 0.1, 0.56]}>
-        <meshStandardMaterial color="#0a0a15" roughness={0.1} metalness={0.8} />
-      </RoundedBox>
+        {/* Screen face area */}
+        <RoundedBox args={[1.1, 0.8, 0.1]} radius={0.05} position={[0, 0.1, 0.56]}>
+          <meshStandardMaterial color="#0a0a15" roughness={0.1} metalness={0.8} />
+        </RoundedBox>
 
-      {/* Left eye (LED style) */}
-      <Box ref={leftEyeRef} args={[0.2, 0.25, 0.05]} position={[-0.3, 0.2, 0.62]}>
-        <meshStandardMaterial color="#00ffaa" emissive="#00ffaa" emissiveIntensity={0.5} />
-      </Box>
-
-      {/* Right eye (LED style) */}
-      <Box ref={rightEyeRef} args={[0.2, 0.25, 0.05]} position={[0.3, 0.2, 0.62]}>
-        <meshStandardMaterial color="#00ffaa" emissive="#00ffaa" emissiveIntensity={0.5} />
-      </Box>
-
-      {/* Mouth (LED bar) */}
-      <Box ref={mouthRef} args={[0.5, 0.1, 0.05]} position={[0, -0.15, 0.62]}>
-        <meshStandardMaterial color="#ff6b6b" emissive="#ff6b6b" emissiveIntensity={0.3} />
-      </Box>
-
-      {/* Antenna */}
-      <group ref={antennaRef} position={[0, 0.9, 0]}>
-        <Box args={[0.08, 0.3, 0.08]}>
-          <meshStandardMaterial color="#666" metalness={0.8} roughness={0.2} />
+        {/* Left eye (LED style) */}
+        <Box ref={leftEyeRef} args={[0.2, 0.25, 0.05]} position={[-0.3, 0.2, 0.62]}>
+          <meshStandardMaterial color="#00ffaa" emissive="#00ffaa" emissiveIntensity={0.5} />
         </Box>
-        <Sphere ref={antennaBallRef} args={[0.1, 16, 16]} position={[0, 0.2, 0]}>
-          <meshStandardMaterial color="#ff0066" emissive="#ff0066" emissiveIntensity={0.8} />
-        </Sphere>
+
+        {/* Right eye (LED style) */}
+        <Box ref={rightEyeRef} args={[0.2, 0.25, 0.05]} position={[0.3, 0.2, 0.62]}>
+          <meshStandardMaterial color="#00ffaa" emissive="#00ffaa" emissiveIntensity={0.5} />
+        </Box>
+
+        {/* Mouth (LED bar) */}
+        <Box ref={mouthRef} args={[0.5, 0.1, 0.05]} position={[0, -0.15, 0.62]}>
+          <meshStandardMaterial color="#ff6b6b" emissive="#ff6b6b" emissiveIntensity={0.3} />
+        </Box>
+
+        {/* Antenna */}
+        <group ref={antennaRef} position={[0, 0.9, 0]}>
+          <Box args={[0.08, 0.3, 0.08]}>
+            <meshStandardMaterial color="#666" metalness={0.8} roughness={0.2} />
+          </Box>
+          <Sphere ref={antennaBallRef} args={[0.1, 16, 16]} position={[0, 0.2, 0]}>
+            <meshStandardMaterial color="#ff0066" emissive="#ff0066" emissiveIntensity={0.8} />
+          </Sphere>
+        </group>
+
+        {/* Side details */}
+        <Box args={[0.1, 0.4, 0.8]} position={[-0.75, 0, 0]}>
+          <meshStandardMaterial color="#444" metalness={0.6} roughness={0.3} />
+        </Box>
+        <Box args={[0.1, 0.4, 0.8]} position={[0.75, 0, 0]}>
+          <meshStandardMaterial color="#444" metalness={0.6} roughness={0.3} />
+        </Box>
       </group>
 
-      {/* Side details */}
-      <Box args={[0.1, 0.4, 0.8]} position={[-0.75, 0, 0]}>
-        <meshStandardMaterial color="#444" metalness={0.6} roughness={0.3} />
-      </Box>
-      <Box args={[0.1, 0.4, 0.8]} position={[0.75, 0, 0]}>
-        <meshStandardMaterial color="#444" metalness={0.6} roughness={0.3} />
-      </Box>
+      {/* Half body */}
+      <AvatarHalfBody color={avatarColor} yOffset={-1.5} />
     </group>
   );
 };
