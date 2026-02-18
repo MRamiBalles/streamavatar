@@ -120,12 +120,31 @@ export const useFaceTracker = () => {
         if (result.faceLandmarks && result.faceLandmarks.length > 0) {
           const landmarks = result.faceLandmarks[0];
 
-          // Indices for diagnostics
+          // Comprehensive face landmark indices (~90 points)
           const diagnosticIndices = [
-            33, 133, 362, 263, // Eyes (4)
-            1, 2, 3, 4,       // Nose (4)
-            61, 291, 0, 17, 78, 308, // Mouth (6)
-            10, 152, 234, 454, 58, 288, 172, 397, 132, 361 // Face Shape (10)
+            // Face contour (17)
+            10, 338, 297, 332, 284, 251, 389, 356, 454,
+            152, 148, 176, 149, 150, 136, 172, 58,
+            // Left eye (7)
+            33, 7, 163, 144, 145, 153, 133,
+            // Right eye (7)
+            362, 382, 381, 380, 374, 263, 249,
+            // Left eyebrow (5)
+            70, 63, 105, 66, 107,
+            // Right eyebrow (5)
+            336, 296, 334, 293, 300,
+            // Nose (9)
+            1, 2, 98, 327, 168, 6, 195, 4, 5,
+            // Outer lips (11)
+            61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291,
+            // Inner lips (10)
+            78, 95, 88, 178, 87, 14, 317, 402, 318, 324,
+            // Irises (2)
+            468, 473,
+            // Jaw / neck estimation (6)
+            132, 361, 93, 234, 127, 162,
+            // Chin to jaw lower (4)
+            365, 379, 378, 400,
           ];
 
           facePoints = diagnosticIndices.map(idx => {

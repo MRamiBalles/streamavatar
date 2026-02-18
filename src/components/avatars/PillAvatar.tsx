@@ -14,6 +14,7 @@ import { Capsule, Sphere } from '@react-three/drei';
 import * as THREE from 'three';
 import { useAvatarStore } from '@/stores/avatarStore';
 import { useAvatarAnimation } from '@/hooks/useAvatarAnimation';
+import { AvatarHalfBody } from './AvatarHalfBody';
 
 export const PillAvatar = () => {
   const groupRef = useRef<THREE.Group>(null);
@@ -101,40 +102,45 @@ export const PillAvatar = () => {
   });
 
   return (
-    <group ref={groupRef} scale={avatarScale}>
-      {/* Main pill body */}
-      <Capsule ref={bodyRef} args={[0.6, 1.2, 16, 32]} position={[0, 0, 0]}>
-        <meshStandardMaterial color={avatarColor} roughness={0.4} metalness={0.1} />
-      </Capsule>
+    <group scale={avatarScale}>
+      <group ref={groupRef}>
+        {/* Main pill body */}
+        <Capsule ref={bodyRef} args={[0.6, 1.2, 16, 32]} position={[0, 0, 0]}>
+          <meshStandardMaterial color={avatarColor} roughness={0.4} metalness={0.1} />
+        </Capsule>
 
-      {/* Left eye */}
-      <Sphere ref={leftEyeRef} args={[0.15, 16, 16]} position={[-0.25, 0.3, 0.5]}>
-        <meshStandardMaterial color="#ffffff" />
-      </Sphere>
-      <Sphere args={[0.08, 16, 16]} position={[-0.25, 0.3, 0.6]}>
-        <meshStandardMaterial color="#1a1a2e" />
-      </Sphere>
+        {/* Left eye */}
+        <Sphere ref={leftEyeRef} args={[0.15, 16, 16]} position={[-0.25, 0.3, 0.5]}>
+          <meshStandardMaterial color="#ffffff" />
+        </Sphere>
+        <Sphere args={[0.08, 16, 16]} position={[-0.25, 0.3, 0.6]}>
+          <meshStandardMaterial color="#1a1a2e" />
+        </Sphere>
 
-      {/* Right eye */}
-      <Sphere ref={rightEyeRef} args={[0.15, 16, 16]} position={[0.25, 0.3, 0.5]}>
-        <meshStandardMaterial color="#ffffff" />
-      </Sphere>
-      <Sphere args={[0.08, 16, 16]} position={[0.25, 0.3, 0.6]}>
-        <meshStandardMaterial color="#1a1a2e" />
-      </Sphere>
+        {/* Right eye */}
+        <Sphere ref={rightEyeRef} args={[0.15, 16, 16]} position={[0.25, 0.3, 0.5]}>
+          <meshStandardMaterial color="#ffffff" />
+        </Sphere>
+        <Sphere args={[0.08, 16, 16]} position={[0.25, 0.3, 0.6]}>
+          <meshStandardMaterial color="#1a1a2e" />
+        </Sphere>
 
-      {/* Mouth */}
-      <Sphere ref={mouthRef} args={[0.15, 16, 16]} position={[0, -0.15, 0.55]} scale={[1.5, 0.1, 1]}>
-        <meshStandardMaterial color="#2a1a1a" />
-      </Sphere>
+        {/* Mouth */}
+        <Sphere ref={mouthRef} args={[0.15, 16, 16]} position={[0, -0.15, 0.55]} scale={[1.5, 0.1, 1]}>
+          <meshStandardMaterial color="#2a1a1a" />
+        </Sphere>
 
-      {/* Highlights/texture spots */}
-      <Sphere args={[0.12, 16, 16]} position={[-0.35, 0.6, 0.35]}>
-        <meshStandardMaterial color="#e8c9a0" transparent opacity={0.5} />
-      </Sphere>
-      <Sphere args={[0.08, 16, 16]} position={[0.4, 0.5, 0.3]}>
-        <meshStandardMaterial color="#e8c9a0" transparent opacity={0.4} />
-      </Sphere>
+        {/* Highlights/texture spots */}
+        <Sphere args={[0.12, 16, 16]} position={[-0.35, 0.6, 0.35]}>
+          <meshStandardMaterial color="#e8c9a0" transparent opacity={0.5} />
+        </Sphere>
+        <Sphere args={[0.08, 16, 16]} position={[0.4, 0.5, 0.3]}>
+          <meshStandardMaterial color="#e8c9a0" transparent opacity={0.4} />
+        </Sphere>
+      </group>
+
+      {/* Half body */}
+      <AvatarHalfBody color={avatarColor} yOffset={-1.4} />
     </group>
   );
 };

@@ -45,11 +45,12 @@ export const FaceLandmarks = () => {
         });
     });
 
-    // Create a pool of dots (24 based on the indices we picked)
+    // Create a pool of dots (~90 landmarks)
+    const DOT_COUNT = 90;
     return (
         <group ref={groupRef}>
-            {Array.from({ length: 24 }).map((_, i) => (
-                <Sphere key={i} args={[0.04, 8, 8]}>
+            {Array.from({ length: DOT_COUNT }).map((_, i) => (
+                <Sphere key={i} args={[0.03, 6, 6]}>
                     <meshBasicMaterial color="#ff0000" toneMapped={false} />
                 </Sphere>
             ))}
