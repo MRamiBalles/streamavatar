@@ -14,7 +14,7 @@ export type ExpressionType = 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised'
 export interface CustomModel {
   url: string;
   name: string;
-  type: 'glb' | 'vrm';
+  type: 'glb' | 'vrm' | 'stl';
 }
 
 export interface AvatarPart {

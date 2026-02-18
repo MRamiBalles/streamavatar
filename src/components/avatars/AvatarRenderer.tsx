@@ -18,6 +18,7 @@ import { VRMAvatar } from './VRMAvatar';
 import { SplatScene } from '../scene/SplatScene';
 import { ARPassthrough } from '../scene/ARPassthrough';
 import { FaceLandmarks } from '../scene/FaceLandmarks';
+import { STLAvatar } from './STLAvatar';
 
 // Simple Error Boundary for SplatScene to prevent app crash
 class SplatErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
@@ -70,7 +71,10 @@ const AvatarModel = ({ type }: { type: AvatarType }) => {
           if (customModel.type === 'vrm' || customModel.url.endsWith('.vrm')) {
             return <VRMAvatar url={customModel.url} />;
           }
-          return <CustomModelAvatar modelUrl={customModel.url} modelType={customModel.type} />;
+          if (customModel.type === 'stl' || customModel.url.endsWith('.stl')) {
+            return <STLAvatar url={customModel.url} />;
+          }
+          return <CustomModelAvatar modelUrl={customModel.url} modelType={customModel.type as 'glb' | 'vrm'} />;
         }
         return <PillAvatar />;
       default: return <PillAvatar />;
