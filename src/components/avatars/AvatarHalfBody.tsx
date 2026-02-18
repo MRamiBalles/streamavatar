@@ -196,6 +196,9 @@ export const AvatarHalfBody = ({ color, yOffset = -1.6, bodyScale = 1 }: AvatarH
     const proceduralSway = Math.sin(timeRef.current * 1.0) * 0.04;
     const audioSway = audioReactiveEnabled ? Math.sin(timeRef.current * 2.5) * audioData.volume * 0.06 : 0;
 
+    // DEBUG: Verify mapping is active
+    // console.log("LeftHandData:", leftHandData.isTracked, "RightHandData:", rightHandData.isTracked);
+
     // SWAPPED: user RIGHT hand (rightHandData) → screen left → leftArmRef
     //          user LEFT hand  (leftHandData)  → screen right → rightArmRef
 
