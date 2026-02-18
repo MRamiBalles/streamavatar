@@ -35,7 +35,7 @@ export type {
   HotkeyMapping,
 } from './slices/avatarSlice';
 
-export type { FaceData } from './slices/trackingSlice';
+export type { FaceData, HandData, HandPoint } from './slices/trackingSlice';
 export type { BackgroundType, Language } from './slices/uiSlice';
 
 // =============================================================================

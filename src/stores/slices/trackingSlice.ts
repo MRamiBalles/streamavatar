@@ -1,11 +1,24 @@
 /**
- * Tracking Slice — Face tracking data and camera state
+ * Tracking Slice — Face + Hand tracking data and camera state
  */
 import { StateCreator } from 'zustand';
 
 // =============================================================================
 // Types
 // =============================================================================
+
+export interface HandPoint {
+  x: number;
+  y: number;
+  z: number;
+}
+
+export interface HandData {
+  /** 21 landmarks per hand (MediaPipe Hand Landmarker) */
+  landmarks: HandPoint[];
+  /** Whether this hand is currently tracked by camera */
+  isTracked: boolean;
+}
 
 export interface FaceData {
   headRotation: { x: number; y: number; z: number };
@@ -28,11 +41,17 @@ export interface FaceData {
 
 export interface TrackingSlice {
   faceData: FaceData;
+  leftHandData: HandData;
+  rightHandData: HandData;
+  isHandTrackingActive: boolean;
   isCameraActive: boolean;
   isTracking: boolean;
   videoElement: HTMLVideoElement | null;
 
   setFaceData: (data: FaceData) => void;
+  setLeftHandData: (data: HandData) => void;
+  setRightHandData: (data: HandData) => void;
+  setHandTrackingActive: (active: boolean) => void;
   setCameraActive: (active: boolean) => void;
   setTracking: (tracking: boolean) => void;
   setVideoElement: (element: HTMLVideoElement | null) => void;
@@ -41,6 +60,11 @@ export interface TrackingSlice {
 // =============================================================================
 // Default State
 // =============================================================================
+
+const emptyHand: HandData = {
+  landmarks: [],
+  isTracked: false,
+};
 
 export const trackingDefaults = {
   faceData: {
@@ -53,6 +77,9 @@ export const trackingDefaults = {
     headPosition: { x: 0, y: 0, z: 0 },
     facePoints: [],
   } as FaceData,
+  leftHandData: { ...emptyHand },
+  rightHandData: { ...emptyHand },
+  isHandTrackingActive: false,
   isCameraActive: false,
   isTracking: false,
   videoElement: null,
@@ -66,6 +93,9 @@ export const createTrackingSlice: StateCreator<TrackingSlice, [], [], TrackingSl
   ...trackingDefaults,
 
   setFaceData: (data) => set({ faceData: data }),
+  setLeftHandData: (data) => set({ leftHandData: data }),
+  setRightHandData: (data) => set({ rightHandData: data }),
+  setHandTrackingActive: (active) => set({ isHandTrackingActive: active }),
   setCameraActive: (active) => set({ isCameraActive: active }),
   setTracking: (tracking) => set({ isTracking: tracking }),
   setVideoElement: (element) => set({ videoElement: element }),
