@@ -48,10 +48,10 @@ export const STLAvatar = ({ url }: STLAvatarProps) => {
     useFrame(() => {
         const anim = getAnimationState();
         if (groupRef.current) {
-            // Head Rotation
-            groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, anim.headRotation.x, 0.1);
-            groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, -anim.headRotation.y, 0.1);
-            groupRef.current.rotation.z = THREE.MathUtils.lerp(groupRef.current.rotation.z, anim.headRotation.z, 0.1);
+            // Head Rotation - Faster response (0.1 -> 0.25)
+            groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, anim.headRotation.x, 0.25);
+            groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, -anim.headRotation.y, 0.25);
+            groupRef.current.rotation.z = THREE.MathUtils.lerp(groupRef.current.rotation.z, anim.headRotation.z, 0.25);
         }
     });
 

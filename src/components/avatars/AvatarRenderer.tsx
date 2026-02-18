@@ -139,8 +139,8 @@ const AvatarGroup = ({ children }: { children: React.ReactNode }) => {
 
         const targetPos = new THREE.Vector3(x, y, z);
 
-        // Smoothing
-        groupRef.current.position.lerp(targetPos, 0.2);
+        // Smoothing - Increased responsiveness (0.2 -> 0.4)
+        groupRef.current.position.lerp(targetPos, 0.4);
 
         // Scaling for AR mode: far plane needs scale-up
         groupRef.current.scale.setScalar(scale);

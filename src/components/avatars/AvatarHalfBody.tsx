@@ -190,17 +190,15 @@ export const AvatarHalfBody = ({ color, yOffset = -1.6, bodyScale = 1 }: AvatarH
     const proceduralSway = Math.sin(timeRef.current * 1.0) * 0.04;
     const audioSway = audioReactiveEnabled ? Math.sin(timeRef.current * 2.5) * audioData.volume * 0.06 : 0;
 
-    // DIRECT * MediaPipe handedness on non-mirrored video:
-    //   - MediaPipe "Left"  = User's RIGHT hand = Screen Left position
-    //   - MediaPipe "Right" = User's LEFT hand  = Screen Right position
-    // 
-    // DIRECT mapping works for Mirror effect:
-    //   - leftArmRef  (screen left)  ← leftHandData (User Right Hand)
-    //   - rightArmRef (screen right) ← rightHandData (User Left Hand)
+    // DIRECT MAPPING (Correct for mirror effect if MediaPipe "Left" = User Right Hand)
+    // User Right Hand (Screen Left) → Label "Left" → leftHandData → leftArmRef (Screen Left)
+    // User Left Hand (Screen Right) → Label "Right" → rightHandData → rightArmRef (Screen Right)
+
+    const enableHandTracking = false; // User requested to disable/hide hand tracking for now
 
     // LEFT ARM ← leftHandData
     if (leftArmRef.current) {
-      if (leftHandData.isTracked && leftHandData.landmarks.length > 0) {
+      if (enableHandTracking && leftHandData.isTracked && leftHandData.landmarks.length > 0) {
         const wrist = leftHandData.landmarks[0];
         // wrist.x < 0 (left side of image) → rotation.z < 0 → arm swings outward left
         leftArmRef.current.rotation.z = THREE.MathUtils.lerp(
@@ -221,7 +219,7 @@ export const AvatarHalfBody = ({ color, yOffset = -1.6, bodyScale = 1 }: AvatarH
 
     // RIGHT ARM ← rightHandData
     if (rightArmRef.current) {
-      if (rightHandData.isTracked && rightHandData.landmarks.length > 0) {
+      if (enableHandTracking && rightHandData.isTracked && rightHandData.landmarks.length > 0) {
         const wrist = rightHandData.landmarks[0];
         // wrist.x > 0 (right side of image) → rotation.z > 0 → arm swings outward right
         rightArmRef.current.rotation.z = THREE.MathUtils.lerp(
@@ -242,20 +240,22 @@ export const AvatarHalfBody = ({ color, yOffset = -1.6, bodyScale = 1 }: AvatarH
 
     // Hand idle wiggle
     const handWiggle = Math.sin(timeRef.current * 2) * 0.03;
-    if (leftHandRef.current && !leftHandData.isTracked) {
+    if (leftHandRef.current) {
       leftHandRef.current.rotation.z = handWiggle;
     }
-    if (rightHandRef.current && !rightHandData.isTracked) {
+    if (rightHandRef.current) {
       rightHandRef.current.rotation.z = -handWiggle;
     }
   });
 
   return (
     <group position={[0, yOffset, 0]} scale={bodyScale}>
-      {/* DEBUG TEXT OVERLAY */}
+      {/* Hand Tracking HIBERNATED via enableHandTracking = false */}
+      {/* 
       <Text position={[0, 1.3, 0]} fontSize={0.15} color="white" anchorX="center" anchorY="middle">
         {debugText}
-      </Text>
+      </Text> 
+      */}
 
       <Limb rTop={0.14} rBot={0.18} h={0.35} color={color} pos={[0, 0.7, 0]} />
 
