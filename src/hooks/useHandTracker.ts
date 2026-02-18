@@ -40,51 +40,56 @@ export const useHandTracker = () => {
   const processHands = useCallback(() => {
     if (!isRunningRef.current) return;
 
-    const { videoElement, isCameraActive, setLeftHandData, setRightHandData, setHandTrackingActive } =
-      useAvatarStore.getState();
+    try {
+      const { videoElement, isCameraActive, setLeftHandData, setRightHandData, setHandTrackingActive } =
+        useAvatarStore.getState();
 
-    if (!videoElement || !handLandmarkerRef.current || !isCameraActive) {
-      animationFrameRef.current = requestAnimationFrame(processHands);
-      return;
-    }
-
-    if (videoElement.readyState >= 2) {
-      const result = handLandmarkerRef.current.detectForVideo(videoElement, performance.now());
-
-      if (result.landmarks && result.landmarks.length > 0) {
-        setHandTrackingActive(true);
-
-        // Classify hands by handedness
-        result.landmarks.forEach((landmarks, idx) => {
-          const handedness = result.handednesses?.[idx]?.[0]?.categoryName;
-          const points = landmarks.map(p => ({
-            x: p.x - 0.5,
-            y: (p.y - 0.5) * -1,
-            z: p.z,
-          }));
-
-          // MediaPipe mirrors: "Left" in result = user's left hand
-          if (handedness === 'Left') {
-            setLeftHandData({ landmarks: points, isTracked: true });
-          } else {
-            setRightHandData({ landmarks: points, isTracked: true });
-          }
-        });
-
-        // If only one hand detected, mark the other as not tracked
-        if (result.landmarks.length === 1) {
-          const handedness = result.handednesses?.[0]?.[0]?.categoryName;
-          if (handedness === 'Left') {
-            setRightHandData({ landmarks: [], isTracked: false });
-          } else {
-            setLeftHandData({ landmarks: [], isTracked: false });
-          }
-        }
-      } else {
-        setHandTrackingActive(false);
-        setLeftHandData({ landmarks: [], isTracked: false });
-        setRightHandData({ landmarks: [], isTracked: false });
+      if (!videoElement || !handLandmarkerRef.current || !isCameraActive) {
+        animationFrameRef.current = requestAnimationFrame(processHands);
+        return;
       }
+
+      if (videoElement.readyState >= 2) {
+        const result = handLandmarkerRef.current.detectForVideo(videoElement, performance.now());
+
+        if (result.landmarks && result.landmarks.length > 0) {
+          setHandTrackingActive(true);
+
+          // Classify hands by handedness
+          result.landmarks.forEach((landmarks, idx) => {
+            const handedness = result.handednesses?.[idx]?.[0]?.categoryName;
+            const points = landmarks.map(p => ({
+              x: p.x - 0.5,
+              y: (p.y - 0.5) * -1,
+              z: p.z,
+            }));
+
+            // MediaPipe mirrors: "Left" results correspond to the user's Left hand 
+            // visualizing on the Right side of the unmirrored stream.
+            if (handedness === 'Left') {
+              setLeftHandData({ landmarks: points, isTracked: true });
+            } else {
+              setRightHandData({ landmarks: points, isTracked: true });
+            }
+          });
+
+          // If only one hand detected, mark the other as not tracked
+          if (result.landmarks.length === 1) {
+            const handedness = result.handednesses?.[0]?.[0]?.categoryName;
+            if (handedness === 'Left') {
+              setRightHandData({ landmarks: [], isTracked: false });
+            } else {
+              setLeftHandData({ landmarks: [], isTracked: false });
+            }
+          }
+        } else {
+          setHandTrackingActive(false);
+          setLeftHandData({ landmarks: [], isTracked: false });
+          setRightHandData({ landmarks: [], isTracked: false });
+        }
+      }
+    } catch (err) {
+      console.error('[HandTracker] Error processing frame:', err);
     }
 
     animationFrameRef.current = requestAnimationFrame(processHands);
