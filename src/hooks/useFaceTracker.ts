@@ -88,10 +88,40 @@ export const useFaceTracker = () => {
         // We boost the raw values to make expressions easier to trigger
         const boost = (val: number, multiplier: number = 1.5) => Math.min(1, val * multiplier);
 
-        const jawOpen = boost(getBlendshapeValue('jawOpen'), 1.8); // Make mouth opening easier
+        // USER REQUEST: Less amplitude, focus on inner edges for closure
+        // Reduced from 1.8 to 1.0 to avoid "too much amplitude"
+        let jawOpen = boost(getBlendshapeValue('jawOpen'), 1.0);
+
         // Eye blinks are often subtle, boost them significantly so "normal" blinks register fully
         const eyeBlinkLeft = boost(getBlendshapeValue('eyeBlinkLeft'), 1.5);
         const eyeBlinkRight = boost(getBlendshapeValue('eyeBlinkRight'), 1.5);
+
+        // --- GEOMETRIC MOUTH CLOSURE CHECK ---
+        // Use Inner Lip landmarks (13: Upper Middle, 14: Lower Middle) to detect precise closure
+        if (result.faceLandmarks && result.faceLandmarks.length > 0) {
+          const landmarks = result.faceLandmarks[0];
+          const upperLip = landmarks[13];
+          const lowerLip = landmarks[14];
+
+          if (upperLip && lowerLip) {
+            // Calculate vertical distance between inner lips
+            const distance = Math.abs(upperLip.y - lowerLip.y);
+
+            // Threshold for "closed": 0.005 is very close (lips touching)
+            // If distance is tiny, force jawOpen to 0 to ensure "se cierra completa"
+            if (distance < 0.005) {
+              jawOpen = 0;
+            } else {
+              // Blend geometric distance with blendshape for more accuracy
+              // Map distance 0.005-0.1 to 0-1
+              const geometricOpen = Math.min(1, Math.max(0, (distance - 0.005) * 5.0)); // Adjusted sensitivity
+
+              // Weighted average: 60% Geometric (Inner Edges), 40% Blendshape
+              // This prioritizes the "points" detection user asked for
+              jawOpen = (jawOpen * 0.4) + (geometricOpen * 0.6);
+            }
+          }
+        }
 
         // Get head rotation from transformation matrix
         let headRotation = { x: 0, y: 0, z: 0 };
