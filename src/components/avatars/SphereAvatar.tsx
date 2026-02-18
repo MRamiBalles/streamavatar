@@ -153,7 +153,7 @@ export const SphereAvatar = () => {
       </group>
 
       {/* Half body */}
-      <AvatarHalfBodyFixed color={avatarColor} yOffset={-1.6} />
+      <AvatarHalfBody color={avatarColor} yOffset={-1.6} />
     </group>
   );
 };
