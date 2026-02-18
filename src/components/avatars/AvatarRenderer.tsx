@@ -1,6 +1,7 @@
 import React, { Suspense, useRef, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Environment, ContactShadows, Html, useProgress } from '@react-three/drei';
+import { debugError } from '@/lib/debugLog';
 import * as THREE from 'three';
 import { useAvatarStore, AvatarType } from '@/stores/avatarStore';
 import { useFaceTracker } from '@/hooks/useFaceTracker';
@@ -30,7 +31,7 @@ class SplatErrorBoundary extends React.Component<{ children: React.ReactNode }, 
   }
 
   componentDidCatch(error: any, errorInfo: any) {
-    console.error("SplatScene crashed:", error, errorInfo);
+    debugError("[SplatScene] crashed:", error, errorInfo);
   }
 
   render() {

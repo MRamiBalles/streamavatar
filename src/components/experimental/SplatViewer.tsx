@@ -16,6 +16,7 @@
 
 import { useRef, useEffect, useState } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
+import { debugLog, debugWarn, debugError } from '@/lib/debugLog';
 import * as THREE from 'three';
 
 // =============================================================================
@@ -54,8 +55,8 @@ interface LoadingState {
 async function loadGaussianSplats(): Promise<any> {
     // This is an experimental feature that requires manual installation
     // To use: npm install @mkkellogg/gaussian-splats-3d
-    console.warn('[SplatViewer] GaussianSplats3D is experimental and requires manual installation.');
-    console.warn('[SplatViewer] Run: npm install @mkkellogg/gaussian-splats-3d');
+    debugWarn('[SplatViewer] GaussianSplats3D is experimental and requires manual installation.');
+    debugWarn('[SplatViewer] Run: npm install @mkkellogg/gaussian-splats-3d');
     throw new Error('GaussianSplats3D library not installed. This is an experimental feature.');
 }
 
@@ -120,7 +121,7 @@ export function SplatViewer({
                 if (mounted) {
                     setState({ isLoading: false, progress: 1, error: null });
                     onLoad?.();
-                    console.log('[SplatViewer] Loaded successfully:', src);
+                    debugLog('[SplatViewer] Loaded successfully:', src);
                 }
 
             } catch (err) {
@@ -128,7 +129,7 @@ export function SplatViewer({
                     const error = err instanceof Error ? err : new Error('Unknown error');
                     setState({ isLoading: false, progress: 0, error: error.message });
                     onError?.(error);
-                    console.error('[SplatViewer] Error:', error);
+                    debugError('[SplatViewer] Error:', error);
                 }
             }
         }

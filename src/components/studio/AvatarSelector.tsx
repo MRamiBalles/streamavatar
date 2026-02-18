@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { saveModel, validateModelFile, MAX_MODEL_SIZE } from '@/lib/db';
+import { debugError } from '@/lib/debugLog';
 
 const avatarOptions: { type: AvatarType; nameKey: 'peanut' | 'robot' | 'slime' | 'cat' | 'ghost' | 'emoji'; icon: React.ElementType }[] = [
   { type: 'pill', nameKey: 'peanut', icon: Pill },
@@ -58,7 +59,7 @@ export const AvatarSelector = () => {
     // Save to IndexedDB for persistence (with enforced storage limits)
     saveModel('custom-avatar', file, { name: file.name, type: extension })
       .catch(err => {
-        console.error('Failed to save model to IDB:', err);
+        debugError('[AvatarSelector] Failed to save model to IDB:', err);
         toast({
           title: 'Storage error',
           description: err instanceof Error ? err.message : 'Failed to save model',

@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import { FaceLandmarker, FilesetResolver, FaceLandmarkerResult } from '@mediapipe/tasks-vision';
 import { useAvatarStore } from '@/stores/avatarStore';
 import { ARKitIndex } from '@/lib/vrmTrackingBridge';
+import { debugError } from '@/lib/debugLog';
 import * as THREE from 'three';
 
 export const useFaceTracker = () => {
@@ -46,7 +47,7 @@ export const useFaceTracker = () => {
       faceLandmarkerRef.current = faceLandmarker;
       setIsLoading(false);
     } catch (err) {
-      console.error('Failed to initialize face landmarker:', err);
+      debugError('[FaceTracker] Failed to initialize:', err);
       setError('Failed to initialize face tracking. Please try again.');
       setIsLoading(false);
     }
@@ -246,7 +247,7 @@ export const useFaceTracker = () => {
     } catch (err: any) {
       // Ignore AbortError from play() interruptions — they are benign
       if (err?.name !== 'AbortError') {
-        console.error('Failed to start camera:', err);
+        debugError('[FaceTracker] Failed to start camera:', err);
         setError('Failed to access camera. Please check permissions.');
       }
     } finally {

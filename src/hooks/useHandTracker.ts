@@ -8,6 +8,7 @@
 import { useRef, useCallback, useEffect } from 'react';
 import { HandLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
 import { useAvatarStore } from '@/stores/avatarStore';
+import { debugLog, debugError } from '@/lib/debugLog';
 
 export const useHandTracker = () => {
   const handLandmarkerRef = useRef<HandLandmarker | null>(null);
@@ -31,9 +32,9 @@ export const useHandTracker = () => {
         numHands: 2,
       });
 
-      console.log('[HandTracker] Initialized');
+      debugLog('[HandTracker] Initialized');
     } catch (err) {
-      console.error('[HandTracker] Failed to initialize:', err);
+      debugError('[HandTracker] Failed to initialize:', err);
     }
   }, []);
 
@@ -89,7 +90,7 @@ export const useHandTracker = () => {
         }
       }
     } catch (err) {
-      console.error('[HandTracker] Error processing frame:', err);
+      debugError('[HandTracker] Error processing frame:', err);
     }
 
     animationFrameRef.current = requestAnimationFrame(processHands);
@@ -100,7 +101,7 @@ export const useHandTracker = () => {
     await initializeHandLandmarker();
     isRunningRef.current = true;
     animationFrameRef.current = requestAnimationFrame(processHands);
-    console.log('[HandTracker] Started');
+    debugLog('[HandTracker] Started');
   }, [initializeHandLandmarker, processHands]);
 
   const stopHandTracking = useCallback(() => {
@@ -113,7 +114,7 @@ export const useHandTracker = () => {
     setHandTrackingActive(false);
     setLeftHandData({ landmarks: [], isTracked: false });
     setRightHandData({ landmarks: [], isTracked: false });
-    console.log('[HandTracker] Stopped');
+    debugLog('[HandTracker] Stopped');
   }, []);
 
   useEffect(() => {

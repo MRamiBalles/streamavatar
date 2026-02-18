@@ -24,6 +24,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { AvatarRenderer } from '@/components/avatars/AvatarRenderer';
 import { useAvatarStore, BackgroundType } from '@/stores/avatarStore';
+import { debugLog, debugWarn } from '@/lib/debugLog';
 
 // =============================================================================
 // Types & Constants
@@ -65,7 +66,7 @@ function safeGetParam(searchParams: URLSearchParams, key: string): string | null
   // Reject overly long parameters to prevent abuse
   // Rechaza parámetros demasiado largos para prevenir abuso
   if (value.length > MAX_PARAM_LENGTH) {
-    console.warn(`[CleanView] Parameter "${key}" exceeded max length (${MAX_PARAM_LENGTH}), ignoring`);
+    debugWarn(`[CleanView] Parameter "${key}" exceeded max length (${MAX_PARAM_LENGTH}), ignoring`);
     return null;
   }
 
@@ -149,7 +150,7 @@ function parseURLConfig(searchParams: URLSearchParams): URLConfig {
 
   // Log validation errors for monitoring
   if (validationErrors.length > 0) {
-    console.warn('[CleanView] URL parameter validation errors:', validationErrors);
+    debugWarn('[CleanView] URL parameter validation errors:', validationErrors);
   }
 
   return { avatar, color, background, scale, idleEnabled, validationErrors };
@@ -199,7 +200,7 @@ const CleanView = () => {
   // Apply URL config to store on mount
   // Aplicar configuración al store al montar
   useEffect(() => {
-    console.log('[CleanView] Applying URL configuration:', {
+    debugLog('[CleanView] Applying URL configuration:', {
       avatar: config.avatar,
       color: config.color,
       background: config.background,

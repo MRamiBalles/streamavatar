@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { debugError } from '@/lib/debugLog';
 
 /**
  * Hybrid Gaussian Splat Loader
@@ -54,7 +55,7 @@ export class HybridLoader extends THREE.Loader {
                     if (onError) {
                         onError(e as ErrorEvent);
                     } else {
-                        console.error(e);
+                        debugError('[HybridLoader]', e);
                     }
                 }
             },

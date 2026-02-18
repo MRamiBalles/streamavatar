@@ -13,6 +13,7 @@
 
 import * as THREE from 'three';
 import { VRM, VRMHumanBoneName } from '@pixiv/three-vrm';
+import { debugLog, debugWarn, debugGroup, debugGroupEnd } from '@/lib/debugLog';
 
 // =============================================================================
 // Constants
@@ -196,7 +197,7 @@ export function normalizeVRM(vrm: VRM): NormalizationResult {
         scene.updateWorldMatrix(true, true);
         result.rotationApplied = true;
         result.modified = true;
-        console.warn('[ModelNormalizer] VRM with Z-up detected, this is unusual');
+        debugWarn('[ModelNormalizer] VRM with Z-up detected, this is unusual');
     }
 
     // Use humanoid bone height if available
@@ -231,13 +232,13 @@ export function normalizeVRM(vrm: VRM): NormalizationResult {
  * Logs normalization results in a human-readable format
  */
 export function logNormalization(result: NormalizationResult, modelName: string): void {
-    console.group(`[ModelNormalizer] ${modelName}`);
-    console.log('Modified:', result.modified);
-    console.log('Scale factor:', result.scaleFactor.toFixed(3));
-    console.log('Rotation fix (Z-up):', result.rotationApplied);
-    console.log('Original size:',
+    debugGroup(`[ModelNormalizer] ${modelName}`);
+    debugLog('Modified:', result.modified);
+    debugLog('Scale factor:', result.scaleFactor.toFixed(3));
+    debugLog('Rotation fix (Z-up):', result.rotationApplied);
+    debugLog('Original size:',
         `${result.originalSize.x.toFixed(2)} x ${result.originalSize.y.toFixed(2)} x ${result.originalSize.z.toFixed(2)}`);
-    console.log('Final size:',
+    debugLog('Final size:',
         `${result.finalSize.x.toFixed(2)} x ${result.finalSize.y.toFixed(2)} x ${result.finalSize.z.toFixed(2)}`);
-    console.groupEnd();
+    debugGroupEnd();
 }

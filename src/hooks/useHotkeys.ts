@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useAvatarStore } from '@/stores/avatarStore';
+import { debugLog } from '@/lib/debugLog';
 
 /**
  * Hook to manage global hotkeys for avatar expressions.
@@ -29,7 +30,7 @@ export function useHotkeys() {
 
                 // Optional: Reset to neutral after some time if needed, 
                 // but for now we'll keep it active until changed.
-                console.log(`[Hotkeys] Triggered expression: ${mapping.expression}`);
+                debugLog(`[Hotkeys] Triggered expression: ${mapping.expression}`);
             }
         };
 
