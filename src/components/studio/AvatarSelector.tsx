@@ -1,4 +1,4 @@
-import { Pill, Box, Circle, Cat, Ghost, Smile, Upload } from 'lucide-react';
+import { Pill, Box, Circle, Cat, Ghost, Smile, Upload, Rocket, Skull } from 'lucide-react';
 import { useAvatarStore, AvatarType, useTranslation } from '@/stores/avatarStore';
 import { cn } from '@/lib/utils';
 import { useRef } from 'react';
@@ -6,12 +6,14 @@ import { useToast } from '@/hooks/use-toast';
 import { saveModel, validateModelFile, MAX_MODEL_SIZE } from '@/lib/db';
 import { debugError } from '@/lib/debugLog';
 
-const avatarOptions: { type: AvatarType; nameKey: 'peanut' | 'robot' | 'slime' | 'cat' | 'ghost' | 'emoji'; icon: React.ElementType }[] = [
+const avatarOptions: { type: AvatarType; nameKey: 'peanut' | 'robot' | 'slime' | 'cat' | 'ghost' | 'alien' | 'scream' | 'emoji'; icon: React.ElementType }[] = [
   { type: 'pill', nameKey: 'peanut', icon: Pill },
   { type: 'boxy', nameKey: 'robot', icon: Box },
   { type: 'sphere', nameKey: 'slime', icon: Circle },
   { type: 'cat', nameKey: 'cat', icon: Cat },
   { type: 'ghost', nameKey: 'ghost', icon: Ghost },
+  { type: 'alien', nameKey: 'alien', icon: Rocket },
+  { type: 'scream', nameKey: 'scream', icon: Skull },
   { type: 'emoji', nameKey: 'emoji', icon: Smile },
 ];
 

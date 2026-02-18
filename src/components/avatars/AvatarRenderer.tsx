@@ -64,6 +64,8 @@ const AvatarModel = ({ type }: { type: AvatarType }) => {
       case 'sphere': return <SphereAvatar />;
       case 'cat': return <CatAvatar />;
       case 'ghost': return <GhostAvatar />;
+      case 'alien': return <CustomModelAvatar modelUrl="/models/alien.glb" modelType="glb" />;
+      case 'scream': return <CustomModelAvatar modelUrl="/models/scream.glb" modelType="glb" />;
       case 'emoji': return <EmojiAvatar />;
       case 'composite': return <CompositeAvatar />;
       case 'custom':

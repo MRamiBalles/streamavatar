@@ -8,7 +8,7 @@ import { getModel, saveModel, deleteModel } from '@/lib/db';
 // Types
 // =============================================================================
 
-export type AvatarType = 'pill' | 'boxy' | 'sphere' | 'cat' | 'ghost' | 'emoji' | 'custom' | 'composite';
+export type AvatarType = 'pill' | 'boxy' | 'sphere' | 'cat' | 'ghost' | 'alien' | 'scream' | 'emoji' | 'custom' | 'composite';
 export type ExpressionType = 'neutral' | 'happy' | 'sad' | 'angry' | 'surprised';
 
 export interface CustomModel {
