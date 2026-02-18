@@ -11,7 +11,7 @@ import { Box, Sphere, RoundedBox } from '@react-three/drei';
 import * as THREE from 'three';
 import { useAvatarStore } from '@/stores/avatarStore';
 import { useAvatarAnimation } from '@/hooks/useAvatarAnimation';
-import { AvatarHalfBodyFixed } from './AvatarHalfBodyFixed';
+import { AvatarHalfBody } from './AvatarHalfBody';
 
 export const BoxyAvatar = () => {
   const groupRef = useRef<THREE.Group>(null);
