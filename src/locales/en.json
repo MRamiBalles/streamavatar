@@ -133,5 +133,6 @@
   "graphicsQuality": "Graphics Quality",
   "graphicsHigh": "High",
   "graphicsLow": "Low",
-  "modelRotation": "Model Rotation"
+  "modelRotation": "Model Rotation",
+  "fixRotation": "Fix Rotation (Meshy)"
 }

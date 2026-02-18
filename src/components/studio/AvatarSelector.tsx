@@ -1,7 +1,9 @@
-import { Pill, Box, Circle, Cat, Ghost, Smile, Upload, Rocket, Skull } from 'lucide-react';
+import { Pill, Box, Circle, Cat, Ghost, Smile, Upload, Rocket, Skull, Rotate3D } from 'lucide-react';
 import { useAvatarStore, AvatarType, useTranslation } from '@/stores/avatarStore';
 import { cn } from '@/lib/utils';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
 import { useToast } from '@/hooks/use-toast';
 import { saveModel, validateModelFile, MAX_MODEL_SIZE } from '@/lib/db';
 import { debugError } from '@/lib/debugLog';
@@ -22,6 +24,7 @@ export const AvatarSelector = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const t = useTranslation();
+  const [fixRotation, setFixRotation] = useState(false);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -58,8 +61,12 @@ export const AvatarSelector = () => {
       URL.revokeObjectURL(customModel.url);
     }
 
+    // Prepare initial rotation if fix is enabled
+    // Meshy models often come Z-up, so we rotate -90 deg on X to be Y-up
+    const initialRotation: [number, number, number] | undefined = fixRotation ? [-Math.PI / 2, 0, 0] : undefined;
+
     // Save to IndexedDB for persistence (with enforced storage limits)
-    saveModel('custom-avatar', file, { name: file.name, type: extension })
+    saveModel('custom-avatar', file, { name: file.name, type: extension, initialRotation })
       .catch(err => {
         debugError('[AvatarSelector] Failed to save model to IDB:', err);
         toast({
@@ -72,7 +79,8 @@ export const AvatarSelector = () => {
     setCustomModel({
       url,
       name: file.name,
-      type: extension as 'glb' | 'vrm',
+      type: extension as 'glb' | 'vrm', // Cast to allowed types
+      initialRotation
     });
 
     toast({
@@ -120,7 +128,19 @@ export const AvatarSelector = () => {
       </div>
 
       {/* Import custom model */}
-      <div className="pt-2 border-t border-border">
+      <div className="pt-2 border-t border-border space-y-3">
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="fix-rotation"
+            checked={fixRotation}
+            onCheckedChange={(c) => setFixRotation(c === true)}
+          />
+          <Label htmlFor="fix-rotation" className="text-xs text-muted-foreground cursor-pointer flex items-center gap-1">
+            <Rotate3D className="w-3 h-3" />
+            {t.fixRotation || "Fix Rotation (Meshy/Z-up)"}
+          </Label>
+        </div>
+
         <input
           ref={fileInputRef}
           type="file"
