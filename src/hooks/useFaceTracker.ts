@@ -120,6 +120,20 @@ export const useFaceTracker = () => {
               // This prioritizes the "points" detection user asked for
               jawOpen = (jawOpen * 0.4) + (geometricOpen * 0.6);
             }
+
+            // FIXED: Update the raw coefficients so the modern avatar renderer uses this corrected value
+            // ARKit 'jawOpen' is index 17
+            // We also dampen the smile to address "automatic smile" complaints
+            if (rawCoefficients.length > 24) {
+              // Update jawOpen (17)
+              rawCoefficients[17] = jawOpen;
+
+              // Dampen smiles (mouthSmileLeft: 23, mouthSmileRight: 24 in standard ARKit 52)
+              // Reducing intensity by 30% to avoid "permanent smile" look
+              const smileDampener = 0.7;
+              rawCoefficients[23] *= smileDampener;
+              rawCoefficients[24] *= smileDampener;
+            }
           }
         }
 
