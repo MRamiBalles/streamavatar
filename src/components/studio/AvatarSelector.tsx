@@ -62,9 +62,8 @@ export const AvatarSelector = () => {
     }
 
     // Prepare initial rotation if fix is enabled
-    // Meshy models often come Z-up, so we rotate -90 deg on X to be Y-up.
-    // Three.js Euler is XYZ intrinsic: X(-90) moves Z axis to Global Up. So we rotate Z(180) to Yaw.
-    const initialRotation: [number, number, number] | undefined = fixRotation ? [-Math.PI / 2, 0, Math.PI] : undefined;
+    // Meshy models often come Z-up/inverted. Trials show X(90) + Y(180) works best.
+    const initialRotation: [number, number, number] | undefined = fixRotation ? [Math.PI / 2, Math.PI, 0] : undefined;
 
     // Save to IndexedDB for persistence (with enforced storage limits)
     saveModel('custom-avatar', file, { name: file.name, type: extension, initialRotation })
