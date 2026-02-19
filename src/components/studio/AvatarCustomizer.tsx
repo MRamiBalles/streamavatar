@@ -75,14 +75,22 @@ export const AvatarCustomizer = () => {
         />
       </div>
 
-      {/* Model Rotation (only for custom models) */}
-      {selectedAvatar === 'custom' && (
+      {/* Model Rotation (for custom and Meshy models) */}
+      {(selectedAvatar === 'custom' || selectedAvatar === 'alien' || selectedAvatar === 'scream') && (
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <RotateCw className="w-4 h-4 text-muted-foreground" />
-            <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-              {t.modelRotation || 'Rotación del modelo'}
-            </Label>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <RotateCw className="w-4 h-4 text-muted-foreground" />
+              <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                {t.modelRotation || 'Rotación del modelo'}
+              </Label>
+            </div>
+            <button
+              onClick={() => setCustomModelRotation([0, 0, 0])}
+              className="text-[10px] text-primary hover:underline"
+            >
+              Reset
+            </button>
           </div>
           {(['X', 'Y', 'Z'] as const).map((axis, i) => (
             <div key={axis} className="space-y-1">
@@ -119,8 +127,8 @@ export const AvatarCustomizer = () => {
               onClick={() => setBackground(bg.type)}
               className={cn(
                 "flex-1 flex flex-col items-center gap-1.5 p-2 rounded-lg transition-all",
-                background === bg.type 
-                  ? "ring-2 ring-primary bg-secondary" 
+                background === bg.type
+                  ? "ring-2 ring-primary bg-secondary"
                   : "hover:bg-secondary/50"
               )}
             >
