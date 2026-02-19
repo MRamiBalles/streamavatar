@@ -25,10 +25,7 @@ export const AvatarSelector = () => {
   const { toast } = useToast();
   const t = useTranslation();
 
-  // Manual Rotation State (Defaults to Meshy fix: -90, 0, 180)
-  const [rotX, setRotX] = useState(-90);
-  const [rotY, setRotY] = useState(0);
-  const [rotZ, setRotZ] = useState(180);
+  const [fixRotation, setFixRotation] = useState(false);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -65,9 +62,9 @@ export const AvatarSelector = () => {
       URL.revokeObjectURL(customModel.url);
     }
 
-    // Prepare initial rotation from inputs (Degrees -> Radians)
-    const degToRad = (deg: number) => deg * (Math.PI / 180);
-    const initialRotation: [number, number, number] = [degToRad(rotX), degToRad(rotY), degToRad(rotZ)];
+    // Prepare initial rotation if fix is enabled
+    // Meshy models often come Z-up, so we rotate -90 deg on X to be Y-up.
+    const initialRotation: [number, number, number] | undefined = fixRotation ? [-Math.PI / 2, 0, 0] : undefined;
 
     // Save to IndexedDB for persistence (with enforced storage limits)
     saveModel('custom-avatar', file, { name: file.name, type: extension, initialRotation })
@@ -132,43 +129,7 @@ export const AvatarSelector = () => {
       </div>
 
       {/* Import custom model */}
-      <div className="pt-2 border-t border-border space-y-3">
-        <div className="space-y-2">
-          <Label className="text-xs text-muted-foreground flex items-center gap-1">
-            <Rotate3D className="w-3 h-3" />
-            {t.fixRotation || "Import Rotation (deg)"}
-          </Label>
-          <div className="flex gap-2">
-            <div className="flex flex-col">
-              <span className="text-[10px] text-muted-foreground">X</span>
-              <input
-                type="number"
-                value={rotX}
-                onChange={(e) => setRotX(Number(e.target.value))}
-                className="w-12 text-xs p-1 border rounded bg-background"
-              />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] text-muted-foreground">Y</span>
-              <input
-                type="number"
-                value={rotY}
-                onChange={(e) => setRotY(Number(e.target.value))}
-                className="w-12 bg-background text-xs p-1 border rounded"
-              />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] text-muted-foreground">Z</span>
-              <input
-                type="number"
-                value={rotZ}
-                onChange={(e) => setRotZ(Number(e.target.value))}
-                className="w-12 bg-background text-xs p-1 border rounded"
-              />
-            </div>
-          </div>
-        </div>
-
+      <div className="pt-2 border-t border-border">
         <input
           ref={fileInputRef}
           type="file"
@@ -194,6 +155,18 @@ export const AvatarSelector = () => {
             </p>
           </div>
         </button>
+
+        <div className="mt-2 flex items-center gap-2">
+          <Checkbox
+            id="fix-rotation"
+            checked={fixRotation}
+            onCheckedChange={(c) => setFixRotation(c === true)}
+          />
+          <Label htmlFor="fix-rotation" className="text-[10px] text-muted-foreground cursor-pointer flex items-center gap-1">
+            <Rotate3D className="w-3 h-3" />
+            {t.fixRotation || "Fix Rotation (Z-up)"}
+          </Label>
+        </div>
 
         {customModel && (
           <button
